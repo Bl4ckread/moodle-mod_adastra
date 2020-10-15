@@ -25,4 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string["modulename"] = "Ad Astra";
 $string['pluginname'] = 'Ad Astra';
+$string["modulenameplural"] = "Ad Astras";
