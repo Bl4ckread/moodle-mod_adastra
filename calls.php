@@ -3,6 +3,7 @@
 require(__DIR__.'/../../config.php');
 
 // Set the page information
+$PAGE->set_context(context_system::instance());
 $PAGE->set_url('/mod/adastra/calls.php');
 $PAGE->set_title("API Calls");
 $PAGE->set_heading("API Calls");
@@ -51,7 +52,7 @@ function call_API($url, $token = false, $data = false) {
 $test_course = call_API(
     'https://tie-plus-test.rd.tuni.fi/api/v2/courses/1/', 
     '!! PUT HERE YOUR PRIVATE KEY !!', 
-    'format=json'
+    ['format=json']
 );
 
 // Print the information of Testikurssi 1
