@@ -14,7 +14,7 @@ $PAGE->set_heading("API Calls");
  * @param $url The url to where the request is sent
  * @param $token The token of the user for authorization
  * @param $data Parameters to be sent with the request
- * @return $result The response from the server
+ * @return $result The response from the server converted to an object
  */
 function call_API($url, $token = false, $data = false) {
     $curl = curl_init();
@@ -44,18 +44,8 @@ function call_API($url, $token = false, $data = false) {
 
     curl_close($curl);
 
+    $result = json_decode($result);
+
     return $result;
 }
-
-
-// Get the information of the course Testikurssi 1
-$test_course = call_API(
-    'https://tie-plus-test.rd.tuni.fi/api/v2/courses/1/', 
-    '!! PUT HERE YOUR PRIVATE KEY !!', 
-    ['format=json']
-);
-
-// Print the information of Testikurssi 1
-echo('Testikurssi 1 info:<br><br>');
-echo($test_course);
 
