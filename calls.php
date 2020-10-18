@@ -1,12 +1,6 @@
 <?php
 
-require(__DIR__.'/../../config.php');
-
-// Set the page information
-$PAGE->set_context(context_system::instance());
-$PAGE->set_url('/mod/adastra/calls.php');
-$PAGE->set_title("API Calls");
-$PAGE->set_heading("API Calls");
+defined('MOODLE_INTERNAL') || die();
 
 
 /**
@@ -39,7 +33,7 @@ function call_API($url, $token = false, $data = false) {
 
     // If no result, then throw an Exception
     if ($result === false) {
-        print_r('Curl error: ' . curl_error($curl));
+        throw new Exception('Curl error: ' . curl_error($curl));
     }
 
     curl_close($curl);
