@@ -40,6 +40,13 @@ function call_API($url, $token = false, $data = false) {
 
     $result = json_decode($result);
 
+    if (!empty($result->detail)) {
+        // If there was an error with token, throw an Exception
+        if (substr($result->detail, 0, 20) === 'Invalid token header') {
+            throw new Exception('Invalid token header');
+        }
+    }
+
     return $result;
 }
 
