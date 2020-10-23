@@ -1,8 +1,7 @@
 # Ad Astra #
 
-TODO Describe the plugin shortly here.
+Ad Astra is a Moodle plugin for implementing course information from Plussa to Moodle environment. Plugin will be a successor of a previous plugin, which is no longer working with the current Moodle version.
 
-TODO Provide more detailed description here.
 
 ## License ##
 
