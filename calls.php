@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Library of API call functions.
+ *
+ * @package     mod_adastra
+ * @copyright   2020 Your Name <you@example.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
 
@@ -24,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param $data Parameters to be sent with the request
  * @return $result The response from the server converted to an object
  */
-function call_api($url, $token = false, $data = false) {
+function adastra_call_api($url, $token = false, $data = false) {
     $curl = curl_init();
 
     // If some parameters should be given with the request, add

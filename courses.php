@@ -14,8 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Display contents of courses on a page.
+ *
+ * @package     mod_adastra
+ * @copyright   2020 Your Name <you@example.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 require(__DIR__.'/../../config.php');
-require('calls.php');
+require_once(__DIR__.'/calls.php');
 
 // Set the page information.
 $PAGE->set_context(context_system::instance());
@@ -25,9 +33,9 @@ $PAGE->set_heading("Courses");
 
 
 // Get the information of the courses.
-$courses = call_api(
+$courses = adastra_call_api(
     'https://tie-plus-test.rd.tuni.fi/api/v2/courses/',
-    '!! PUT HERE YOUR PRIVATE KEY !!',
+    'fe68a18a4c08318bbaea7027b03bba415ce35b8e',
     ['format=json']
 );
 
