@@ -25,6 +25,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string["modulename"] = "Ad Astra";
+$string['modulename'] = 'Ad Astra';
 $string['pluginname'] = 'Ad Astra';
-$string["modulenameplural"] = "Ad Astras";
+$string['modulenameplural'] = 'Ad Astras';
+
+$string['apikey'] = 'Set Plussa API key';
+$string['apikey_desc'] = 'The API key is required to fetch course data.';
