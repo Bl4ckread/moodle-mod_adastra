@@ -34,8 +34,9 @@ $PAGE->set_heading("Courses");
 
 // Get the information of the courses.
 $apikey = get_config('mod_adastra', 'apikey');
+$url = get_config('mod_adastra', 'url');
 $courses = adastra_call_api(
-    'https://tie-plus-test.rd.tuni.fi/api/v2/courses/',
+    $url . 'courses/',
     $apikey,
     ['format=json']
 );

@@ -27,6 +27,12 @@ defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
 
+    // Plussa API url base.
+    $urlsetting = new admin_setting_configtext('mod_adastra/url',
+        get_string('url', 'adastra'), get_string('url_desc', 'adastra'), '', PARAM_TEXT);
+    $urlsetting->set_locked_flag_options(admin_setting_flag::ENABLED, true);
+    $settings->add($urlsetting);
+
     // Plussa API key.
     $apikeysetting = new admin_setting_configtext('mod_adastra/apikey',
         get_string('apikey', 'adastra'), get_string('apikey_desc', 'adastra'), '', PARAM_TEXT);

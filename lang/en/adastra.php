@@ -31,3 +31,6 @@ $string['modulenameplural'] = 'Ad Astras';
 
 $string['apikey'] = 'Set Plussa API key';
 $string['apikey_desc'] = 'The API key is required to fetch course data.';
+
+$string['url'] = 'Set Plussa API base url';
+$string['url_desc'] = 'The base URL for Plussa API. The URL must end with a forward slash, e.g. https://plus.tuni.fi/api/v2/';
