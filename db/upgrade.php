@@ -38,12 +38,43 @@ function xmldb_adastra_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    // Create new table adastra_course_settings.
+    if ($oldversion < 2020111300) {
+
+        // Define table adastra_course_settings to be created.
+        $table = new xmldb_table('adastra_course_settings');
+
+        // Adding fields to table adastra_course_settings.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('apikey', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('configurl', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('sectionnum', XMLDB_TYPE_INTEGER, '2', null, null, null, null);
+        $table->add_field('modulenumbering', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('contentnumbering', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('lang', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'en');
+
+        // Adding keys to table adastra_course_settings.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table adastra_course_settings.
+        $table->add_index('course', XMLDB_INDEX_UNIQUE, ['course']);
+
+        // Conditionally launch create table for adastra_course_settings.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Adastra savepoint reached.
+        upgrade_mod_savepoint(true, 2020111300, 'adastra');
+    }
+
     // For further information please read the Upgrade API documentation:
     // https://docs.moodle.org/dev/Upgrade_API
     //
     // You will also have to create the db/install.xml file by using the XMLDB Editor.
     // Documentation for the XMLDB Editor can be found at:
-    // https://docs.moodle.org/dev/XMLDB_editor
+    // https://docs.moodle.org/dev/XMLDB_editor.
 
     return true;
 }
