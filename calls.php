@@ -38,7 +38,7 @@ function adastra_call_api($url, $token = false, $data = false) {
     // If some parameters should be given with the request, add
     // them to the end of the URL.
     if ($data) {
-        $url = sprintf("%s?%s", $url, http_build_query($data));
+        $url = sprintf('%s?%s', $url, http_build_query($data));
     }
 
     // Authentication.

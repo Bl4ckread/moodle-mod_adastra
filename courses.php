@@ -28,14 +28,14 @@ require_once(__DIR__.'/calls.php');
 // Set the page information.
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/mod/adastra/courses.php');
-$PAGE->set_title("Courses");
-$PAGE->set_heading("Courses");
+$PAGE->set_title('Courses');
+$PAGE->set_heading('Courses');
 
 
 // Get the information of the courses.
 $apikey = get_config('mod_adastra', 'apikey');
 $url = get_config('mod_adastra', 'url');
-$courses = adastra_call_api(
+$courses = mod_adastra_call_api(
     $url . 'courses/',
     $apikey,
     ['format=json']
