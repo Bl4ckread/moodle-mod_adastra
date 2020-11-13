@@ -47,7 +47,7 @@ class course_config extends \mod_adastra\local\database_object {
      * @param string $language
      * @return void
      */
-    public static function updateorcreate($courseid, $sectionnumber, $apikey = null, $configurl = null,
+    public static function update_or_create($courseid, $sectionnumber, $apikey = null, $configurl = null,
             $modulenumbering = null, $contentnumbering = null, $language = null) {
         global $DB;
 
@@ -66,7 +66,7 @@ class course_config extends \mod_adastra\local\database_object {
                 $newrow->contentnumbering = $contentnumbering;
             }
             if ($language !== null) {
-                $newrow->lang = self::preparelangstring($language);
+                $newrow->lang = self::prepare_lang_string($language);
             }
             $id = $DB->insert_record(self::TABLE, $newrow);
             return $id != 0;
@@ -88,7 +88,7 @@ class course_config extends \mod_adastra\local\database_object {
                 $row->contentnumbering = $contentnumbering;
             }
             if ($language !== null) {
-                $row->lang = self::preparelangstring($language);
+                $row->lang = self::prepare_lang_string($language);
             }
             return $DB->update_record(self::TABLE, $row);
         }
@@ -100,13 +100,31 @@ class course_config extends \mod_adastra\local\database_object {
      * @param string[]|string $langs
      * @return string The formatted language string.
      */
-    public static function preparelangstring($langs) : string {
+    public static function prepare_lang_string($langs) : string {
         if (empty($langs)) {
             return '';
         } else if (is_array($langs)) {
             return '|' . implode('|', $langs) . '|';
         }
         return substr($langs, 0, 5); // At most five first characters.
+    }
+
+    /**
+     * Return current module numbering
+     *
+     * @return int Module numbering.
+     */
+    public function get_module_numbering() {
+        return (int) $this->record->modulenumbering;
+    }
+
+    /**
+     * Return current content numbering.
+     *
+     * @return int Content numbering.
+     */
+    public function get_content_numbering() {
+        return (int) $this->record->contentnumbering;
     }
 
 }

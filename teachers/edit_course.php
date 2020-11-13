@@ -25,22 +25,16 @@ require_login($course, false);
 $context = context_course::intance($cid);
 require_capability('mod/adastra:addinstance', $context);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') { // TODO: Find out if we can check the request method with some Moodle internal function.
-    $modulenumbering = \mod_adastra\local\course_config::MODULE_NUMBERING_ARABIC;
-    $requestmodulenumbering = optional_param('module_numbering', -1, PARAM_INT);
-    if ($requestmodulenumbering >= 0) {
-        $modulenumbering = $requestmodulenumbering;
-    }
-    $contentnumbering = \mod_adastra\local\course_config::CONTENT_NUMBERING_ARABIC;
-    $requestcontentnumbering = optional_param('content_numbering', -1, PARAM_INT);
-    if ($requestcontentnumbering >= 0) {
-        $contentnumbering = $requestcontentnumbering;
-    }
-
-}
-
+// Print the page header.
 $PAGE->set_pagelayout('incourse');
-$PAGE->set_url(\mod_adastra\local\urls\urls::editcourse($cid, true));
+$PAGE->set_url(\mod_adastra\local\urls::edit_course($cid, true));
 $PAGE->set_title(format_string(get_string('editcourse', \mod_adastra\local\exercise_round::MODNAME)));
 $PAGE->set_heading(format_string($course->fullname));
 
+// Navbar.
+adastra_edit_course_navbar($PAGE, $cid, true);
+
+// Output starts here.
+
+
+// Finish the page.

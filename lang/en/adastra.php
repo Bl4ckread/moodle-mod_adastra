@@ -34,3 +34,13 @@ $string['apikey_desc'] = 'The API key is required to fetch course data.';
 
 $string['url'] = 'Set Plussa API base url';
 $string['url_desc'] = 'The base URL for Plussa API. The URL must end with a forward slash, e.g. https://plus.tuni.fi/api/v2/';
+
+// Strings for mod_form.php.
+$string['statusready'] = 'Ready';
+$string['statushidden'] = 'Hidden';
+
+// Templates.
+$string['statusnototal'] = 'No total points';
+
+// Teacher's edit pages.
+$string['editcourse'] = 'Edit course';

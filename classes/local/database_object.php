@@ -28,13 +28,13 @@ abstract class database_object {
      * @param int $id
      * @throws dml_exception If the record does not exist.
      */
-    public static function createfromid($id) {
+    public static function create_from_id($id) {
         global $DB;
         $rec = $DB->get_record(static::TABLE, array('id' => $id), '*', MUST_EXIST);
         return new static($rec);
         /*
          * Class to instantiate is the class given in the static call:
-         * \mod_astra\local\submission::createfromid() returns instance of
+         * \mod_astra\local\submission::create_from_id() returns instance of
          * \mod_astra\local\submission.
          */
     }
@@ -49,7 +49,12 @@ abstract class database_object {
         $this->$record = $record;
     }
 
-    public function getid() {
+    /**
+     * Return the id of the record as int.
+     *
+     * @return int The id.
+     */
+    public function get_id() {
         return (int) $this->record->id;
     }
 
@@ -73,7 +78,7 @@ abstract class database_object {
      *
      * @return stdClass The record.
      */
-    public function getrecord() {
+    public function get_record() {
         return $this->record;
     }
 }

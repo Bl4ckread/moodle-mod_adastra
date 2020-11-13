@@ -14,23 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace mod_adastra\output;
+
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Add edit course page to the navbar.
- *
- * @param moodle_page $page $PAGE
- * @param int $courseid
- * @param bool $active
- * @return navigation_node The new navnode.
- */
-function adastra_edit_course_navbar(moodle_page $page, $courseid, $active = true) {
-    $coursenav = $page->navigation->find($courseid, navigation_node::TYPE_COURSE);
-    $editnav = $coursenav->add(get_string('editcourse', \mod_adastra\local\exercise_round::MODNAME),
-            \mod_adastra\local\urls::edit_course($courseid, true),
-            navigation_node::TYPE_CUSTOM, null, 'editcourse');
-    if ($active) {
-        $editnav->make_active();
+class renderer extends \plugin_renderer_base {
+
+    /**
+     * Render edit_course.php.
+     *
+     * @param edit_course_page $page
+     * @return string Html for the page.
+     */
+    protected function render_edit_course_page(mod_adastra\output\edit_course_page $page) {
+        $data = $page->export_for_template($this);
+        return $this->render_from_template(\mod_adastra\local\exercise_round::MODNAME . '/edit_course_page', $data);
     }
-    return $editnav;
 }
