@@ -54,7 +54,7 @@ class course_config extends \mod_adastra\local\database_object {
         $row = $DB->get_record(self::TABLE, array('course' => $courseid), '*', IGNORE_MISSING);
         if ($row === false) {
             // Create new.
-            $newrow = new stdClass();
+            $newrow = new \stdClass();
             $newrow->course = $courseid;
             $newrow->sectionnum = $sectionnumber;
             $newrow->apikey = $apikey;
@@ -110,7 +110,68 @@ class course_config extends \mod_adastra\local\database_object {
     }
 
     /**
-     * Return current module numbering
+     * Returns the course config for the given course id.
+     *
+     * @param int $courseid
+     * @return null|\mod_adastra\local\course_config
+     */
+    public static function get_for_course_id($courseid) {
+        global $DB;
+        $record = $DB->get_record(self::TABLE, array('course' => $courseid));
+        if ($record === false) {
+            return null;
+        } else {
+            return new self($record);
+        }
+    }
+
+    /**
+     * Return the default module numbering.
+     *
+     * @return int
+     */
+    public static function get_default_module_numbering() {
+        return self::MODULE_NUMERING_ARABIC;
+    }
+
+    /**
+     * Return the default content numbering.
+     *
+     * @return int
+     */
+    public static function get_default_content_numbering() {
+        return self::CONTENT_NUMBERING_ARABIC;
+    }
+
+    /**
+     * Return the Moodle course section number of this activity.
+     *
+     * @return void
+     */
+    public function get_section_number() {
+        return $this->record->sectionnum;
+    }
+
+    /**
+     * Return the api key for this activity.
+     *
+     * @return string
+     */
+    public function get_api_key() {
+        return $this->record->apikey;
+    }
+
+    /**
+     * Return the configuration url for this activity.
+     *
+     * @return string
+     */
+    public function get_configuration_url() {
+        return $this->record->configurl;
+    }
+
+    /**
+     * Return current module numbering.
      *
      * @return int Module numbering.
      */
@@ -127,4 +188,22 @@ class course_config extends \mod_adastra\local\database_object {
         return (int) $this->record->contentnumbering;
     }
 
+    /**
+     * Returns the languages of the current activity.
+     *
+     * @return string[]
+     */
+    public function get_languages() : array {
+        $langs = $this->record->lang;
+        if (empty($langs)) {
+            return self::DEFAULT_LANGUAGES;
+        } else if (substr($langs, 0, 1) === '|') {
+            // Starts with the pipe |.
+            $arr = array_filter(explode('|', $langs));
+            // Filter empty values.
+            return empty($arr) ? self::DEFAULT_LANGUAGES : $arr;
+        } else {
+            return array($langs);
+        }
+    }
 }

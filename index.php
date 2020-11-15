@@ -31,7 +31,7 @@ $id = required_param('id', PARAM_INT);
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 require_course_login($course);
 
-$coursecontext = context_course::instance($course->id);
+$coursecontext = \context_course::instance($course->id);
 
 $event = \mod_adastra\event\course_module_instance_list_viewed::create(array(
     'context' => $modulecontext

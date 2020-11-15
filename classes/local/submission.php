@@ -14,20 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\output;
+namespace mod_adastra\local;
 
 defined('MOODLE_INTERNAL') || die();
 
-class renderer extends \plugin_renderer_base {
-
-    /**
-     * Render edit_course.php.
-     *
-     * @param edit_course_page $page
-     * @return string Html for the page.
-     */
-    protected function render_edit_course_page(\mod_adastra\output\edit_course_page $page) {
-        $data = $page->export_for_template($this);
-        return $this->render_from_template(\mod_adastra\local\exercise_round::MODNAME . '/edit_course_page', $data);
-    }
+class submission extends \mod_adastra\local\database_object {
+    const TABLE = 'adastra_submissions';
 }

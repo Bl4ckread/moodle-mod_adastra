@@ -35,7 +35,7 @@ class chapter extends \mod_adastra\local\learning_object {
      *
      * @param boolean $includecoursemodule
      * @param boolean $includesiblins
-     * @return stdClass
+     * @return \stdClass
      */
     public function get_template_context($includecoursemodule = true, $includesiblins = false) {
         $ctx = parent::get_template_context($includecoursemodule, $includesiblings);

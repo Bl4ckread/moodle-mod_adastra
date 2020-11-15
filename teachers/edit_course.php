@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-require(__DIR__.'/../../config.php');
-require_once(__DIR__.'/teachers/editcourse_lib.php');
-require_once(__DIR__.'/locallib.php');
+require(__DIR__.'/../../../config.php');
+require_once(__DIR__.'/editcourse_lib.php');
+require_once(__DIR__.'/../locallib.php');
 
 $cid = required_param('course', PARAM_INT); // Course ID.
 $course = $DB->get_record('course', array('id' => $cid), '*', MUST_EXIST);
 
 require_login($course, false);
-$context = context_course::intance($cid);
+$context = \context_course::instance($cid);
 require_capability('mod/adastra:addinstance', $context);
 
 // Print the page header.
@@ -35,6 +35,11 @@ $PAGE->set_heading(format_string($course->fullname));
 adastra_edit_course_navbar($PAGE, $cid, true);
 
 // Output starts here.
+$output = $PAGE->get_renderer(\mod_adastra\local\exercise_round::MODNAME);
 
+echo $output->header();
+$renderable = new \mod_adastra\output\edit_course_page($cid);
+echo $output->render($renderable);
 
 // Finish the page.
+echo $output->footer();

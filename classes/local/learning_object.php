@@ -97,11 +97,70 @@ abstract class learning_object extends \mod_adastra\local\database_object {
      * Return ID of this learning object in its subtype table
      * (different to the ID in the base table).
      *
-     * @return void
+     * @return int
      */
     public function get_subtype_id() {
         // Assume that id field is from the subtype, see constant SQL_SELECT_ALL_FIELDS.
         return $this->record->id;
+    }
+
+    /**
+     * Return the status for this learning object.
+     *
+     * @param boolean $asstring
+     * @return string|int
+     */
+    public function get_status($asstring = false) {
+        if ($asstring) {
+            switch ((int) $this->record->status) {
+                case self::STATUS_READY:
+                    return get_string('statusready', \mod_adastra\local\exercise_round::MODNAME);
+                    break;
+                case self::STATUS_MAINTENANCE:
+                    return get_string('statusmaintenance', \mod_adastra\local\exercise_round::MODNAME);
+                    break;
+                case self::STATUS_UNLISTED:
+                    return get_string('statusunlisted', \mod_adastra\local\exercise_round::MODNAME);
+                    break;
+                default:
+                    return get_string('statushidden', \mod_adastra\local\exercise_round::MODNAME);
+            }
+
+        }
+        return (int) $this->record->status;
+    }
+
+    /**
+     * Return the category of this learning object.
+     *
+     * @return \mod_adastra\local\category
+     */
+    public function get_category() {
+        if (is_null($this->category)) {
+            $this->category = \mod_adastra\local\category::create_from_id($this->record->categoryid);
+        }
+        return $this->category;
+    }
+
+    /**
+     * Return the category ID for this learning object.
+     *
+     * @return int
+     */
+    public function get_category_id() {
+        return $this->record->categoryid;
+    }
+
+    /**
+     * Return the exercise round for this learning object.
+     *
+     * @return \mod_adastra\local\exercise_round
+     */
+    public function get_exercise_round() {
+        if (is_null($this->exerciseround)) {
+            $this->exerciseround = \mod_adastra\local\exercise_round::create_from_id($this->record->roundid);
+        }
+        return $this->exerciseround;
     }
 
     /**
@@ -118,6 +177,18 @@ abstract class learning_object extends \mod_adastra\local\database_object {
             $this->parentobject = self::create_from_id($this->record->parentid);
         }
         return $this->parentobject;
+    }
+
+    /**
+     * Return the ID of the parent of this learning_object.
+     *
+     * @return int
+     */
+    public function get_parent_id() {
+        if (empty($this->record->parentid)) {
+            return null;
+        }
+        return (int) $this->record->parentid;
     }
 
     /**
@@ -149,6 +220,85 @@ abstract class learning_object extends \mod_adastra\local\database_object {
             return $parent->get_number() . ".{$this->record->ordernum}";
         }
         return ".{$this->record->ordernum}";
+    }
+
+    /**
+     * Return the name of the learning object.
+     *
+     * @param boolean $includeorder If true, the name is prepended with the content number.
+     * @param null|string $lang The preferred language if the name is defined for multiple
+     * languages. If null, the current language is used.
+     * @param boolean $multilang If true, the name includes multiple languages and is returned
+     * in the format of the Moodle multilang filter (<span lang=en class="multilang">).
+     * @return string
+     */
+    public function get_name(
+            bool $includeorder = true,
+            string $lang = null,
+            bool $multilang = false
+    ) {
+        require_once(__DIR__ . '/../../locallib.php');
+
+        // Number formatting based on A+ (a-plus/exercise/exercise_models.py).
+        $number = '';
+        if ($includeorder && $this->get_order() >= 0) {
+            $conf = $this->get_exercise_round()->get_course_config();
+            if ($conf !== null) {
+                $contentnumbering = $conf->get_content_numbering();
+                $modulenumbering = $conf->get_module_numbering();
+            } else {
+                $contentnumbering = \mod_adastra\local\course_config::get_default_content_numbering();
+                $modulenumbering = \mod_adastra\local\course_config::get_default_module_numbering();
+            }
+
+            if ($contentnumbering == \mod_adastra\local\course_config::CONTENT_NUMBERING_ARABIC) {
+                $number = $this->get_number();
+                if (
+                        $modulenumbering == \mod_adastra\local\course_config::MODULE_NUMBERING_ARABIC ||
+                        $modulenumbering == \mod_adastra\local\course_config::MODULE_NUMBERING_HIDDEN_ARABIC
+                ) {
+                    $number = $this->get_exercise_round()->get_order() . $number . ' ';
+                } else {
+                    // Leave out the module number ($number starts with a dot).
+                    $number = substr($number, 1) . ' ';
+                }
+            } else if ($contentnumbering == \mod_adastra\local\course_config::CONTENT_NUMBERING_ROMAN) {
+                $number = adastra_roman_numeral($this->get_order()) . ' ';
+            }
+        }
+
+        $name = adastra_parse_localization($this->record->name, $land, $multilang);
+        if (is_array($name)) {
+            if (count($name) > 1) {
+                // Multilang with spans.
+                $spans = array();
+                foreach ($name as $langcode => $val) {
+                    $spans[] = "<span lang=\"{$langcode}\" class=\"multilang\">{$val}</span>";
+                }
+                return $number . implode(' ', $spans);
+            } else {
+                $name = reset($name);
+            }
+        }
+        return $number . $name;
+    }
+
+    /**
+     * Return true if this object uses a wide column.
+     *
+     * @return boolean
+     */
+    public function get_use_wide_column() {
+        return (bool) $this->record->usewidecolumn;
+    }
+
+    /**
+     * Return true if this object is empty.
+     *
+     * @return boolean
+     */
+    public function is_empty() {
+        return empty($this->record->serviceurl);
     }
 
     /**
@@ -188,7 +338,125 @@ abstract class learning_object extends \mod_adastra\local\database_object {
         return false;
     }
 
+    protected function get_sibling_context($next = true) {
+        global $DB;
+
+        $context = \context_module::instance($this->get_exercise_round()->get_course_module()->id);
+        $isteacher = has_capability('/moodle/course:manageactivities', $context);
+        $isassistant = has_capability('mod/adastra:viewallsubmissions', $context);
+
+        $order = $this->get_order();
+        $parentid = $this->get_parent_id();
+        $params = array(
+            'roundid' => $this->record->roundid,
+            'ordernum' => $order,
+            'parentid' => $parentid,
+        );
+        $where = 'roundid = :roundid';
+        $where .= ' AND ordernum ' . ($next ? '>' : '<') . ' :ordernum';
+        // Skip some uncommon details in the hierarchy of the round content and assume that
+        // siblings are in the same level (they have the same parent).
+        if ($parentid === null) {
+            $where .= ' AND parentid IS NULL';
+        } else {
+            $where .= ' AND parentid = :parentid';
+        }
+        if ($isassistant && !$isteacher) {
+            // Assistants do not see hidden objects.
+            $where .= ' AND status <> :status';
+            $params['status'] = self::STATUS_HIDDEN;
+        } else if (!$isteacher) {
+            // Students see objects that are normally enabled.
+            $where .= ' AND status = :status';
+            $params['status'] = self::STATUS_READY;
+        }
+        $sort = 'ordernum ' . ($next ? 'ASC' : 'DESC');
+
+        $results = $DB->get_records_select(self::TABLE, $where, $params, $sort, '*', 0, 1);
+
+        if (!empty($results)) {
+            // The next object is inn the same round.
+            $record = reset($results);
+            $record->lobjectid = $record->id;
+            // Hack: the record does not contain the data of the learning object subtype since the DB query did not join the tables.
+            unset($record->id);
+            // Use the chapter class here since this abstract learning object class may not be instantiated.
+            // The subtype of the learning object is not needed here.
+            $sibling = new \mod_adastra\local\chapter($record);
+            $ctx = new \stdClass();
+            $ctx->name = $sibling->get_name();
+            $ctx->link = \mod_adastra\local\urls::exercise($sibling);
+            $ctx->accessible = $this->get_exercise_round()->has_started();
+            return $ctx;
+        } else {
+            // The sibling is the next/previous round.
+            if ($next) {
+                return $this->get_exercise_round->get_next_sibling_context();
+            } else {
+                return $this->get_exercise_round()->get_previous_sibling_context();
+            }
+        }
+    }
+
+    /**
+     * Return the context of the next sibling.
+     *
+     * @return null|\stdClass The context.
+     */
+    public function get_next_sibling_context() {
+        return $this->get_sibling_context(true);
+    }
+
+    /**
+     * Return the context of the previous sibling.
+     *
+     * @return null|\stdClass The context.
+     */
+    public function get_previous_sibling_context() {
+        return $this->get_sibling_context(false);
+    }
+
+    /**
+     * Return the context used for templating for this learning object.
+     *
+     * @param boolean $includecoursemodule
+     * @param boolean $includesiblings
+     * @return \stdClass The context.
+     */
     public function get_template_context($includecoursemodule = true, $includesiblings = false) {
-        // TODO
+        $ctx = new \stdClass();
+        $ctx->url = \mod_adastra\local\urls::exercise($this);
+        $parent = $this->get_parent_object();
+        if ($parent === null) {
+            $ctx->parenturl = null;
+        } else {
+            $ctx->parenturl = \mod_adastra\local\urls::exercise($parent);
+        }
+        $ctx->displayurl = \mod_adastra\local\urls::exercise($this, false, false);
+        $ctx->name = $this->get_name();
+        $ctx->usewidecolumn = $this->get_use_wide_column();
+        $ctx->editurl = \mod_adastra\local\urls::edit_exercise($this);
+        $ctx->removeurl = \mod_adastra\local\urls::delete_exercise($this);
+
+        if ($includecoursemodule) {
+            $ctx->coursemodule = $this->get_exercise_round()->get_template_context();
+        }
+        $ctx->statusready = ($this->get_status() === self::STATUS_READY);
+        $ctx->statusstr = $this->get_status(true);
+        $ctx->statusunlisted = ($this->get_status() === self::STATUS_UNLISTED);
+        $ctx->statusmaintenance = (
+            $this->get_status() === self::STATUS_MAINTENANCE ||
+            $this->get_exercise_round()->get_status() === \mod_adastra\local\exercise_round::STATUS_MAINTENANCE
+        );
+        $ctx->issubmittable = $this->is_submittable();
+
+        $ctx->category = $this->get_category()->get_template_context(false);
+
+        if ($includesiblings) {
+            $ctx->next = $this->get_next_sibling_context();
+            $ctx->previous = $this->get_previous_sibling_context();
+        }
+
+        return $ctx;
     }
 }

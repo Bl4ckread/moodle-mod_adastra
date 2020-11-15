@@ -71,6 +71,19 @@ class exercise_round extends \mod_adastra\local\database_object {
     }
 
     /**
+     * Return the (Ad Astra) course configuration object of the course.
+     * May return null if there is no configuration.
+     *
+     * @return null|\mod_adastra\local\course_config
+     */
+    public function get_course_config() {
+        if (is_null($this->courseconfig)) {
+            $this->courseconfig = \mod_adastra\local\course_config::get_for_course_id($this->record->course);
+        }
+        return $this->courseconfig;
+    }
+
+    /**
      * Return the name of this activity instance.
      *
      * @param string $lang
@@ -78,7 +91,7 @@ class exercise_round extends \mod_adastra\local\database_object {
      * @return string The name.
      */
     public function get_name(string $lang = null, bool $includealllang = false) {
-        require_once(__DIR__.'/locallib.php');
+        require_once(__DIR__.'/../../locallib.php');
         if ($includealllang) {
             // Do not parse multilang values.
             return $this->record->name;
@@ -196,7 +209,7 @@ class exercise_round extends \mod_adastra\local\database_object {
      * @return int A Unix timestamp.
      */
     public function get_late_submission_deadline() {
-        return $this->record->latesmbsdl;
+        return $this->record->latesbmsdl;
     }
 
     /**
@@ -316,8 +329,94 @@ class exercise_round extends \mod_adastra\local\database_object {
         $this->record->name = $name;
     }
 
+    /**
+     * Return an array of the learning objects in this round (as
+     * \mod_adastra\local\learning_object instances).
+     *
+     * @param boolean $includehidden If true, hidden learning objects are included.
+     * @param boolean $sort If true, the result array is sorted.
+     * @return (sorted) array of \mod_adastra\local\learning_object instances
+     */
     public function get_learning_objects($includehidden = false, $sort = true) {
-        // TODO
+        global $DB;
+
+        $where = ' WHERE lob.roundid = ?';
+        $params = array($this->get_id());
+
+        if (!$includehidden) {
+            $nothiddencats = \mod_adastra\local\category::get_categories_in_course($this->get_course()->courseid, false);
+            $nothiddencatids = array_keys($nothiddencats);
+
+            $where .= ' AND status != ? AND categoryid IN (' . implode(',', $nothiddencatids) . ')';
+            $params[] = \mod_adastra\local\learning_object::STATUS_HIDDEN;
+        }
+
+        $exerciserecords = array();
+        $chapterrecords = array();
+        if ($includehidden || !empty($nothiddencatids)) {
+            $exerciserecords = $DB->get_records_sql(
+                \mod_adastra\local\learning_object::get_subtype_join_sql(\mod_adastra\local\exercise::TABLE) . $where, $params
+            );
+            $chapterrecords = $DB->get_records_sql(
+                \mod_adastra\local\learning_object::get_subtype_join_sql(\mod_adastra\local\chapter::TABLE) . $where, $params
+            );
+        }
+        // Gather all the learning objects of the round in a single array.
+        $learningobjects = array();
+        foreach ($exerciserecords as $ex) {
+            $learningobjects[] = new \mod_adastra\local\exercise($ex);
+        }
+        foreach ($chapterrecords as $ch) {
+            $learningobjects[] = new \mod_adastra\local\chapter($ch);
+        }
+        /*
+         * Sort again since some learning objects may have parent objects, and combining
+         * chapters and exercises messes up the order from the database. Output array
+         * should be in the order that is used to print the exercises under the round.
+         * Sorting and flattening the exercise tree is derived from A+ (a-plus/course/tree.py).
+         */
+        if ($sort) {
+            return self::sort_round_learning_objects($learningobjects);
+        } else {
+            return $learningobjects; // No sorting.
+        }
+    }
+
+    public static function sort_round_learning_objects(array $learningobjects, $startparentid = null) {
+        $ordersortcallback = function ($obj1, $obj2) {
+            $ord1 = $obj1->get_order();
+            $ord2 = $obj2->get_order();
+            if ($ord1 < $ord2) {
+                return -1;
+            } else if ($ord1 == $ord2) {
+                return 0;
+            } else {
+                return 1;
+            }
+        };
+
+        // Paremeter $parentid may be null to get top-level learning objects.
+        $children = function($parentid) use ($learningobjects, &$ordersortcallback) {
+            $childobjs = array();
+            foreach ($learningobjects as $obj) {
+                if ($obj->get_parent_id() == $parentid) {
+                    $childobjs[] = $obj;
+                }
+            }
+            // Sort children by ordernum, they all have the same parent.
+            usort($childobjs, $ordersortcallback);
+            return $childobjs;
+        };
+
+        $traverse = function($parentid) use (&$children, &$traverse) {
+            $container = array();
+            foreach ($children($parentid) as $child) {
+                $container[] = $child;
+                $container = array_merge($container, $traverse($child->get_id()));
+            }
+            return $container;
+        };
+        return $traverse(null);
     }
 
     /**
@@ -335,7 +434,7 @@ class exercise_round extends \mod_adastra\local\database_object {
         } else {
             // Exclude hidden rounds.
             $temprecords = $DB->get_records_select(self::TABLE, 'course = ? AND status != ?',
-            array($courseid, self::STATUS_HIDDEN), $sort);
+                array($courseid, self::STATUS_HIDDEN), $sort);
             // Check course_module visibility too, since the status may be ready, but the
             // course_module might not be visible.
             $records = array();
@@ -353,15 +452,55 @@ class exercise_round extends \mod_adastra\local\database_object {
         return $rounds;
     }
 
+    /**
+     * Return the context of the next or previous sibling.
+     *
+     * @param boolean $next Next if true, previous if false.
+     * @return null|\stdClass The context.
+     */
     protected function get_sibling_context($next = true) {
-        // TODO
+        // If $next true, get the next sibling; if false, get the previous sibling.
+        global $DB;
+
+        $context = \context_course::instance($this->record->course);
+        $isteacher = has_capability('moodle/course:manageactivities', $context);
+        $isassistant = has_capability('mod/adastra:viewallsubmissions', $context);
+
+        $where = 'course = :course';
+        $where .= ' AND ordernum ' . ($next ? '>' : '<') .' :ordernum';
+        $params = array(
+            'course' => $this->record->course,
+            'ordernum' => $this->get_order(),
+        );
+        if ($isassistant && !$isteacher) {
+            // Assistants do not see hidden rounds.
+            $where .= ' AND status <> :status';
+            $params['status'] = self::STATUS_HIDDEN;
+        } else if (!$isteacher) {
+            // Students see normally enabled rounds.
+            $where .= ' AND status = :status';
+            $params['status'] = self::STATUS_READY;
+        }
+        // Order the DB query so that the first record is the next/previous sibling.
+        $results = $DB->get_records_select(self::TABLE, $where, $params,
+                'ordernum '. ($next ? 'ASC' : 'DESC'),
+                '*', 0, 1);
+        $ctx = null;
+        if (!empty($results)) {
+            $sibling = new self(reset($results));
+            $ctx = new \stdClass();
+            $ctx->name = $sibling->get_name();
+            $ctx->link = \mod_adastra\local\urls::exercise_round($sibling);
+            $ctx->accessible = $sibling->has_started();
+        }
+        return $ctx;
     }
 
     /**
      * Return the context for the next sibling.
      *
      * @see \mod_adastra\local\exercise_round::get_sibling_context()
-     * @return stdClass|null
+     * @return \stdClass|null
      */
     public function get_next_sibling_context() {
         return $this->get_sibling_context(true);
@@ -371,7 +510,7 @@ class exercise_round extends \mod_adastra\local\database_object {
      * Return the context for the previous sibling.
      *
      * @see \mod_adastra\local\exercise_round::get_sibling_context()
-     * @return stdClass|null
+     * @return \stdClass|null
      */
     public function get_previous_sibling_context() {
         return $this->get_sibling_context(false);
@@ -381,22 +520,23 @@ class exercise_round extends \mod_adastra\local\database_object {
      * Return the context for templating.
      *
      * @param boolean $includesiblings
-     * @return stdClass Context object.
+     * @return \stdClass Context object.
      */
     public function get_template_context($includesiblings = false) {
-        $ctx = new stdClass();
+        $ctx = new \stdClass();
         $ctx->id = $this->get_id();
         $ctx->openingtime = $this->get_opening_time();
         $ctx->closingtime = $this->get_closing_time();
         $ctx->name = $this->get_name();
-        $ctx->latesubmissionsallowed = $this->is_late_submissions_allowed();
+        $ctx->latesubmissionsallowed = $this->is_late_submission_allowed();
         $ctx->latesubmissiondeadline = $this->get_late_submission_deadline();
         $ctx->latesubmissionpointworth = $this->get_late_submission_point_worth();
         $ctx->islatesubmissionopen = $this->is_late_submission_open();
         $ctx->showlatesubmissionpointworth = ($ctx->latesubmissionpointworth < 100);
         $ctx->latesubmissionpenalty = (int) ($this->get_late_submission_penalty() * 100); // Percent.
         $ctx->statusready = ($this->get_status() === self::STATUS_READY);
-        // show_lobject_points: true if the exercise round point progress panel should display the exercise points for each exercise.
+        // Property showlobjectpoints: true if the exercise round point progress panel
+        // should display the exercise points for each exercise.
         $ctx->showlobjectpoints = ($this->get_status() === self::STATUS_READY || $this->get_status() === self::STATUS_UNLISTED);
         $ctx->statusmaintenance = ($this->get_status() === self::STATUS_MAINTENANCE);
         $ctx->introduction = \format_module_intro(self::TABLE, $this->record, $this->get_course_module()->id);
@@ -427,7 +567,7 @@ class exercise_round extends \mod_adastra\local\database_object {
      * Include exercises in the context for templating.
      *
      * @param boolean $includehidden
-     * @return stdClass Context object.
+     * @return \stdClass Context object.
      */
     public function get_template_context_with_exercises($includehidden = false) {
         $ctx = $this->get_template_context();

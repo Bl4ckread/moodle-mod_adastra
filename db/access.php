@@ -86,7 +86,7 @@ $capabilities = array(
 
     // View a list of all submissions to exercises and
     // inspect individual submissions (submitted files and grading results).
-    'mod/adastar:viewallsubmissions' => array(
+    'mod/adastra:viewallsubmissions' => array(
         'captype' => 'read',
         'riskbitmask' => RISK_PERSONAL,
         'contextlevel' => CONTEXT_MODULE,

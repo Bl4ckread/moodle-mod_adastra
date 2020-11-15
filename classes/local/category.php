@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * Each instance of this class should correspond to one record in the categories
  * database table.
  */
-class category extends \mod_astra\local\database_object {
+class category extends database_object {
     const TABLE = 'adastra_categories';
     const STATUS_READY  = 0;
     const STATUS_HIDDEN = 1;
@@ -63,7 +63,7 @@ class category extends \mod_astra\local\database_object {
      * @return string
      */
     public function get_name(string $lang = null) {
-        require_once(__DIR__ . '/locallib.php');
+        require_once(__DIR__ . '/../../locallib.php');
 
         return adastra_parse_localization($this->record->name, $lang);
     }
@@ -151,10 +151,10 @@ class category extends \mod_astra\local\database_object {
      * TODO
      *
      * @param boolean $includelobjectcount
-     * @return stdClass TODO
+     * @return \stdClass TODO
      */
     public function get_template_context($includelobjectcount = true) {
-        $ctx = new stdClass();
+        $ctx = new \stdClass();
         $ctx->name = $this->get_name();
         $ctx->editurl = \mod_adastra\local\urls::edit_category($this);
         if ($includelobjectcount) {

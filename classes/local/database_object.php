@@ -20,7 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 abstract class database_object {
     // Child classes must define constant TABLE (name of the database table).
-    protected $record; // Database record, stdClass.
+    protected $record; // Database record, \stdClass.
 
     /**
      * Create object of the corresponding class from an existing database ID.
@@ -43,10 +43,10 @@ abstract class database_object {
      * Create object from the given database record. The instance should already
      * exist in the database and have a valid id.
      *
-     * @param stdClass $record
+     * @param \stdClass $record
      */
-    public function __construct(stdClass $record) {
-        $this->$record = $record;
+    public function __construct(\stdClass $record) {
+        $this->record = $record;
     }
 
     /**
@@ -71,12 +71,12 @@ abstract class database_object {
     }
 
     /**
-     * Return the database record of the object (as a stdClass).
+     * Return the database record of the object (as a \stdClass).
      * Please do not use this method to change the state of the object
      * by modifying the record; use this when Moodle requires data as
-     * a stdClass.
+     * a \stdClass.
      *
-     * @return stdClass The record.
+     * @return \stdClass The record.
      */
     public function get_record() {
         return $this->record;

@@ -17,6 +17,27 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
+ * Convert a number to a roman numeral. Number should be between 0 and 1999.
+ * Derived from A+ (a-plus/lib/helpers.py).
+ *
+ * @param int $number
+ * @return string
+ */
+function adastra_roman_numeral($number) {
+    $numbers = array(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1);
+    $letters = array('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I');
+    $roman = '';
+    $lennumbers = count($numbers);
+    for ($i = 0; $i < $lennumbers; ++$i) {
+        while ($number >= $numbers[$i]) {
+            $roman .= $letters[$i];
+            $number -= $numbers[$i];
+        }
+    }
+    return $roman;
+}
+
+/**
  * Picks the selected language's value from |lang:value|lang:value| format text.
  * Adapted from A+ (a-plus/lib/localization_syntax.py)
  *

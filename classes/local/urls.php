@@ -126,7 +126,7 @@ class urls {
     }
 
     /**
-     * Form url to the create exercise page.
+     * Form url for the create exercise page.
      *
      * @param \mod_adastra\local\exercise_round $exround
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
@@ -138,7 +138,7 @@ class urls {
     }
 
     /**
-     * Form url to the edit exercise page.
+     * Form url for the edit exercise page.
      *
      * @param \mod_adastra\local\learning_object $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
@@ -150,7 +150,7 @@ class urls {
     }
 
     /**
-     * Form url to the delete exercise page.
+     * Form url for the delete exercise page.
      *
      * @param \mod_adastra\local\learning_object $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
@@ -162,13 +162,46 @@ class urls {
     }
 
     /**
+     * Form url for the submission list page.
+     *
+     * @param \mod_adastra\local\exercise $ex
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @param array $sort Information about how the page should be sorted.
+     * @param array $filter Filter for the data.
+     * @param int $page Page fnumber.
+     * @param int $pagesize Number of items per page.
+     * @return \moodle_url|string
+     */
+    public static function submission_list(\mod_adastra\local\exercise $ex, $asmoodleurl = false,
+            array $sort = null, array $filter = null, $page = null, $pagesize = null) {
+        $query = array('id' => $ex->get_id());
+        if (isset($sort)) {
+            foreach ($sort as $order => $fieldasc) {
+                // Order: which column is the primary column to sort by.
+                $query['sort_' - $fieldasc[0]] = $order . '_' . ($fieldasc[1] ? 1 : 0);
+                // $fieldASC[1] == true -> ascending, else descending.
+            }
+        }
+        if (isset($filter)) {
+            $query = array_merge($query, $filter);
+        }
+        if (isset($page)) {
+            $query['page'] = $page;
+        }
+        if (isset($pagesize)) {
+            $query['pagesize'] = $pagesize;
+        }
+        return self::build_url('/teachers/submission_list.php', $query, $asmoodleurl);
+    }
+
+    /**
      * Form url to the create chapter page.
      *
      * @param \mod_adastra\local\exercise_round $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function create_chapter(\mod_adastra\local\exercise_round $ex, $asmoodleurl = false) {
+    public static function create_chapter(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
         $query = array('round' => $exround->get_id(), 'type' => 'chapter');
         return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
     }
@@ -231,5 +264,17 @@ class urls {
     public static function auto_setup($courseid, $asmoodleurl = false) {
         $query = array('id' => $courseid);
         return self::build_url('/index.php', $query, $asmoodleurl);
+    }
+
+    /**
+     * Form url for the exercise info page.
+     *
+     * @param \mod_adastra\local\exercise $exercise
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|stringf
+     */
+    public static function exercise_info(\mod_adastra\local\exercise $exercise, $asmoodleurl = false) {
+        $query = array('id' => $exercise->get_id());
+        return self::build_url('/exercise_info.php', $query, $asmoodleurl);
     }
 }
