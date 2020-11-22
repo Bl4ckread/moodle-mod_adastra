@@ -67,6 +67,10 @@ class category extends database_object {
 
         return adastra_parse_localization($this->record->name, $lang);
     }
+    
+    public function get_points_to_pass() {
+        return $this->record->pointstopass;
+    }
 
     /**
      * Get the sql statement and params for querying learning objects.
@@ -145,6 +149,17 @@ class category extends database_object {
             $categories[$id] = new self($record);
         }
         return $categories;
+    }
+    
+    /**
+     * Create a new category in the database.
+     * @param stdClass $categoryRecord object with the fields required by the database table,
+     * excluding id
+     * @return int ID of the new database record, zero on failure
+     */
+    public static function create_new(\stdClass $categoryRecord) {
+        global $DB;
+        return $DB->insert_record(self::TABLE, $categoryRecord);
     }
 
     /**
