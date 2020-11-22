@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
-class course_config extends \mod_adastra\local\database_object {
+class course_config extends \mod_adastra\local\data\database_object {
     const TABLE = 'adastra_course_settings';
 
     // Numbering of exercise rounds.
@@ -113,7 +113,7 @@ class course_config extends \mod_adastra\local\database_object {
      * Returns the course config for the given course id.
      *
      * @param int $courseid
-     * @return null|\mod_adastra\local\course_config
+     * @return null|\mod_adastra\local\data\course_config
      */
     public static function get_for_course_id($courseid) {
         global $DB;

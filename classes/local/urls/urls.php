@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\urls;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -30,7 +30,7 @@ class urls {
      */
     public static function base_url() {
         global $CFG;
-        return $CFG->wwwroot . '/mod/' . \mod_adastra\local\exercise_round::TABLE;
+        return $CFG->wwwroot . '/mod/' . \mod_adastra\local\data\exercise_round::TABLE;
     }
 
     /**
@@ -57,11 +57,11 @@ class urls {
     /**
      * Form url for the exercise round page.
      *
-     * @param \mod_adastra\local\exercise_round $exround
+     * @param \mod_adastra\local\data\exercise_round $exround
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function exercise_round(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
+    public static function exercise_round(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('id' => $exround->get_course_module()->id);
         return self::build_url('view.php', $query, $asmoodleurl);
     }
@@ -81,11 +81,11 @@ class urls {
     /**
      * Form url for the edit exercise round page.
      *
-     * @param \mod_adastra\local\exercise_round $exround
+     * @param \mod_adastra\local\data\exercise_round $exround
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function edit_exercise_round(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
+    public static function edit_exercise_round(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('id' => $exround->get_id());
         return self::build_url('/teachers/edit_round.php', $query, $asmoodleurl);
     }
@@ -93,11 +93,11 @@ class urls {
     /**
      * Form url for the delete exercise round page.
      *
-     * @param \mod_adastra\local\exercise_round $exround
+     * @param \mod_adastra\local\data\exercise_round $exround
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function delete_exercise_round(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
+    public static function delete_exercise_round(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('id' => $exround->get_id(), 'type' => 'round');
         return self::build_url('/teachers/delete.php', $query, $asmoodleurl);
     }
@@ -105,14 +105,14 @@ class urls {
     /**
      * Form url to a learning object (exercise or chapter).
      *
-     * @param \mod_adastra\local\learning_object $ex
+     * @param \mod_adastra\local\data\learning_object $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @param boolean $directurl If false and the exercise is embedded in a chapter (i.e. it has a parent and its
      * status is unlisted), return the URL of the parent (chapter). Otherwise, return url to the exercise object itself
      * (independent exercise page).
      * @return \moodle_url|string
      */
-    public static function exercise(\mod_adastra\local\learning_object $ex, $asmoodleurl = false, $directurl = true) {
+    public static function exercise(\mod_adastra\local\data\learning_object $ex, $asmoodleurl = false, $directurl = true) {
         $anchor = null;
         $parent = $ex->get_parent_object();
         if (!$directurl && $parent && $ex->is_unlisted()) {
@@ -128,11 +128,11 @@ class urls {
     /**
      * Form url for the create exercise page.
      *
-     * @param \mod_adastra\local\exercise_round $exround
+     * @param \mod_adastra\local\data\exercise_round $exround
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function create_exercise(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
+    public static function create_exercise(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('round' => $exround->get_id(), 'type' => 'exercise');
         return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
     }
@@ -140,11 +140,11 @@ class urls {
     /**
      * Form url for the edit exercise page.
      *
-     * @param \mod_adastra\local\learning_object $ex
+     * @param \mod_adastra\local\data\learning_object $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function edit_exercise(\mod_adastra\local\learning_object $ex, $asmoodleurl = false) {
+    public static function edit_exercise(\mod_adastra\local\data\learning_object $ex, $asmoodleurl = false) {
         $query = array('id' => $ex->get_id());
         return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
     }
@@ -152,11 +152,11 @@ class urls {
     /**
      * Form url for the delete exercise page.
      *
-     * @param \mod_adastra\local\learning_object $ex
+     * @param \mod_adastra\local\data\learning_object $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function delete_exercise(\mod_adastra\local\learning_object $ex, $asmoodleurl = false) {
+    public static function delete_exercise(\mod_adastra\local\data\learning_object $ex, $asmoodleurl = false) {
         $query = array('id' => $ex->get_id(), 'type' => 'exercise');
         return self::build_url('/teachers/delete.php', $query, $asmoodleurl);
     }
@@ -164,7 +164,7 @@ class urls {
     /**
      * Form url for the submission list page.
      *
-     * @param \mod_adastra\local\exercise $ex
+     * @param \mod_adastra\local\data\exercise $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @param array $sort Information about how the page should be sorted.
      * @param array $filter Filter for the data.
@@ -172,7 +172,7 @@ class urls {
      * @param int $pagesize Number of items per page.
      * @return \moodle_url|string
      */
-    public static function submission_list(\mod_adastra\local\exercise $ex, $asmoodleurl = false,
+    public static function submission_list(\mod_adastra\local\data\exercise $ex, $asmoodleurl = false,
             array $sort = null, array $filter = null, $page = null, $pagesize = null) {
         $query = array('id' => $ex->get_id());
         if (isset($sort)) {
@@ -197,11 +197,11 @@ class urls {
     /**
      * Form url to the create chapter page.
      *
-     * @param \mod_adastra\local\exercise_round $ex
+     * @param \mod_adastra\local\data\exercise_round $ex
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function create_chapter(\mod_adastra\local\exercise_round $exround, $asmoodleurl = false) {
+    public static function create_chapter(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('round' => $exround->get_id(), 'type' => 'chapter');
         return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
     }
@@ -221,11 +221,11 @@ class urls {
     /**
      * Form url for the editing a category page.
      *
-     * @param \mod_adastra\local\category $cat
+     * @param \mod_adastra\local\data\category $cat
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function edit_category(\mod_adastra\local\category $cat, $asmoodleurl = false) {
+    public static function edit_category(\mod_adastra\local\data\category $cat, $asmoodleurl = false) {
         $query = array('id' => $cat->get_id());
         return self::build_url('teachers/edit_category.php', $query, $asmoodleurl);
     }
@@ -233,11 +233,11 @@ class urls {
     /**
      * Form url for the deleting a category page.
      *
-     * @param \mod_adastra\local\category $cat
+     * @param \mod_adastra\local\data\category $cat
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function delete_category(\mod_adastra\local\category $cat, $asmoodleurl= false) {
+    public static function delete_category(\mod_adastra\local\data\category $cat, $asmoodleurl= false) {
         $query = array('id' => $cat->get_id(), 'type' => 'category');
         return self::build_url('teachers/delete.php', $query, $asmoodleurl);
     }
@@ -263,17 +263,29 @@ class urls {
      */
     public static function auto_setup($courseid, $asmoodleurl = false) {
         $query = array('id' => $courseid);
-        return self::build_url('/index.php', $query, $asmoodleurl);
+        return self::build_url('/teachers/auto_setup.php', $query, $asmoodleurl);
+    }
+
+    /**
+     * Form url for the rounds index page.
+     *
+     * @param int $courseid
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function rounds_index($courseid, $asmoodleurl = false) {
+        $query = array('id' => $courseid);
+        return self::buildurl('/index.php', $query, $asmoodleurl);
     }
 
     /**
      * Form url for the exercise info page.
      *
-     * @param \mod_adastra\local\exercise $exercise
+     * @param \mod_adastra\local\data\exercise $exercise
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|stringf
      */
-    public static function exercise_info(\mod_adastra\local\exercise $exercise, $asmoodleurl = false) {
+    public static function exercise_info(\mod_adastra\local\data\exercise $exercise, $asmoodleurl = false) {
         $query = array('id' => $exercise->get_id());
         return self::build_url('/exercise_info.php', $query, $asmoodleurl);
     }

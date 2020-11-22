@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -44,13 +44,13 @@ class category extends database_object {
         if ($asstring) {
             switch ((int) $this->record->status) {
                 case self::STATUS_READY:
-                    return get_string('statusready', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statusready', \mod_adastra\local\data\exercise_round::MODNAME);
                     break;
                 case self::STATUS_NOTOTAL:
-                    return get_string('statusnototal', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statusnototal', \mod_adastra\local\data\exercise_round::MODNAME);
                     break;
                 default:
-                    return get_string('statushidden', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statushidden', \mod_adastra\local\data\exercise_round::MODNAME);
             }
         }
         return (int) $this->record->status;
@@ -79,15 +79,15 @@ class category extends database_object {
     public function get_learning_objects_sql($subtypetable, $includehidden = false, $fields = null) {
         if ($fields === null) {
             // Get all the fields by default.
-            $sql = \mod_adastra\local\learning_object::get_subtype_join_sql($subtypetable) . ' WHERE lob.categoryid = ?';
+            $sql = \mod_adastra\local\data\learning_object::get_subtype_join_sql($subtypetable) . ' WHERE lob.categoryid = ?';
         } else {
-            $sql = \mod_adastra\local\learning_object::get_subtype_join_sql($subtypetable, $fields) . ' WHERE lob.categoryid = ?';
+            $sql = \mod_adastra\local\data\learning_object::get_subtype_join_sql($subtypetable, $fields) . ' WHERE lob.categoryid = ?';
         }
         $params = array($this->get_id());
 
         if (!$includehidden) {
             $sql .= 'AND status != ?';
-            $params[] = \mod_adastra\local\learning_object::STATUS_HIDDEN;
+            $params[] = \mod_adastra\local\data\learning_object::STATUS_HIDDEN;
         }
 
         return array($sql, $params);
@@ -102,7 +102,7 @@ class category extends database_object {
     public function count_exercises($includehidden = false) {
         global $DB;
 
-        list($sql, $params) = $this->get_learning_objects_sql(\mod_adastra\local\exercise::TABLE,
+        list($sql, $params) = $this->get_learning_objects_sql(\mod_adastra\local\data\exercise::TABLE,
                 $includehidden, 'COUNT(lob.id');
 
         return $DB->count_records_sql($sql, $params);
@@ -117,7 +117,7 @@ class category extends database_object {
     public function count_learning_objects($includehidden = false) {
         global $DB;
 
-        list($chsql, $chparams) = $this->get_learning_objects_sql(\mod_adastra\local\chapter::TABLE,
+        list($chsql, $chparams) = $this->get_learning_objects_sql(\mod_adastra\local\data\chapter::TABLE,
         $includehidden, 'COUNT(lob.id)');
 
         return $this->count_exercises($includehidden) + $DB->count_records_sql($chsql, $chparams);
@@ -156,11 +156,11 @@ class category extends database_object {
     public function get_template_context($includelobjectcount = true) {
         $ctx = new \stdClass();
         $ctx->name = $this->get_name();
-        $ctx->editurl = \mod_adastra\local\urls::edit_category($this);
+        $ctx->editurl = \mod_adastra\local\urls\urls::edit_category($this);
         if ($includelobjectcount) {
             $ctx->has_learning_objects = ($this->count_learning_objects() > 0);
         }
-        $ctx->removeurl = \mod_adastra\local\urls::delete_category($this);
+        $ctx->removeurl = \mod_adastra\local\urls\urls::delete_category($this);
         $ctx->statusready = ($this->get_status() === self::STATUS_READY);
         $ctx->statusstr = $this->get_status(true);
         $ctx->statushidden = ($this->get_status() === self::STATUS_HIDDEN);

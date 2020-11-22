@@ -27,15 +27,15 @@ require_capability('mod/adastra:addinstance', $context);
 
 // Print the page header.
 $PAGE->set_pagelayout('incourse');
-$PAGE->set_url(\mod_adastra\local\urls::edit_course($cid, true));
-$PAGE->set_title(format_string(get_string('editcourse', \mod_adastra\local\exercise_round::MODNAME)));
+$PAGE->set_url(\mod_adastra\local\urls\urls::edit_course($cid, true));
+$PAGE->set_title(format_string(get_string('editcourse', \mod_adastra\local\data\exercise_round::MODNAME)));
 $PAGE->set_heading(format_string($course->fullname));
 
 // Navbar.
 adastra_edit_course_navbar($PAGE, $cid, true);
 
 // Output starts here.
-$output = $PAGE->get_renderer(\mod_adastra\local\exercise_round::MODNAME);
+$output = $PAGE->get_renderer(\mod_adastra\local\data\exercise_round::MODNAME);
 
 echo $output->header();
 $renderable = new \mod_adastra\output\edit_course_page($cid);

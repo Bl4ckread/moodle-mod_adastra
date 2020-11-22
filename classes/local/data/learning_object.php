@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -24,7 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  * and one category. A learning object has a service URL that is used to connect to
  * the exercise service.
  */
-abstract class learning_object extends \mod_adastra\local\database_object {
+abstract class learning_object extends \mod_adastra\local\data\database_object {
     const TABLE = 'adastra_lobjects'; // Database table name.
     const STATUS_READY       = 0;
     const STATUS_HIDDEN      = 1;
@@ -54,7 +54,7 @@ abstract class learning_object extends \mod_adastra\local\database_object {
      * @param string $fields The fields to be taken from the query.
      * @return string The sql query.
      */
-    public static function get_subtype_join_sql($subtype = \mod_adastra\local\exercise::TABLE,
+    public static function get_subtype_join_sql($subtype = \mod_adastra\local\data\exercise::TABLE,
             $fields = self::SQL_SELECT_ALL_FIELDS) {
         return sprintf(self::SQL_SUBTYPE_JOIN, $fields, $subtype);
     }
@@ -63,29 +63,29 @@ abstract class learning_object extends \mod_adastra\local\database_object {
      * Create an object of a corresponding class from an existing database ID.
      *
      * @param int $id
-     * @return \mod_adastra\local\exercise|\mod_adastra\local\chapter The new learning object.
+     * @return \mod_adastra\local\data\exercise|\mod_adastra\local\data\chapter The new learning object.
      */
     public static function create_from_id($id) {
         global $DB;
 
         $where = ' WHERE lob.id = ?';
-        $sql = self::get_subtype_join_sql(\mod_adastra\local\exercise::TABLE) . $where;
+        $sql = self::get_subtype_join_sql(\mod_adastra\local\data\exercise::TABLE) . $where;
         $row = $DB->get_record_sql($sql, array($id), IGNORE_MISSING);
         if ($row !== false) {
             // This learning object is an exercise.
-            return new \mod_adastra\local\exercise($row);
+            return new \mod_adastra\local\data\exercise($row);
         } else {
             // No exercise was found, so this learning object should be a chapter.
-            $sql = self::get_subtype_join_sql(\mod_adastra\local\chapter::TABLE) . $where;
+            $sql = self::get_subtype_join_sql(\mod_adastra\local\data\chapter::TABLE) . $where;
             $row = $DB->get_record_sql($sql, array($id), MUST_EXIST);
-            return new \mod_adastra\local\chapter($row);
+            return new \mod_adastra\local\data\chapter($row);
         }
     }
 
     /**
      * Return the ID of this learning object (ID in the base table).
      *
-     * @see \mod_adastra\local\database_object::get_id()
+     * @see \mod_adastra\local\data\database_object::get_id()
      * @return int
      */
     public function get_id() {
@@ -114,16 +114,16 @@ abstract class learning_object extends \mod_adastra\local\database_object {
         if ($asstring) {
             switch ((int) $this->record->status) {
                 case self::STATUS_READY:
-                    return get_string('statusready', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statusready', \mod_adastra\local\data\exercise_round::MODNAME);
                     break;
                 case self::STATUS_MAINTENANCE:
-                    return get_string('statusmaintenance', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statusmaintenance', \mod_adastra\local\data\exercise_round::MODNAME);
                     break;
                 case self::STATUS_UNLISTED:
-                    return get_string('statusunlisted', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statusunlisted', \mod_adastra\local\data\exercise_round::MODNAME);
                     break;
                 default:
-                    return get_string('statushidden', \mod_adastra\local\exercise_round::MODNAME);
+                    return get_string('statushidden', \mod_adastra\local\data\exercise_round::MODNAME);
             }
 
         }
@@ -133,11 +133,11 @@ abstract class learning_object extends \mod_adastra\local\database_object {
     /**
      * Return the category of this learning object.
      *
-     * @return \mod_adastra\local\category
+     * @return \mod_adastra\local\data\category
      */
     public function get_category() {
         if (is_null($this->category)) {
-            $this->category = \mod_adastra\local\category::create_from_id($this->record->categoryid);
+            $this->category = \mod_adastra\local\data\category::create_from_id($this->record->categoryid);
         }
         return $this->category;
     }
@@ -154,11 +154,11 @@ abstract class learning_object extends \mod_adastra\local\database_object {
     /**
      * Return the exercise round for this learning object.
      *
-     * @return \mod_adastra\local\exercise_round
+     * @return \mod_adastra\local\data\exercise_round
      */
     public function get_exercise_round() {
         if (is_null($this->exerciseround)) {
-            $this->exerciseround = \mod_adastra\local\exercise_round::create_from_id($this->record->roundid);
+            $this->exerciseround = \mod_adastra\local\data\exercise_round::create_from_id($this->record->roundid);
         }
         return $this->exerciseround;
     }
@@ -167,7 +167,7 @@ abstract class learning_object extends \mod_adastra\local\database_object {
      * Return the parent of this object. If the object does not exist, but the record holds an ID
      * for the parent, form a new parent object and return it.
      *
-     * @return \mod_adastra\local\exercise|\mod_adastra\local\chapter The parent object.
+     * @return \mod_adastra\local\data\exercise|\mod_adastra\local\data\chapter The parent object.
      */
     public function get_parent_object() {
         if (empty($this->record->parentid)) {
@@ -247,22 +247,22 @@ abstract class learning_object extends \mod_adastra\local\database_object {
                 $contentnumbering = $conf->get_content_numbering();
                 $modulenumbering = $conf->get_module_numbering();
             } else {
-                $contentnumbering = \mod_adastra\local\course_config::get_default_content_numbering();
-                $modulenumbering = \mod_adastra\local\course_config::get_default_module_numbering();
+                $contentnumbering = \mod_adastra\local\data\course_config::get_default_content_numbering();
+                $modulenumbering = \mod_adastra\local\data\course_config::get_default_module_numbering();
             }
 
-            if ($contentnumbering == \mod_adastra\local\course_config::CONTENT_NUMBERING_ARABIC) {
+            if ($contentnumbering == \mod_adastra\local\data\course_config::CONTENT_NUMBERING_ARABIC) {
                 $number = $this->get_number();
                 if (
-                        $modulenumbering == \mod_adastra\local\course_config::MODULE_NUMBERING_ARABIC ||
-                        $modulenumbering == \mod_adastra\local\course_config::MODULE_NUMBERING_HIDDEN_ARABIC
+                        $modulenumbering == \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC ||
+                        $modulenumbering == \mod_adastra\local\data\course_config::MODULE_NUMBERING_HIDDEN_ARABIC
                 ) {
                     $number = $this->get_exercise_round()->get_order() . $number . ' ';
                 } else {
                     // Leave out the module number ($number starts with a dot).
                     $number = substr($number, 1) . ' ';
                 }
-            } else if ($contentnumbering == \mod_adastra\local\course_config::CONTENT_NUMBERING_ROMAN) {
+            } else if ($contentnumbering == \mod_adastra\local\data\course_config::CONTENT_NUMBERING_ROMAN) {
                 $number = adastra_roman_numeral($this->get_order()) . ' ';
             }
         }
@@ -382,10 +382,10 @@ abstract class learning_object extends \mod_adastra\local\database_object {
             unset($record->id);
             // Use the chapter class here since this abstract learning object class may not be instantiated.
             // The subtype of the learning object is not needed here.
-            $sibling = new \mod_adastra\local\chapter($record);
+            $sibling = new \mod_adastra\local\data\chapter($record);
             $ctx = new \stdClass();
             $ctx->name = $sibling->get_name();
-            $ctx->link = \mod_adastra\local\urls::exercise($sibling);
+            $ctx->link = \mod_adastra\local\urls\urls::exercise($sibling);
             $ctx->accessible = $this->get_exercise_round()->has_started();
             return $ctx;
         } else {
@@ -425,18 +425,18 @@ abstract class learning_object extends \mod_adastra\local\database_object {
      */
     public function get_template_context($includecoursemodule = true, $includesiblings = false) {
         $ctx = new \stdClass();
-        $ctx->url = \mod_adastra\local\urls::exercise($this);
+        $ctx->url = \mod_adastra\local\urls\urls::exercise($this);
         $parent = $this->get_parent_object();
         if ($parent === null) {
             $ctx->parenturl = null;
         } else {
-            $ctx->parenturl = \mod_adastra\local\urls::exercise($parent);
+            $ctx->parenturl = \mod_adastra\local\urls\urls::exercise($parent);
         }
-        $ctx->displayurl = \mod_adastra\local\urls::exercise($this, false, false);
+        $ctx->displayurl = \mod_adastra\local\urls\urls::exercise($this, false, false);
         $ctx->name = $this->get_name();
         $ctx->usewidecolumn = $this->get_use_wide_column();
-        $ctx->editurl = \mod_adastra\local\urls::edit_exercise($this);
-        $ctx->removeurl = \mod_adastra\local\urls::delete_exercise($this);
+        $ctx->editurl = \mod_adastra\local\urls\urls::edit_exercise($this);
+        $ctx->removeurl = \mod_adastra\local\urls\urls::delete_exercise($this);
 
         if ($includecoursemodule) {
             $ctx->coursemodule = $this->get_exercise_round()->get_template_context();
@@ -446,7 +446,7 @@ abstract class learning_object extends \mod_adastra\local\database_object {
         $ctx->statusunlisted = ($this->get_status() === self::STATUS_UNLISTED);
         $ctx->statusmaintenance = (
             $this->get_status() === self::STATUS_MAINTENANCE ||
-            $this->get_exercise_round()->get_status() === \mod_adastra\local\exercise_round::STATUS_MAINTENANCE
+            $this->get_exercise_round()->get_status() === \mod_adastra\local\data\exercise_round::STATUS_MAINTENANCE
         );
         $ctx->issubmittable = $this->is_submittable();
 

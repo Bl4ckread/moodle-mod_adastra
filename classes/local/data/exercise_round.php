@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
-class exercise_round extends \mod_adastra\local\database_object {
+class exercise_round extends \mod_adastra\local\data\database_object {
     const TABLE = 'adastra'; // Database table name.
     const MODNAME = 'mod_adastra'; // Module name for get_string().
 
@@ -74,11 +74,11 @@ class exercise_round extends \mod_adastra\local\database_object {
      * Return the (Ad Astra) course configuration object of the course.
      * May return null if there is no configuration.
      *
-     * @return null|\mod_adastra\local\course_config
+     * @return null|\mod_adastra\local\data\course_config
      */
     public function get_course_config() {
         if (is_null($this->courseconfig)) {
-            $this->courseconfig = \mod_adastra\local\course_config::get_for_course_id($this->record->course);
+            $this->courseconfig = \mod_adastra\local\data\course_config::get_for_course_id($this->record->course);
         }
         return $this->courseconfig;
     }
@@ -331,11 +331,11 @@ class exercise_round extends \mod_adastra\local\database_object {
 
     /**
      * Return an array of the learning objects in this round (as
-     * \mod_adastra\local\learning_object instances).
+     * \mod_adastra\local\data\learning_object instances).
      *
      * @param boolean $includehidden If true, hidden learning objects are included.
      * @param boolean $sort If true, the result array is sorted.
-     * @return (sorted) array of \mod_adastra\local\learning_object instances
+     * @return (sorted) array of \mod_adastra\local\data\learning_object instances
      */
     public function get_learning_objects($includehidden = false, $sort = true) {
         global $DB;
@@ -344,30 +344,30 @@ class exercise_round extends \mod_adastra\local\database_object {
         $params = array($this->get_id());
 
         if (!$includehidden) {
-            $nothiddencats = \mod_adastra\local\category::get_categories_in_course($this->get_course()->courseid, false);
+            $nothiddencats = \mod_adastra\local\data\category::get_categories_in_course($this->get_course()->courseid, false);
             $nothiddencatids = array_keys($nothiddencats);
 
             $where .= ' AND status != ? AND categoryid IN (' . implode(',', $nothiddencatids) . ')';
-            $params[] = \mod_adastra\local\learning_object::STATUS_HIDDEN;
+            $params[] = \mod_adastra\local\data\learning_object::STATUS_HIDDEN;
         }
 
         $exerciserecords = array();
         $chapterrecords = array();
         if ($includehidden || !empty($nothiddencatids)) {
             $exerciserecords = $DB->get_records_sql(
-                \mod_adastra\local\learning_object::get_subtype_join_sql(\mod_adastra\local\exercise::TABLE) . $where, $params
+                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\exercise::TABLE) . $where, $params
             );
             $chapterrecords = $DB->get_records_sql(
-                \mod_adastra\local\learning_object::get_subtype_join_sql(\mod_adastra\local\chapter::TABLE) . $where, $params
+                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\chapter::TABLE) . $where, $params
             );
         }
         // Gather all the learning objects of the round in a single array.
         $learningobjects = array();
         foreach ($exerciserecords as $ex) {
-            $learningobjects[] = new \mod_adastra\local\exercise($ex);
+            $learningobjects[] = new \mod_adastra\local\data\exercise($ex);
         }
         foreach ($chapterrecords as $ch) {
-            $learningobjects[] = new \mod_adastra\local\chapter($ch);
+            $learningobjects[] = new \mod_adastra\local\data\chapter($ch);
         }
         /*
          * Sort again since some learning objects may have parent objects, and combining
@@ -490,7 +490,7 @@ class exercise_round extends \mod_adastra\local\database_object {
             $sibling = new self(reset($results));
             $ctx = new \stdClass();
             $ctx->name = $sibling->get_name();
-            $ctx->link = \mod_adastra\local\urls::exercise_round($sibling);
+            $ctx->link = \mod_adastra\local\urls\urls::exercise_round($sibling);
             $ctx->accessible = $sibling->has_started();
         }
         return $ctx;
@@ -499,7 +499,7 @@ class exercise_round extends \mod_adastra\local\database_object {
     /**
      * Return the context for the next sibling.
      *
-     * @see \mod_adastra\local\exercise_round::get_sibling_context()
+     * @see \mod_adastra\local\data\exercise_round::get_sibling_context()
      * @return \stdClass|null
      */
     public function get_next_sibling_context() {
@@ -509,7 +509,7 @@ class exercise_round extends \mod_adastra\local\database_object {
     /**
      * Return the context for the previous sibling.
      *
-     * @see \mod_adastra\local\exercise_round::get_sibling_context()
+     * @see \mod_adastra\local\data\exercise_round::get_sibling_context()
      * @return \stdClass|null
      */
     public function get_previous_sibling_context() {
@@ -547,11 +547,11 @@ class exercise_round extends \mod_adastra\local\database_object {
         $ctx->hasstarted = $this->has_started();
         $ctx->notstarted = !$ctx->hasstarted;
         $ctx->statusstr = $this->get_status(true);
-        $ctx->editurl = \mod_adastra\local\urls::edit_exercise_round($this);
-        $ctx->removeurl = \mod_adastra\local\urls::delete_exercise_round($this);
-        $ctx->url = \mod_adastra\local\urls::exercise_round($this);
-        $ctx->addnewexerciseurl = \mod_adastra\local\urls::create_exercise($this);
-        $ctx->addnewchapterurl = \mod_adastra\local\urls::create_chapter($this);
+        $ctx->editurl = \mod_adastra\local\urls\urls::edit_exercise_round($this);
+        $ctx->removeurl = \mod_adastra\local\urls\urls::delete_exercise_round($this);
+        $ctx->url = \mod_adastra\local\urls\urls::exercise_round($this);
+        $ctx->addnewexerciseurl = \mod_adastra\local\urls\urls::create_exercise($this);
+        $ctx->addnewchapterurl = \mod_adastra\local\urls\urls::create_chapter($this);
         $context = \context_module::instance($this->get_course_module()->id);
         $ctx->iscoursestaff = \has_capability('mod/adastra:viewallsubmissions', $context);
 

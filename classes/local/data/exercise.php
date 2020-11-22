@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
-class exercise extends \mod_adastra\local\learning_object {
+class exercise extends \mod_adastra\local\data\learning_object {
     const TABLE = 'adastra_exercises';
 
     /**
@@ -124,7 +124,7 @@ class exercise extends \mod_adastra\local\learning_object {
     public function get_total_submitter_count() {
         global $DB;
         return $DB->count_records_select(
-                \mod_adastra\local\submission::TABLE,
+                \mod_adastra\local\data\submission::TABLE,
                 'exerciseid = ?',
                 array($this->get_id()),
                 'COUNT(DISTINCT submitter)',
@@ -134,8 +134,8 @@ class exercise extends \mod_adastra\local\learning_object {
     public function get_exercise_template_context(\stdClass $user = null, $includetotalsubmittercount = true,
             $includecoursemodule = true, $includesiblings = false) {
         $ctx = parent::get_template_context($includecoursemodule, $includesiblings);
-        $ctx->submissionlisturl = \mod_adastra\local\urls::submission_list($this);
-        $ctx->infourl = \mod_adastra\local\urls::exercise_info($this);
+        $ctx->submissionlisturl = \mod_adastra\local\urls\urls::submission_list($this);
+        $ctx->infourl = \mod_adastra\local\urls\urls::exercise_info($this);
 
         $ctx->maxpoints = $this->get_max_points();
         $ctx->maxsubmissions = $this->get_max_submissions();
@@ -148,7 +148,7 @@ class exercise extends \mod_adastra\local\learning_object {
                 $ctx->submitlimitdeviation = 0;
             }
 
-            $dldeviation = \mod_adastra\local\deadline_deviation::find_deviation($this->get_id(), $user->id);
+            $dldeviation = \mod_adastra\local\data\deadline_deviation::find_deviation($this->get_id(), $user->id);
             if ($dldeviation !== null) {
                 $ctx->deadline = $dldeviation->get_new_deadline();
                 $ctx->dlextendedminutes = $dldeviation->get_extra_time();
@@ -181,7 +181,7 @@ class exercise extends \mod_adastra\local\learning_object {
      */
     public function get_max_submissions_for_student(\stdClass $user) {
         $max = $this->get_max_submissions(); // Zero means no limit.
-        $deviation = \mod_adastra\local\submission_limit_deviation::find_deviation($this->get_id(), $user->id);
+        $deviation = \mod_adastra\local\data\submission_limit_deviation::find_deviation($this->get_id(), $user->id);
         if ($deviation !== null && $max !== 0) {
             return $max + $deviation->get_extra_submissions();
         }

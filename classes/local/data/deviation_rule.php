@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
-abstract class deviation_rule extends \mod_adastra\local\database_object {
+abstract class deviation_rule extends \mod_adastra\local\data\database_object {
     // Subclasses must define constant TABLE.
 
     // Cache of variables.
@@ -50,11 +50,11 @@ abstract class deviation_rule extends \mod_adastra\local\database_object {
     /**
      * Return the exercise this rule is associated with.
      *
-     * @return \mod_adastra\local\exercise
+     * @return \mod_adastra\local\data\exercise
      */
     public function get_exercise() {
         if ($this->exercise === null) {
-            $this->exercise = \mod_adastra\local\exercise::create_from_id($this->record->exerciseid);
+            $this->exercise = \mod_adastra\local\data\exercise::create_from_id($this->record->exerciseid);
         }
         return $this->exercise;
     }

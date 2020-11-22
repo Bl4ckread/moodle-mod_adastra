@@ -28,12 +28,12 @@ class edit_course_page implements \renderable, \templatable {
 
         $this->courseid = $courseid;
 
-        $coursesettings = $DB->get_record(\mod_adastra\local\course_config::TABLE, array('course' => $courseid));
+        $coursesettings = $DB->get_record(\mod_adastra\local\data\course_config::TABLE, array('course' => $courseid));
         if ($coursesettings === false) {
-            $this->modulenumbering = \mod_adastra\local\course_config::MODULE_NUMBERING_ARABIC;
-            $this->contentnumbering = \mod_adastra\local\course_config::CONTENT_NUMBERING_ARABIC;
+            $this->modulenumbering = \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC;
+            $this->contentnumbering = \mod_adastra\local\data\course_config::CONTENT_NUMBERING_ARABIC;
         } else {
-            $conf = new \mod_adastra\local\course_config($coursesettings);
+            $conf = new \mod_adastra\local\data\course_config($coursesettings);
             $this->modulenumbering = $conf->get_module_numbering();
             $this->contentnumbering = $conf->get_content_numbering();
         }
@@ -41,29 +41,29 @@ class edit_course_page implements \renderable, \templatable {
 
     public function export_for_template(\renderer_base $output) {
         $ctx = new \stdClass();
-        $ctx->autosetupurl = \mod_adastra\local\urls::auto_setup($this->courseid);
+        $ctx->autosetupurl = \mod_adastra\local\urls\urls::auto_setup($this->courseid);
         $ctx->categories = array();
-        foreach (\mod_adastra\local\category::get_categories_in_course($this->courseid, true) as $cat) {
+        foreach (\mod_adastra\local\data\category::get_categories_in_course($this->courseid, true) as $cat) {
             $ctx->categories[] = $cat->get_template_context();
         }
-        $ctx->createcategoryurl = \mod_adastra\local\urls::create_category($this->courseid);
+        $ctx->createcategoryurl = \mod_adastra\local\urls\urls::create_category($this->courseid);
         $ctx->coursemodules = array();
-        foreach (\mod_adastra\local\exercise_round::get_exercise_rounds_in_course($this->courseid, true) as $exround) {
+        foreach (\mod_adastra\local\data\exercise_round::get_exercise_rounds_in_course($this->courseid, true) as $exround) {
             $ctx->coursemodules[] = $exround->get_template_context_with_exercises(true);
         }
-        $ctx->createmoduleurl = \mod_adastra\local\urls::create_exercise_round($this->courseid);
-        $ctx->renumberactionurl = \mod_adastra\local\urls::edit_course($this->courseid);
+        $ctx->createmoduleurl = \mod_adastra\local\urls\urls::create_exercise_round($this->courseid);
+        $ctx->renumberactionurl = \mod_adastra\local\urls\urls::edit_course($this->courseid);
 
         $ctx->modulenumberingoptions = function($mustachehelper) {
             $options = array(
-                \mod_adastra\local\course_config::MODULE_NUMBERING_NONE =>
-                    \get_string('nonumbering', \mod_adastra\local\exercise_round::MODNAME),
-                \mod_adastra\local\course_config::MODULE_NUMBERING_ARABIC =>
-                    \get_string('arabicnumbering', \mod_adastra\local\exercise_round::MODNAME),
-                \mod_adastra\local\course_config::MODULE_NUMBERING_ROMAN =>
-                    \get_string('romannumbering', \mod_adastra\local\exercise_round::MODNAME),
-                \mod_adastra\local\course_config::MODULE_NUMBERING_HIDDEN_ARABIC =>
-                    \get_string('hiddenarabicnum', \mod_adastra\local\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::MODULE_NUMBERING_NONE =>
+                    \get_string('nonumbering', \mod_adastra\local\data\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC =>
+                    \get_string('arabicnumbering', \mod_adastra\local\data\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::MODULE_NUMBERING_ROMAN =>
+                    \get_string('romannumbering', \mod_adastra\local\data\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::MODULE_NUMBERING_HIDDEN_ARABIC =>
+                    \get_string('hiddenarabicnum', \mod_adastra\local\data\exercise_round::MODNAME),
             );
             $result = '';
             foreach ($options as $val => $text) {
@@ -77,12 +77,12 @@ class edit_course_page implements \renderable, \templatable {
         };
         $ctx->contentnumberingoptions = function($mustachehelper) {
             $options = array(
-                \mod_adastra\local\course_config::CONTENT_NUMBERING_NONE =>
-                \get_string('nonumbering', \mod_adastra\local\exercise_round::MODNAME),
-                \mod_adastra\local\course_config::CONTENT_NUMBERING_ARABIC =>
-                \get_string('arabicnumbering', \mod_adastra\local\exercise_round::MODNAME),
-                \mod_adastra\local\course_config::CONTENT_NUMBERING_ROMAN =>
-                \get_string('romannumbering', \mod_adastra\local\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::CONTENT_NUMBERING_NONE =>
+                \get_string('nonumbering', \mod_adastra\local\data\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::CONTENT_NUMBERING_ARABIC =>
+                \get_string('arabicnumbering', \mod_adastra\local\data\exercise_round::MODNAME),
+                \mod_adastra\local\data\course_config::CONTENT_NUMBERING_ROMAN =>
+                \get_string('romannumbering', \mod_adastra\local\data\exercise_round::MODNAME),
             );
             $result = '';
             foreach ($options as $val => $text) {
