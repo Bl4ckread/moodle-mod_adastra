@@ -22,7 +22,7 @@ class chapter extends \mod_adastra\local\data\learning_object {
     const TABLE = 'adastra_chapters';
 
     /**
-     * Check if table of contents should be generated.
+     * Return true if table of contents should be generated.
      *
      * @return boolean
      */

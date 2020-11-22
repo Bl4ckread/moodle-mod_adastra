@@ -1,0 +1,50 @@
+{{! Modal dialogs that are used on many exercise, chapter and submission pages.
+
+Page modal is used for generic messages.
+File modal is used particularly when the contents of a file are displayed in the modal.
+AMD module aplus_modal (astra/amd/src/aplus_modal.js)) uses these modals.
+The modals have a progress bar that may be shown when the loading of the content takes some time.
+
+Derived from A+ (a-plus/templates/base.html)
+}}
+
+<div id="page-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-progress">
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:100%" data-msg-error="{{#str}} loadingfailed, mod_adastra {{/str}}">
+                  {{#str}} loading, mod_adastra {{/str}}
+                </div>
+              </div>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                {{#str}} close, mod_adastra {{/str}}
+              </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="file-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-progress">
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:100%" data-msg-error="{{#str}} loadingfailed, mod_adastra {{/str}}">
+                  {{#str}} loading, mod_adastra {{/str}}
+                </div>
+              </div>
+            </div>
+            <div class="modal-header">
+                <h4 class="modal-title"></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{#str}} close, mod_adastra {{/str}}">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>

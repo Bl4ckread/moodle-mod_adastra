@@ -1,0 +1,225 @@
+{{!
+Derived from A+ (a-plus/course/templates/course/module.html and
+a-plus/exercise/templates/exercise/_user_results.html)
+
+Context variables:
+* course_module stdClass (exercise round) with fields id, openingtime, closingtime, name,
+        late_submissions_allowed, late_submission_deadline,
+        show_late_submission_point_worth (bool), late_submission_point_worth (0-100),
+        status_ready (bool), status_maintenance (bool), introduction (HTML string)
+        show_required_points (bool, status ready and points to pass > 0), points_to_pass,
+        expired (bool, has been closed), open (bool), not_started (bool, has not been opened yet),
+        is_course_staff (bool), url (string)
+* module_summary stdClass (summary of the student's status in the exercise round)
+        fields that are required by _points_badge.mustache
+* toDateStr callable Function that converts a Unix timestamp to a date string
+* module_contents (array of objects) lists the learning objects of the round in the correct
+    display order with the exercise summaries (points) as well, only visible content
+    (no objects with status hidden); keys of the objects
+        - exercise (object with keys)
+            * is_submittable (bool, exercise or chapter)
+            * category (object with keys id, name)
+            * displayurl (string)
+            * name (string)
+            * status_maintenance (bool)
+            * max_submissions_for_user (int) zero if no limit
+            * submissionlisturl (string)
+        - submissions (array of objects) if the exercise is submittable, objects have keys
+            * nth (int)
+            * submission_time (int) Unix timestamp
+            * url (string)
+            * has_assistant_feedback (bool)
+            * fields required by _points_badge.mustache
+        - sbmsrequireastview (bool) true if the submissions array is hidden (empty)
+            only because the exercise configuration has not enabled assistant viewing
+        - showallsbmslink (bool) true if the view all submissions link may be shown
+            to the user (assuming that the user is part of the course staff)
+        - exercise_summary (object) if the exercise is submittable
+            * keys that are required by _points_badge.mustache
+            * submission_count (int) how many submissions the user has made
+            * has_any_sbms_assist_feedback (bool) true if any submission has received assistant feedback
+}}
+<div class="card border-primary module-panel mb-1{{# coursemodule.expired }} module-expired{{/ coursemodule.expired }}">
+  <div class="card-header bg-primary text-white">
+  <a href="{{{ coursemodule.url }}}">
+  <h3 class="card-title">
+    {{# modulesummary }}
+      {{> mod_adastra/_points_badge }}
+    {{/ modulesummary }}
+    {{# coursemodule.notstarted }}
+    <span class="badge badge-secondary float-right">
+      {{#str}} opens, mod_adastra {{/str}} {{# todatestr }}{{ coursemodule.openingtime }}{{/ todatestr }}
+    </span>
+    {{/ coursemodule.notstarted }}
+    {{ coursemodule.name }}
+  </h3>
+  </a>
+  </div>
+<div id="module{{ coursemodule.id }}">
+  <div class="card-body">
+    <p>
+      {{# todatestr }}{{ coursemodule.openingtime }}{{/ todatestr }} &ndash; {{# todatestr }}{{ coursemodule.closingtime }}{{/ todatestr }}
+
+      {{# coursemodule.latesubmissionsallowed }}
+      <br>
+      <em>
+        {{#str}}
+        latealloweduntil, mod_adastra, {{# todatestr }}{{ coursemodule.latesubmissiondeadline }}{{/ todatestr }}
+        {{/str}}
+        {{# coursemodule.showlatesubmissionpointworth }}
+        {{#str}} latepointsworth, mod_adastra, {{ coursemodule.latesubmissionpointworth }} {{/str}}
+        {{/ coursemodule.showlatesubmissionpointworth }}
+      </em>
+      {{/ coursemodule.latesubmissionsallowed }}
+
+      {{# coursemodule.showrequiredpoints }}
+      <br>
+      {{#str}} pointsrequiredtopass, mod_adastra, {{ coursemodule.pointstopass }} {{/str}}
+      {{/ coursemodule.showrequiredpoints }}
+    </p>
+
+    {{# coursemodule.statusmaintenance }}
+    <p>
+      {{#str}} undermaintenance, mod_adastra {{/str}}
+    </p>
+    {{/ coursemodule.statusmaintenance }}
+    {{^ coursemodule.statusmaintenance }}
+      {{^ coursemodule.notstarted }}
+        {{# modulesummary }}
+          {{> mod_adastra/_points_progress }}
+        {{/ modulesummary }}
+        {{{ coursemodule.introduction }}}
+      {{/ coursemodule.notstarted }}
+      {{# coursemodule.notstarted }}
+        <p>{{#str}} notopenedyet, mod_adastra {{/str}}</p>
+      {{/ coursemodule.notstarted }}
+    {{/ coursemodule.statusmaintenance }}
+  </div>
+  {{# coursemodule.showlobjectpoints }}
+  <table class="table table-striped table-sm results-table">
+    <tbody>
+
+      <tr class="category-row">
+        <th>{{#str}} exercise, mod_adastra {{/str}}</th>
+        <th>{{#str}} category, mod_adastra {{/str}}</th>
+        <th>{{#str}} submissions, mod_adastra {{/str}}</th>
+        <th>{{#str}} points, mod_adastra {{/str}}</th>
+        {{# coursemodule.iscoursestaff }}
+          <th>{{#str}} coursestaff, mod_adastra {{/str}}</th>
+        {{/ coursemodule.iscoursestaff }}
+      </tr>
+
+      {{# modulecontents }}
+
+      {{# exercise.issubmittable }}
+      <tr data-category="{{ exercise.category.id }}">
+        <td>
+          {{^ coursemodule.notstarted }}
+          <a href="{{{ exercise.displayurl }}}" class="{{# exercise.statusmaintenance }}maintenance{{/ exercise.statusmaintenance }}">
+            {{ exercise.name }}
+          </a>
+          {{/ coursemodule.notstarted }}
+          {{# coursemodule.notstarted }}
+          {{ exercise.name }}
+          {{/ coursemodule.notstarted }}
+        </td>
+        <td>
+          <small>{{ exercise.category.name }}</small>
+        </td>
+        <td class="submissions-dropdown dropdown">
+          <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+              aria-haspopup="true" aria-expanded="false">
+              <span class="badge badge-secondary badge-pill">
+                {{# exercisesummary.hasanysbmsassistfeedback }}
+                  {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                {{/ exercisesummary.hasanysbmsassistfeedback }}
+                {{ exercisesummary.submissioncount }}
+                {{# exercise.maxsubmissionsforuser }}
+                  / {{ exercise.maxsubmissionsforuser }}
+                {{/ exercise.maxsubmissionsforuser }}
+              </span>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right">
+              {{# submissions }}
+                  <a class="dropdown-item page-modal" href="{{{ url }}}">
+                      {{ nth }}.
+                      {{# todatestr }}{{ submissiontime }}{{/ todatestr }}
+                      {{> mod_adastra/_points_badge }}
+                      {{# hasassistantfeedback }}
+                        {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                      {{/ hasassistantfeedback }}
+                  </a>
+              {{/ submissions }}
+              {{^ submissions }}
+                  <a class="dropdown-item page-modal" href="#">
+                    {{^ sbmsrequireastview }}
+                      {{#str}} nosubmissionsyet, mod_adastra {{/str}}
+                    {{/ sbmsrequireastview }}
+                    {{# sbmsrequireastview }}
+                      {{#str}} assistviewingnotallowed, mod_adastra {{/str}}
+                    {{/ sbmsrequireastview}}
+                  </a>
+              {{/ submissions }}
+          </div>
+        </td>
+        <td>
+          {{# exercisesummary }}
+            {{> mod_adastra/_points_badge }}
+          {{/ exercisesummary }}
+        </td>
+        {{# coursemodule.iscoursestaff }}
+        <td>
+          {{# coursemodule.notstarted }}
+          <a class="btn btn-secondary btn-sm" href="{{{ exercise.displayurl }}}">
+            {{#pix}}i/lock{{/pix}}
+            {{#str}} earlyaccess, mod_adastra {{/str}}
+          </a>
+          {{/ coursemodule.notstarted }}
+          {{! exercise statistics not yet implemented
+          {^ course_module.not_started }
+            {% exercise_text_stats entry.id %}
+          {/ course_module.not_started }
+          }}
+          {{# showallsbmslink }}
+          <a class="btn btn-secondary btn-sm" href="{{{ exercise.submissionlisturl }}}">
+            {{#pix}}a/view_list_active{{/pix}}
+            {{#str}} viewsubmissions, mod_adastra {{/str}}
+          </a>
+          {{/ showallsbmslink }}
+        </td>
+        {{/ coursemodule.iscoursestaff }}
+      </tr>
+      {{/ exercise.issubmittable }}
+
+      {{^ exercise.issubmittable }} {{! chapter }}
+      <tr>
+        <td colspan="4">
+          {{^ coursemodule.notstarted }}
+          <strong><a href="{{{ exercise.displayurl }}}" class="{{# exercise.statusmaintenance }}maintenance{{/ exercise.statusmaintenance }}">
+            {{ exercise.name }}
+          </a></strong>
+          {{/ coursemodule.notstarted }}
+          {{# coursemodule.notstarted }}
+          <strong>{{ exercise.name }}</strong>
+          {{/ coursemodule.notstarted }}
+        </td>
+        {{# coursemodule.iscoursestaff }}
+        <td>
+          {{# coursemodule.notstarted }}
+          <a class="btn btn-secondary btn-sm" href="{{{ exercise.displayurl }}}">
+            {{#pix}}i/lock{{/pix}}
+            {{#str}} earlyaccess, mod_adastra {{/str}}
+          </a>
+          {{/ coursemodule.notstarted }}
+        </td>
+        {{/ coursemodule.iscoursestaff }}
+      </tr>
+      {{/ exercise.issubmittable }}
+
+      {{/ modulecontents }}
+
+    </tbody>
+  </table>
+  {{/ coursemodule.showlobjectpoints }}
+</div>
+</div>

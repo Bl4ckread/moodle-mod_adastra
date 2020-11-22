@@ -162,6 +162,40 @@ class urls {
     }
 
     /**
+     * Form url for the submission page.
+     *
+     * @param \mod_adastra\local\data\submission $sbms
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @param boolean $wait If true, wait for the grading to be finished.
+     * @param boolean $escaped
+     * @return \moodle_url|string
+     */
+    public static function submission(
+        \mod_adastra\local\data\submission $sbms,
+        $asmoodleurl = false,
+        $wait = false,
+        $escaped = true
+    ) {
+        $query = array('id' => $sbms->get_id());
+        if ($wait) {
+            $query['wait'] = 1; // Poll whether the grading has finished.
+        }
+        return self::build_url('submission.php', $query, $asmoodleurl, $escaped);
+    }
+
+    /**
+     * Form url for the submission inspection page.
+     *
+     * @param \mod_adastra\local\data\submission $sbms
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function inspect_submission(\mod_adastra\local\data\submission $sbms, $asmoodleurl = false) {
+        $query = array('id' => $sbms->get_id());
+        return self::build_url('/teachers/inspect.php', $query, $asmoodleurl);
+    }
+
+    /**
      * Form url for the submission list page.
      *
      * @param \mod_adastra\local\data\exercise $ex
@@ -276,6 +310,34 @@ class urls {
     public static function rounds_index($courseid, $asmoodleurl = false) {
         $query = array('id' => $courseid);
         return self::buildurl('/index.php', $query, $asmoodleurl);
+    }
+
+    /**
+     * Form urk for the user results page.
+     *
+     * @param int $courseid
+     * @param int $userid
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function user_results($courseid, $userid, $asmoodleurl = false) {
+        $query = array(
+            'course' => $courseid,
+            'user' => $userid,
+        );
+        return self::build_url('/teachers/user_results.php', $query, $asmoodleurl);
+    }
+
+    /**
+     * Form url for the polling submission status page.
+     *
+     * @param \mod_adastra\local\data\submission $submission
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function poll_submission_status(\mod_adastra\local\data\submission $submission, $asmoodleurl = false) {
+        $query = array('id' => $submission->get_id());
+        return self::build_url('/poll.php', $query, $asmoodleurl);
     }
 
     /**

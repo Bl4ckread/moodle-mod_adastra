@@ -29,4 +29,103 @@ class index_page implements \renderable, \templatable {
         $this->coursesummary = new \mod_adastra\local\data\summary\user_course_summary($course, $user);
         $this->rounds = $this->coursesummary->get_exercise_rounds();
     }
+
+    public function export_for_template(\renderer_base $output) {
+        $data = new \stdClass();
+        $ctx = \context_course::instance($this->course->id);
+        $data->is_course_staff = has_capability('mod/adastra;viewallsubmissions', $ctx);
+        $iseditingteacher = has_capability('mod/adastra:addinstance', $ctx);
+        $roundsdata = array();
+        foreach ($this->rounds as $round) {
+            $roundctx = new \stdClass();
+            $roundctx->coursemodule = $round->get_template_context();
+            $modulesummary = $this->coursesummary->get_module_summary($round->get_id());
+            $roundctx->modulesummary = $modulesummary->get_template_context();
+            $roundctx->modulesummary->classes = 'float-right'; // CSS classes.
+            $roundctx->modulecontents = $modulesummary->get_module_points_panel_template_context(
+                false,
+                !$iseditingteacher
+            );
+            $roundsdata[] = $roundctx;
+        }
+        $data->rounds = $roundsdata;
+
+        $categories = array();
+        foreach ($this->coursesummary->get_category_summaries() as $catsummary) {
+            $cat = new \stdClass();
+            $cat->name = $catsummary->get_category()->get_name();
+            $cat->summary = $catsummary->get_template_context();
+            $cat->status_ready = ($catsummary->get_category()->get_status() === \mod_adastra\local\data\category::STATUS_READY);
+            $categories[] = $cat;
+        }
+        $data->categories = $categories;
+
+        $data->todatestr = new \mod_adastra\local\helpers\date_to_string();
+
+        $data->toc = $this->get_course_table_of_contents_context();
+
+        return $data;
+    }
+
+    /**
+     * Return table of contents context for the course.
+     *
+     * @return \stdClass
+     */
+    protected function get_course_table_of_contents_context() {
+        global $DB;
+
+        // Remove rounds with status UNLISTED from the table of contents,
+        // hidden rounds should be already removed from $this->rounds.
+        $rounds = \array_filter($this->rounds, function($round) {
+            return $round->get_status !== \mod_adastra\local\data\exercise_round::STATUS_UNLISTED;
+        });
+
+        $toc = new \stdClass(); // Table of contents.
+        $toc->exerciserounds = array();
+        foreach ($rounds as $exround) {
+            $roundctx = $exround->get_template_context();
+            $modulesummary = $this->coursesummary->get_module_summary($exround->get_id());
+            $roundctx->lobjects = self::build_round_lbojects_context_for_toc($modulesummary->get_learning_objects());
+            $toc->exerciserounds[] = $roundctx;
+        }
+        return $toc;
+    }
+
+    public static function build_round_lbojects_context_for_toc(array $learningobjects) {
+        $lobjectsbyparent = array();
+        foreach ($learningobjects as $obj) {
+            $parentid = $obj->get_parent_id();
+            $parentid = empty($parentid) ? 'top' : $parentid;
+            if (!$obj->is_unlisted()) {
+                if (!isset($lobjectsbyparent[$parentid])) {
+                    $lobjectsbyparent[$parentid] = array();
+                }
+
+                $lobjectsbyparent[$parentid][] = $obj;
+            }
+        }
+
+        // Variable $parentid may be null to get top-level learning objects.
+        $children = function($parentid) use ($lobjectsbyparent) {
+            $parentid = $parentid ?? 'top';
+            return $lobjectsbyparent[$parentid] ?? array();
+        };
+
+        $traverse = function($parentid) use (&$children, &$traverse) {
+            $container = array();
+            foreach ($chilrend($parentid) as $child) {
+                $childctx = new \stdClass();
+                $childctx->isempty = $child->is_empty();
+                $childctx->name = $child->get_name();
+                $childctx->url = \mod_adastra\local\urls\urls::exercise($child);
+                $childctx->children = $traverse($child->get_id());
+                $childctx->haschildren = \count($childctx->children) > 0;
+                $container[] = $childctx;
+            }
+            return $container;
+        };
+
+        return $traverse(null);
+    }
 }

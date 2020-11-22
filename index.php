@@ -26,7 +26,7 @@ require(__DIR__.'/../../config.php');
 
 require_once(__DIR__.'/lib.php');
 
-$id = required_param('id', PARAM_INT);
+$id = required_param('id', PARAM_INT); // Course ID.
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 require_course_login($course);
@@ -34,59 +34,27 @@ require_course_login($course);
 $coursecontext = \context_course::instance($course->id);
 
 $event = \mod_adastra\event\course_module_instance_list_viewed::create(array(
-    'context' => $modulecontext
+    'context' => $coursecontext
 ));
 $event->add_record_snapshot('course', $course);
 $event->trigger();
 
-$PAGE->set_url('/mod/adastra/index.php', array('id' => $id));
-$PAGE->set_title(format_string($course->fullname));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($coursecontext);
+$pluralname = get_string('modulenameplural', \mod_adastra\local\data\exercise_round::MODNAME);
+$pageurl = \mod_adastra\local\urls\urls::rounds_index($id, true);
 
-echo $OUTPUT->header();
+$PAGE->set_url($pageurl);
+$PAGE->navbar->add($pluralname, $pageurl);
+$PAGE->set_title("$course->shortname: $pluralname");
+$PAGE->set_heading($course->fullname);
+$PAGE->set_pagelayout('incourse');
 
-$modulenameplural = get_string('modulenameplural', 'mod_adastra');
-echo $OUTPUT->heading($modulenameplural);
+// Render page content.
+$output = $PAGE->get_renderer(\mod_adastra\local\data\exercise_round::MODNAME);
 
-$adastras = get_all_instances_in_course('adastra', $course);
+// Print the page header (Moodle navbar etc.).
+echo $output->header();
 
-if (empty($adastras)) {
-    notice(get_string('nonewmodules', 'mod_adastra'), new moodle_url('/course/view.php', array('id' => $course->id)));
-}
+$renderable = new \mod_adastra\output\index_page($course, $USER);
+echo $output->render($renderable);
 
-$table = new html_table();
-$table->attributes['class'] = 'generaltable mod_index';
-
-if ($course->format == 'weeks') {
-    $table->head  = array(get_string('week'), get_string('name'));
-    $table->align = array('center', 'left');
-} else if ($course->format == 'topics') {
-    $table->head  = array(get_string('topic'), get_string('name'));
-    $table->align = array('center', 'left', 'left', 'left');
-} else {
-    $table->head  = array(get_string('name'));
-    $table->align = array('left', 'left', 'left');
-}
-
-foreach ($adastras as $adastra) {
-    if (!$adastra->visible) {
-        $link = html_writer::link(
-            new moodle_url('/mod/adastra/view.php', array('id' => $adastra->coursemodule)),
-            format_string($adastra->name, true),
-            array('class' => 'dimmed'));
-    } else {
-        $link = html_writer::link(
-            new moodle_url('/mod/adastra/view.php', array('id' => $adastra->coursemodule)),
-            format_string($adastra->name, true));
-    }
-
-    if ($course->format == 'weeks' or $course->format == 'topics') {
-        $table->data[] = array($adastra->section, $link);
-    } else {
-        $table->data[] = array($link);
-    }
-}
-
-echo html_writer::table($table);
-echo $OUTPUT->footer();
+echo $output->footer();

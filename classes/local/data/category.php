@@ -98,6 +98,29 @@ class category extends database_object {
     }
 
     /**
+     * Return all exercises in this category.
+     *
+     * @param boolean $includehidden If true, hidden exercises are included.
+     * @return \mod_adastra\local\data\exercise[] Indexed by exercise/learning object IDs.
+     */
+    public function get_exercises($includehidden = false) {
+        global $DB;
+
+        list($sql, $params) = $this->get_learning_objects_sql(\mod_adastra\local\data\exercise::TABLE, $includehidden);
+
+        $exerciserecords = $DB->get_records_sql($sql, $params);
+
+        $exercises = array();
+
+        foreach ($exerciserecords as $rec) {
+            $ex = new \mod_adastra\local\data\exercise($rec);
+            $exercises[$ex->get_id()] = $ex;
+        }
+
+        return $exercises;
+    }
+
+    /**
      * Return the count of exercises in this category.
      *
      * @param boolean $includehidden

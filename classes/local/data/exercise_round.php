@@ -195,7 +195,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Check if late submission is allowed.
+     * Return true if late submission is allowed.
      *
      * @return boolean
      */
@@ -254,7 +254,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Check if the exercise round is open for submissions.
+     * Return true if the exercise round is open for submissions.
      *
      * @param int|null $when Time to check, null for current time.
      * @return boolean True if is open, false if not.
@@ -267,7 +267,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Check if the exercise round is in the late submission period.
+     * Return true if the exercise round is in the late submission period.
      *
      * @param int|null $when Time to check, null for current time.
      * @return boolean True if yes, false if no.

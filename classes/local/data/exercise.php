@@ -99,7 +99,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
-     * Check if assistant viewing is allowed.
+     * Return true if assistant viewing is allowed.
      *
      * @return boolean
      */
@@ -108,7 +108,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
-     * Check if assistant grading is allowed.
+     * Return true if assistant grading is allowed.
      *
      * @return boolean
      */
@@ -131,6 +131,44 @@ class exercise extends \mod_adastra\local\data\learning_object {
         );
     }
 
+    /**
+     * Return the template context objects for the given submissions.
+     * The submissions should be submitted by the same user to the same exercise
+     * and the array should be sorted by the submission time (latest submission first).
+     *
+     * @param array $submissions An arrya of \mod_adastra\local\data\submission objects.
+     * @param \mod_adastra\local\data\submission $currentsubmission If set, one submission is marked
+     * as the current submission with and additional variable currentsubmission.
+     * @return stdClass[] An array of context objects.
+     */
+    public static function submissions_template_context(
+        array $submissions,
+        \mod_adastra\local\data\submission $currentsubmission = null
+    ) {
+        $ctx = array();
+        $nth = count($submissions);
+        foreach ($submissions as $sbms) {
+            $obj = $sbms->get_template_context();
+            $obj->nth = $nth;
+            $nth--;
+            if (isset($currentsubmission) && $sbms->get_id() == $currentsubmission->get_id()) {
+                $obj->currentsubmission = true;
+            }
+            $ctx[] = $obj;
+        }
+
+        return $ctx;
+    }
+
+    /**
+     * Return the data for templating.
+     *
+     * @param \stdClass $user
+     * @param boolean $includetotalsubmittercount
+     * @param boolean $includecoursemodule
+     * @param boolean $includesiblings
+     * @return \stdClass
+     */
     public function get_exercise_template_context(\stdClass $user = null, $includetotalsubmittercount = true,
             $includecoursemodule = true, $includesiblings = false) {
         $ctx = parent::get_template_context($includecoursemodule, $includesiblings);

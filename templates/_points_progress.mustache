@@ -1,0 +1,26 @@
+{{!
+Derived from A+ (a-plus/exercise/templates/exercise/_points_progress.html).
+
+Context variables:
+* points int
+* max int
+* required int Points that are required to pass, zero is not shown
+* full_score bool
+* passed bool
+* percentage int percentage of max points that the student has earned
+* required_percentage int 0-100, percentage of max points required
+}}
+
+{{# max }}
+<div class="progress" data-toggle="tooltip" data-html="true" data-placement="bottom"
+    title="{{#str}} points, mod_adastra {{/str}}: &lt;span class='text-nowrap'&gt;{{ points }} / {{ max }}&lt;/span&gt;{{# required }} {{#str}} required, mod_adastra {{/str}}: &lt;span class='text-nowrap'&gt;{{ required }}&lt;/span&gt;{{/ required }}">
+    <div class="progress-bar progress-bar-striped bg-{{# fullscore }}success{{/ fullscore }}{{^ fullscore }}{{# passed }}warning{{/ passed }}{{^ passed }}danger{{/ passed }}{{/ fullscore }}"
+        role="progressbar" aria-valuenow="{{ points }}" aria-valuemin="0" aria-valuemax="{{ max }}"
+        style="width:{{ percentage }}%; height: inherit;{{# requiredpercentage }} float: left;{{/ requiredpercentage }}">
+    {{! height seems to be often zero if not set here; float left is needed for the required percentage marker so that it is displayed on top of the progress bar }}
+    </div>
+    {{# requiredpercentage }}
+    <div class="required-points" style="left:{{ requiredpercentage }}%"></div>
+    {{/ requiredpercentage }}
+</div>
+{{/ max }}

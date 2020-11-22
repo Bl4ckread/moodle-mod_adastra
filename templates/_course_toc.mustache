@@ -1,0 +1,47 @@
+{{!
+Table of contents of Astra content in a course (all rounds).
+Derived from A+ (a-plus/course/templates/course/toc.html).
+
+Context variables:
+* exercise_rounds (array of objects), each object has round-specific fields
+    that are required by _round_toc.mustache, and
+    - url (string) URL to the round
+    - name (string) name of the round with ordinal number
+    - openingtime (int) Unix timestamp
+    - closingtime (int) Unix timestamp
+* is_course_staff (bool) true if the user can see hidden/inactive content
+* toDateStr callable Function that converts a Unix timestamp to a date string
+}}
+
+<h3>{{#str}} toc, mod_adastra {{/str}}</h3>
+
+<ul class="toc">
+    {{# exerciserounds }}
+    <li>
+      {{# hasstarted }}
+        <h3>
+            <a href="{{{ url }}}">{{ name }}</a>
+        </h3>
+        <p>
+            <small>{{#todatestr}}{{ openingtime }}{{/todatestr}} &ndash; {{#todatestr}}{{ closingtime }}{{/todatestr}}</small>
+        </p>
+      {{/ hasstarted }}
+      {{^ hasstarted }}
+        <h3>
+          {{ name }}
+          {{# iscoursestaff }}
+          <a class="btn btn-secondary btn-sm" href="{{{ url }}}">
+              {{#pix}}i/lock{{/pix}}
+              {{#str}} earlyaccess, mod_adastra {{/str}}
+          </a>
+          {{/ iscoursestaff }}
+        </h3>
+        <h4>
+            <span class="badge badge-info">{{#str}} opens, mod_adastra {{/str}} {{#todatestr}}{{ openingtime }}{{/todatestr}}</span>
+            <small>&ndash; {{#todatestr}}{{ closingtime }}{{/todatestr}}</small>
+        </h4>
+      {{/ hasstarted }}
+      {{> mod_adastra/_round_toc }}
+    </li>
+    {{/ exerciserounds }}
+</ul>
