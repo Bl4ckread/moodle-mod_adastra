@@ -10,7 +10,7 @@ class mod_adastra_generator extends testing_module_generator {
             'name' => 'Round',
             'introformat' => FORMAT_HTML,
             'ordernum' => 1,
-            'status' => \mod_adastra\local\exercise_round::STATUS_READY,
+            'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
             'grade' => 0,
             'pointstopass' => 0,
             'openingtime' => time(),
