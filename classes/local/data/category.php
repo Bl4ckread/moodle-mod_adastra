@@ -63,11 +63,11 @@ class category extends database_object {
      * @return string
      */
     public function get_name(string $lang = null) {
-        require_once(__DIR__ . '/../../locallib.php');
+        require_once(__DIR__ . '/../../../locallib.php');
 
         return adastra_parse_localization($this->record->name, $lang);
     }
-    
+
     public function get_points_to_pass() {
         return $this->record->pointstopass;
     }
@@ -150,16 +150,16 @@ class category extends database_object {
         }
         return $categories;
     }
-    
+
     /**
      * Create a new category in the database.
      * @param stdClass $categoryRecord object with the fields required by the database table,
      * excluding id
      * @return int ID of the new database record, zero on failure
      */
-    public static function create_new(\stdClass $categoryRecord) {
+    public static function create_new(\stdClass $categoryrecord) {
         global $DB;
-        return $DB->insert_record(self::TABLE, $categoryRecord);
+        return $DB->insert_record(self::TABLE, $categoryrecord);
     }
 
     /**
@@ -173,7 +173,7 @@ class category extends database_object {
         $ctx->name = $this->get_name();
         $ctx->editurl = \mod_adastra\local\urls\urls::edit_category($this);
         if ($includelobjectcount) {
-            $ctx->has_learning_objects = ($this->count_learning_objects() > 0);
+            $ctx->haslearningobjects = ($this->count_learning_objects() > 0);
         }
         $ctx->removeurl = \mod_adastra\local\urls\urls::delete_category($this);
         $ctx->statusready = ($this->get_status() === self::STATUS_READY);

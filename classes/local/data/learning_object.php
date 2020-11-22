@@ -237,7 +237,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
             string $lang = null,
             bool $multilang = false
     ) {
-        require_once(__DIR__ . '/../../locallib.php');
+        require_once(__DIR__ . '/../../../locallib.php');
 
         // Number formatting based on A+ (a-plus/exercise/exercise_models.py).
         $number = '';

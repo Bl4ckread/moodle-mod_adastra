@@ -91,7 +91,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
      * @return string The name.
      */
     public function get_name(string $lang = null, bool $includealllang = false) {
-        require_once(__DIR__.'/../../locallib.php');
+        require_once(__DIR__.'/../../../locallib.php');
         if ($includealllang) {
             // Do not parse multilang values.
             return $this->record->name;
