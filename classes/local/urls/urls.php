@@ -63,7 +63,7 @@ class urls {
      */
     public static function exercise_round(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
         $query = array('id' => $exround->get_course_module()->id);
-        return self::build_url('view.php', $query, $asmoodleurl);
+        return self::build_url('/view.php', $query, $asmoodleurl);
     }
 
     /**
@@ -180,7 +180,7 @@ class urls {
         if ($wait) {
             $query['wait'] = 1; // Poll whether the grading has finished.
         }
-        return self::build_url('submission.php', $query, $asmoodleurl, $escaped);
+        return self::build_url('/submission.php', $query, $asmoodleurl, $escaped);
     }
 
     /**
@@ -261,7 +261,7 @@ class urls {
      */
     public static function edit_category(\mod_adastra\local\data\category $cat, $asmoodleurl = false) {
         $query = array('id' => $cat->get_id());
-        return self::build_url('teachers/edit_category.php', $query, $asmoodleurl);
+        return self::build_url('/teachers/edit_category.php', $query, $asmoodleurl);
     }
 
     /**
@@ -273,7 +273,7 @@ class urls {
      */
     public static function delete_category(\mod_adastra\local\data\category $cat, $asmoodleurl= false) {
         $query = array('id' => $cat->get_id(), 'type' => 'category');
-        return self::build_url('teachers/delete.php', $query, $asmoodleurl);
+        return self::build_url('/teachers/delete.php', $query, $asmoodleurl);
     }
 
     /**
