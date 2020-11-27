@@ -49,7 +49,7 @@ class urls {
             return $url;
         } else {
             return $url->out($escaped);
-            // $escaped true: use in HTML, ampersands (&) are escaped.
+            // Parameter $escaped true: use in HTML, ampersands (&) are escaped.
             // false: use in HTTP headers.
         }
     }
@@ -213,7 +213,7 @@ class urls {
             foreach ($sort as $order => $fieldasc) {
                 // Order: which column is the primary column to sort by.
                 $query['sort_' - $fieldasc[0]] = $order . '_' . ($fieldasc[1] ? 1 : 0);
-                // $fieldASC[1] == true -> ascending, else descending.
+                // If $fieldASC[1] == true -> ascending, else descending.
             }
         }
         if (isset($filter)) {
