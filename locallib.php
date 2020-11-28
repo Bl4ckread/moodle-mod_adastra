@@ -70,7 +70,7 @@ function adastra_roman_numeral($number) {
  */
 function adastra_parse_localization(string $text, string $preferredlang = null, bool $includeall = false) {
     if (strpos($text, '|') !== false) {
-        $currentlang = $preferredlang ?? current_language();
+        $currentlang = isset($preferredlang) ? $preferredlang : current_language();
         $variants = explode('|', $text);
         $exercisenumber = $variants[0];
         $langs = array();
@@ -117,7 +117,7 @@ function adastra_parse_multilang_filter_localization(string $text, string $prefe
         return $text;
     }
     $start = substr($text, 0, $pos); // Substring preceding any multilang spans.
-    $currentlang = $preferredlang ?? current_language();
+    $currentlang = isset($preferredlang) ? $preferredlang : current_language();
 
     $pattern = '/<span(?:\s+lang="(?P<lang>[a-zA-Z0-9_-]+)"|\s+class="multilang"){2}\s*>(?P<value>[^<]*)<\/span>/i';
     $langs = array();

@@ -76,7 +76,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
      *
      * @return int
      */
-    public function get_gradebook_item_numer() {
+    public function get_gradebook_item_number() {
         return $this->record->gradeitemnumber;
     }
 
@@ -114,6 +114,152 @@ class exercise extends \mod_adastra\local\data\learning_object {
      */
     public function is_assistant_grading_allowed() {
         return (bool) $this->record->allowastgrading;
+    }
+
+    public function delete_instance($updateroundmaxpoints = true) {
+        global $DB;
+
+        // All submitted files to this exercise (in Moodle file API) (file itemid is a submission id).
+        $fs = \get_file_storage();
+        $fs->delete_area_files_select(
+            \context_module::instance($this->get_exercise_round()->get_course_module()->id)->id,
+            \mod_adastra\local\data\exercise_round::MODNAME,
+            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            'IN (SELECT id FROM {' . \mod_adastra\local\data\submission::TABLE . '} WHERE exerciseid = :adastraexerciseid',
+            array('adastraexerciseid' => $this->get_id())
+        );
+        // All submissions to this exercise.
+        $DB->delete_records(\mod_adastra\local\data\submission::TABLE, array('exerciseid' => $this->get_id()));
+
+        // Delete exercise gradebook item.
+        $this->delete_gradebook_item();
+
+        // Delete all deviations for this exercise.
+        $this->delete_deviations();
+
+        // This exercise (both lobject and exercise tables) and children.
+        $res = parent::delete_instance();
+
+        // Update round max points (this exercise must have been deleted from the DB before this.).
+        if ($updateroundmaxpoints) {
+            $this->get_exercise_round()->update_max_points();
+        }
+
+        return $res;
+    }
+
+    /**
+     * Delete all deviations related to this exercise,
+     * i.e. deadline and submission limit extensions.
+     *
+     * @return void
+     */
+    public function delete_deviations() {
+        global $DB;
+
+        $DB->delete_records(\mod_adastra\local\data\deadline_deviationn::TABLE, array('exerciseid' => $this->get_id()));
+        $DB->delete_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array('exerciseid' => $this->get_id()));
+    }
+
+    /**
+     * Delete the Moodle gradebook item for this exercise.
+     *
+     * @return int GRADE_UPDATE_OK or GRADE_UPDATE_FAILED (or GRADE_UPDATE_MULTIPLE).
+     */
+    public function delete_gradebook_item() {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        return grade_update(
+                'mod/' . \mod_adastra\local\data\exercise_round::TABLE,
+                $this->get_exercise_round()->get_course()->courseid,
+                'mod',
+                \mod_adastra\local\data\exercise_round::TABLE,
+                $this->get_exercise_round()->get_id(),
+                $this->get_gradebook_item_number(),
+                null,
+                array('deleted' => 1)
+        );
+    }
+
+    /**
+     * Create or update the Moodle gradebook item for this exercise.
+     * In order to add grades for students, use the method update_grades.
+     *
+     * @param boolean $reset If true, delete all grades in the grade item.
+     * @return int grade_update return value (one of GRADE_UPDATE_OK, GRADE_UPDATE_FAILED,
+     * GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED).
+     */
+    public function update_gradebook_item($reset = false) {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/grade/grade_item.php');
+
+        $item = array();
+        $item['itemname'] = $this->get_name(true, null, true);
+        $item['hidden'] = (int) (
+                $this->is_hidden() ||
+                $this->get_exercise_round()->is_hidden() ||
+                $this->get_category()->is_hidden()
+        ); // The hidden value must be zero or one. Integers above one are interpreted as timestamps (hidden until).
+
+        // Update exercise grading information ($item).
+        if ($this->get_max_points() > 0) {
+            $item['gradetype'] = GRADE_TYPE_VALUE; // Points.
+            $item['grademax'] = $this->get_max_points();
+            $item['grademin'] = 0; // Minimum allowed value (points cannot be below this).
+            // Looks like minimum grade to pass (gradepass) can't be set in this API directly.
+        } else {
+            $item['gradetype'] = GRADE_TYPE_NONE;
+        }
+
+        if ($reset) {
+            $item['reset'] = true;
+        }
+
+        $courseid = $this->get_exercise_round()->get_course()->courseid;
+
+        // Create gradebook item.
+        $res = grade_update(
+            'mod/' . \mod_adastra\local\data\exercise_round::TABLE,
+            $courseid,
+            'mod',
+            \mod_adastra\local\data\execise_round::TABLE,
+            $this->record->roundid,
+            $this->get_gradebook_item_number(),
+            null,
+            $item
+        );
+
+        // Parameters to find the grade item from DB.
+        $gradeitemparams = array(
+            'itemtype' => 'mod',
+            'itemmodule' => \mod_adastra\local\data\exercise_round::TABLE,
+            'iteminstance' => $this->record->roundid,
+            'itemnumber' => $this->get_gradebook_item_number(),
+            'courseid' => $courseid,
+        );
+        $gi = \grade_item::fetch($gradeitemparams);
+        if ($gi && $gi->gradepass != $this->get_points_to_pass()) {
+            // Set min points to pass.
+            $gi->gradepass = $this->get_points_to_pass();
+            $gi->update('mod/' . \mod_adastra\local\data\exercise_round::TABLE);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Save changes made to this exercise.
+     *
+     * @param boolean $skipgradebook If true don't update gradebook.
+     * @return boolean True.
+     */
+    public function save($skipgradebook = false) {
+        if (!$skipgradebook) {
+            $this->update_gradebook_item();
+        }
+
+        return parent::save();
     }
 
     /**

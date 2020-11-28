@@ -105,6 +105,23 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Save the changes made to the learning object to DB.
+     *
+     * @return bool True.
+     */
+    public function save() {
+        global $DB;
+        // Must save to both base table and subtype table.
+        // Subtype: $this->record->id should be the ID in the subtype table.
+        $DB->update_record(static::TABLE, $this->record);
+
+        // Must change the id value in the record for the base table.
+        $record = clone $this->record;
+        $record->id = $this->get_id();
+        return $DB->update_record(self::TABLE, $record);
+    }
+
+    /**
      * Return the status for this learning object.
      *
      * @param boolean $asstring
@@ -189,6 +206,55 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
             return null;
         }
         return (int) $this->record->parentid;
+    }
+
+    /**
+     * Return an array of the learning objects that are direct children of
+     * this learning object.
+     *
+     * @param boolean $includehidden If true, hidden learning objects are included.
+     * @return \mod_adastra\local\data\learning_object[]
+     */
+    public function get_children($includehidden = false) {
+        global $DB;
+
+        $where = ' WHERE lob.parentid = ?';
+        $orderby = ' ORDER BY ordernum ASC';
+        $params = array($this->get_id());
+
+        if ($includehidden) {
+            $where .= $orderby;
+        } else {
+            $where .= ' AND lob.status != ?' . $orderby;
+            $params[] = self::STATUS_HIDDEN;
+        }
+        $exsql = self::get_subtype_join_sql(\mod_adastra\local\data\exercise::TABLE) . $where;
+        $chsql = self::get_subtype_join_sql(\mod_adastra\local\data\chapter::TABLE) . $where;
+        $exerciserecords = $DB->get_records_sql($exsql, $params);
+        $chapterrecords = $DB->get_records_sql($chsql, $params);
+
+        // Gather learning objects into one array.
+        $learningobjects = array();
+        foreach ($exerciserecords as $ex) {
+            $learningobjects[] = new \mod_adastra\local\data\exercise($ex);
+        }
+        foreach ($chapterrecords as $ch) {
+            $learningobjects[] = new \mod_adastra\local\data\chapter($ch);
+        }
+        // Sort the combined array, compare ordernums since all objects have the same parent.
+        usort($learningobjects, function($obj1, $obj2) {
+            $ord1 = $obj1->get_order();
+            $ord2 = $obj2->get_order();
+            if ($ord1 < $ord2) {
+                return -1;
+            } else if ($ord1 == $ord2) {
+                return 0;
+            } else {
+                return 1;
+            }
+        });
+
+        return $learningobjects;
     }
 
     /**
@@ -329,6 +395,36 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Set the status of the learning object as $status.
+     *
+     * @param int $status
+     * @return void
+     */
+    public function set_status($status) {
+        $this->record->status = $status;
+    }
+
+    /**
+     * Set the order number of the learning object as $neworder.
+     *
+     * @param int $neworder
+     * @return void
+     */
+    public function set_order($neworder) {
+        $this->record->ordernum = $neworder;
+    }
+
+    /**
+     * Set a new parent learning object to this learning object.
+     *
+     * @param int|null $newparentid Null or lobjectid of another learning object.
+     * @return void
+     */
+    public function setparent($newparentid) {
+        $this->record->parentid = $newparentid;
+    }
+
+    /**
      * Chekc if learning_object is submittable.
      * This function will be overriden in inherited classes if necessary.
      *
@@ -338,6 +434,30 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
         return false;
     }
 
+    /**
+     * Delete this learning object from the database. Possible child learning objects
+     * are also deleted.
+     *
+     * @return bool True.
+     */
+    public function delete_instance() {
+        global $DB;
+
+        foreach ($this->get_children(true) as $child) {
+            $child->delete_instance();
+        }
+
+        // Delete this object, subtable and base table.
+        $DB->delete_records(static::TABLE, array('id' => $this->get_subtype_id()));
+        return $DB->delete_records(self::TABLE, array('id' => $this->get_id()));
+    }
+
+    /**
+     * Return context of one of the siblings of the learning object for templating.
+     *
+     * @param boolean $next If true return the context of the next sibling, otherwise the previous sibling.
+     * @return \stdClass
+     */
     protected function get_sibling_context($next = true) {
         global $DB;
 
@@ -391,7 +511,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
         } else {
             // The sibling is the next/previous round.
             if ($next) {
-                return $this->get_exercise_round->get_next_sibling_context();
+                return $this->get_exercise_round()->get_next_sibling_context();
             } else {
                 return $this->get_exercise_round()->get_previous_sibling_context();
             }

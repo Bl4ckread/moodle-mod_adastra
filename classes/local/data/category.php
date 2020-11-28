@@ -68,8 +68,31 @@ class category extends database_object {
         return adastra_parse_localization($this->record->name, $lang);
     }
 
+    /**
+     * Return the number of points needed to pass the category.
+     *
+     * @return int
+     */
     public function get_points_to_pass() {
         return $this->record->pointstopass;
+    }
+
+    /**
+     * Return true if the status of the category is set as hidden.
+     *
+     * @return boolean
+     */
+    public function is_hidden() {
+        return $this->get_status() === self::STATUS_HIDDEN;
+    }
+
+    /**
+     * Set the status of the category as hidden.
+     *
+     * @return void
+     */
+    public function set_hidden() {
+        $this->record->status = self::STATUS_HIDDEN;
     }
 
     /**

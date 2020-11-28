@@ -108,8 +108,8 @@ class index_page implements \renderable, \templatable {
 
         // Variable $parentid may be null to get top-level learning objects.
         $children = function($parentid) use ($lobjectsbyparent) {
-            $parentid = $parentid ?? 'top';
-            return $lobjectsbyparent[$parentid] ?? array();
+            $parentid = isset($parentid) ? $parentid : 'top';
+            return isset($lobjectsbyparent[$parentid]) ? $lobjectsbyparent[$parentid] : array();
         };
 
         $traverse = function($parentid) use (&$children, &$traverse) {

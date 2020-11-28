@@ -34,3 +34,20 @@ function adastra_edit_course_navbar(moodle_page $page, $courseid, $active = true
     }
     return $editnav;
 }
+
+/**
+ * Add both edit course and another page to the navbar.
+ *
+ * @param moodle_page $page
+ * @param int $courseid
+ * @param string $title Title for the new page.
+ * @param moodle_url $url URL of the new page.
+ * @param string $navkey Navbar key for the new page.
+ * @return navigation_node
+ */
+function adastra_edit_course_navbar_add(moodle_page $page, $courseid, $title, moodle_url $url, $navkey) {
+    $editcoursenav = adastra_edit_course_navbar($page, $courseid, false);
+    $nav = $editcoursenav->add($title, $url, navigation_node::TYPE_CUSTOM, null, $navkey);
+    $nav->make_active();
+    return $nav;
+}

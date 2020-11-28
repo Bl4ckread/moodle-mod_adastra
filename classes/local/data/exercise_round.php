@@ -355,10 +355,12 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         $chapterrecords = array();
         if ($includehidden || !empty($nothiddencatids)) {
             $exerciserecords = $DB->get_records_sql(
-                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\exercise::TABLE) . $where, $params
+                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\exercise::TABLE) . $where,
+                $params
             );
             $chapterrecords = $DB->get_records_sql(
-                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\chapter::TABLE) . $where, $params
+                \mod_adastra\local\data\learning_object::get_subtype_join_sql(\mod_adastra\local\data\chapter::TABLE) . $where,
+                $params
             );
         }
         // Gather all the learning objects of the round in a single array.
@@ -382,6 +384,13 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         }
     }
 
+    /**
+     * Sort learning objects present in the exercise round.
+     *
+     * @param array $learningobjects
+     * @param int $startparentid
+     * @return array The learning objects sorted.
+     */
     public static function sort_round_learning_objects(array $learningobjects, $startparentid = null) {
         $ordersortcallback = function ($obj1, $obj2) {
             $ord1 = $obj1->get_order();
@@ -417,6 +426,245 @@ class exercise_round extends \mod_adastra\local\data\database_object {
             return $container;
         };
         return $traverse(null);
+    }
+
+    /**
+     * Return an array of the exercises in this round.
+     *
+     * @param boolean $includehidden If true, hidden exercises are included.
+     * @param boolean $sort If true, the result array is sorted.
+     * @return \mod_adastra\local\data\exercise[]
+     */
+    public function get_exercises($includehidden = false, $sort = true) {
+        // Function array_filter keeps the old indexes/keys, so a numerically indexed array may
+        // have discontinuous indexes.
+        return array_filter($this->get_learning_objects($includehidden, $sort), function($lobj) {
+            return $lobj->is_submittable();
+        });
+    }
+
+    /**
+     * Hide or delete learning objects in this round if they are not included in the giben array.
+     * The object is deleted if it and its children have no submissions. Otherwise, it is hidden.
+     *
+     * @param array $seen An array of \mod_adastra\local\data\learning_object instances that have been seen.
+     * @return boolean True if something was hidden or deleted, false otherwise.
+     */
+    public function hide_or_delete_unseen_learning_objects(array $seen) : bool {
+        $children = array();
+        $unseen = array();
+        foreach ($this->get_learning_objects(true, false) as $lobj) {
+            if (!in_array($lobj->get_id(), $seen)) {
+                $unseen[] = $lobj;
+            }
+
+            // Array for easily finding the children of a learning object
+            // without additional DB queries.
+            $parentid = $lobj->get_parent_id();
+            if ($parentid !== null) {
+                if (!isset($children[$parentid])) {
+                    $children[$parentid] = array();
+                }
+                $children[$parentid][] = $lobj;
+            }
+        }
+
+        $anychildhassubmissions = function($learningobject) use ($children, &$anychildhassubmissions) {
+            if (isset($children[$learningobject->get_id()])) {
+                // Object $learningobject has children.
+                foreach ($children[$learningobject->get_id()] as $child) {
+                    if ($child->is_submittable() && $child->get_total_submitter_count() > 0) {
+                        return true;
+                    }
+                    $res = $anychildhassubmissions($child);
+                    if ($res) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+        $descendants = function($learningobject) use ($children, &$descendants) {
+            $res = array();
+            if (isset($children[$learningobject->get_id()])) {
+                foreach ($children[$learningobject->get_id()] as $child) {
+                    $res[] = $child->get_id();
+                    $res = array_merge($res, $descendants($child));
+                }
+            }
+            return $res;
+        };
+
+        $deleted = array();
+        $changesmade = !empty($unseen);
+        foreach ($unseen as $lobj) {
+            if (in_array($lobj->get_id(), $deleted)) {
+                continue;
+            }
+            $nodirectsubmissions = !$lobj->is_submittable() ||
+                    $lobj->is_submittable() && $lobj->get_total_submitter_count() == 0;
+            if ($nodirectsubmissions && !$anychildhassubmissions($lobj)) {
+                // No submissions, delete.
+                $lobj->delete_instance(false); // Deletes children too.
+                $deleted[] = $lobj->get_id();
+                $deleted = array_merge($deleted, $descendants($lobj));
+            } else {
+                $lobj->set_status(\mod_adastra\local\data\learning_object::STATUS_HIDDEN);
+                $lobj->save();
+            }
+        }
+        return $changesmade;
+    }
+
+    /**
+     * Create or update the Moodle gradebook item for this exercise round.
+     * In order to add grades for students, use the method update_grades.
+     * This method does not create or update the grade items for the exercises
+     * of the round.
+     *
+     * @param boolean $reset If true, delete all grades in the grade item.
+     * @return int One of the grade_update return values: GRADE_UPDATE_OK, GRADE_UPDATE_FAILED,
+     * GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED.
+     */
+    public function update_gradebook_item($reset = false) {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/grade/grade_item.php');
+
+        $item = array();
+        $item['itemname'] = $this->get_name(null, true);
+        $item['hidden'] = (int) $this->is_hidden();
+        // The hidden value must be zero or one. Integers above one are interpreted as timestamps (hidded until).
+
+        // Update activity grading information ($item).
+        if ($this->get_max_points() > 0) {
+            $item['gradetype'] = GRADE_TYPE_VALUE; // Points.
+            $item['grademax'] = $this->get_max_points();
+            $item['grademin'] = 0; // Minimum allowed value (points cannot be below this).
+            // Looks like minimum grade to pass (gradepass) cannnot be set in this API directly.
+        } else {
+            // Moodle core does not accept zero max points.
+            $item['gradetype'] = GRADE_TYPE_NONE;
+        }
+
+        if ($reset) {
+            $item['reset'] = true;
+        }
+
+        // Set course gradebook total grade aggregation method to "natural" (sum), because it is the only
+        // one that allows setting the exercise round coefficients to zero.
+        $this->set_gradebook_total_aggregation();
+
+        // Create gradebook item.
+        $res = grade_update(
+                'mod/' . self::TABLE,
+                $this->record->course,
+                'mod',
+                self::TABLE,
+                $this->record->id,
+                0,
+                null,
+                $item
+        );
+
+        if ($this->get_max_points() > 0 && $res === GRADE_UPDATE_OK) {
+            // Paremeters to find the grade item from DB.
+            $gradeparams = array(
+                'itemtype' => 'mod',
+                'itemmodule' => self::TABLE,
+                'iteminstance' => $this->record->id,
+                'itemnumber' => 0,
+                'courseid' => $this->record->course,
+            );
+            $gi = \grade_item::fetch($gradeparams);
+            if (
+                    $gi &&
+                    ($gi->gradepass != $this->get_points_to_pass() || $gi->aggregationcoef2 != 0.0 || $gi->weightoverride != 1)
+            ) {
+                // Set min points to pass.
+                $gi->gradepass = $this->get_points_to_pass();
+                // Set zero coefficient so that the course total is not affected by rounds.
+                // Round grades are only sums of the exercise grades in the round.
+                $gi->aggregationcoef2 = 0.0;
+                $gi->weightoverride = 1;
+                $gi->update('mod/' . self::TABLE);
+            }
+
+            /*
+             * If some students already have grades for the round in the gradebook,
+             * the changed coefficient may not be taken into account unless the course
+             * final grades are computed again. The API function grade_regrade_final_grades($this->record->course)
+             * is very heavy and should not be called here since the call must not be
+             * repeated for each round when automatically updating course configuration
+             * (auto setup). For now, we assume that the grade_regrade_final_grades
+             * call is not needed since nobody has grades when the grade item is
+             * initially created and its coefficient is then set to zero.
+             */
+        }
+
+        return $res;
+    }
+
+    /**
+     * Update the max points of this exercise round (based on the max points of exercises).
+     * Updates the database and the gradebook item.
+     *
+     * @return boolean True.
+     */
+    public function update_max_points() {
+        global $DB;
+
+        $this->record->timemodified = time();
+        $max = 0;
+        foreach ($this->get_exercises(false, false) as $lobj) {
+            // Chapters have no grading, so ignore them.
+            // Only non-hidden exercises, but must check categories too.
+            if (!$lobj->get_category()->is_hidden()) {
+                $max += $lobj->get_max_points();
+            }
+        }
+        $this->record->grade = $max;
+        $result = $DB->update_record(self::TABLE, $this->record);
+        $this->update_gradebook_item();
+
+        return $result;
+    }
+
+    /**
+     * Set the course gradebook total grade aggregation method to "natural" (sum).
+     *
+     * @return void
+     */
+    public function set_gradebook_total_aggregation() {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/grade/constants.php');
+        require_once($CFG->libdir . '/grade/grade_category.php');
+
+        $gradecategory = \grade_category::fetch(array(
+                'courseid' => $this->record->course,
+                'parent' => null,
+        ));
+        /*
+         * The default course total category is automatically created by Moodle.
+         * If the teacher creates additional gradebook categories they become
+         * children to the root category.
+         */
+        if (
+                $gradecategory &&
+                ($gradecategory->aggregation != GRADE_AGGREGATE_SUM || $gradecategory->aggregateonlygraded != 0)
+        ) {
+            // Set course gradebook total grade aggregation method to "natural" i.e. sum.
+            $gradecategory->aggregation = GRADE_CATEGORY_SUM;
+            // Include ungraded assignments in the aggregation. Course total does not show
+            // 100 % when only one exercise has been submitted with correct solution.
+            $gradecategory->aggregateonlygraded = 0;
+            $gradecategory->update('mod/' . self::TABLE);
+
+            $gradeitem = $gradecategory->load_grade_item();
+            $gradeitem->update('mod/' . self::TABLE);
+        }
+
     }
 
     /**
