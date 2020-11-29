@@ -836,6 +836,54 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Create a new exercise to this exercise round.
+     *
+     * @param  stdClass           $exercise             settings for the nex exercise: object with fields
+     *                                                  status, parentid, ordernum, remotekey, name,
+     *                                                  serviceurl, maxsubmissions, pointstopass,
+     *                                                  maxpoints
+     * @param  \mod_adastra\local\data\category $category             category of the exercise
+     * @param  bool               $updateRoundMaxPoints if true, the max points of the round are
+     *                                                  updated here. Use false if the round is
+     *                                                  handled elsewhere in order to reduce
+     *                                                  database operations.
+     * @return \mod_adastra\local\data\exercise the new exercise, or null if failed
+     */
+    public function create_new_exercise(\stdClass $exercise, \mod_adastra\local\data\category $category,
+        bool $updateroundmaxpoints = true
+    ) {
+        global $DB;
+
+        $exercise->categoryid = $category->get_id();
+        $exercise->roundid = $this->get_id();
+        $exercise->gradeitemnumber = $this->get_new_gradebook_item_number();
+
+        $exercise->lobjectid = $DB->insert_record(\mod_adastra\local\data\learning_object::TABLE, $exercise);
+        $ex = null;
+        if ($exercise->lobjectid) {
+            $exercise->id = $DB->insert_record(\mod_adastra\local\data\exercise::TABLE, $exercise);
+
+            try {
+                $ex = \mod_adastra\local\data\exercise::create_from_id($exercise->lobjectid);
+            } catch (dml_exception $e) {
+                // Learning object row was created but not the exercise row, remove learning object.
+                $DB->delete_records(\mod_adastra\local\data\learning_object::TABLE, array('id' => $exercise->lobjectid));
+                return null;
+            }
+
+            // Create gradebook item.
+            $ex->update_gradebook_item();
+
+            // Update the max points of the round.
+            if ($updateroundmaxpoints) {
+                $this->update_max_points();
+            }
+        }
+
+        return $ex;
+    }
+
+    /**
      * Return the context of the next or previous sibling.
      *
      * @param boolean $next Next if true, previous if false.
@@ -899,54 +947,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         return $this->get_sibling_context(false);
     }
 
-    /**
-     * Create a new exercise to this exercise round.
-     *
-     * @param  stdClass           $exercise             settings for the nex exercise: object with fields
-     *                                                  status, parentid, ordernum, remotekey, name,
-     *                                                  serviceurl, maxsubmissions, pointstopass,
-     *                                                  maxpoints
-     * @param  \mod_adastra\local\data\category $category             category of the exercise
-     * @param  bool               $updateRoundMaxPoints if true, the max points of the round are
-     *                                                  updated here. Use false if the round is
-     *                                                  handled elsewhere in order to reduce
-     *                                                  database operations.
-     * @return \mod_adastra\local\data\exercise the new exercise, or null if failed
-     */
-    public function create_new_exercise(\stdClass $exercise, \mod_adastra\local\data\category $category,
-        bool $updateRoundMaxPoints = true
-    ) {
-        global $DB;
-
-        $exercise->categoryid = $category->get_id();
-        $exercise->roundid = $this->get_id();
-        $exercise->gradeitemnumber = $this->get_new_gradebook_item_number();
-
-        $exercise->lobjectid = $DB->insert_record(\mod_adastra\local\data\learning_object::TABLE, $exercise);
-        $ex = null;
-        if ($exercise->lobjectid) {
-            $exercise->id = $DB->insert_record(\mod_adastra\local\data\exercise::TABLE, $exercise);
-
-            try {
-                $ex = \mod_adastra\local\data\exercise::create_from_id($exercise->lobjectid);
-            } catch (dml_exception $e) {
-                // learning object row was created but not the exercise row, remove learning object
-                $DB->delete_records(\mod_adastra\local\data\learning_object::TABLE, array('id' => $exercise->lobjectid));
-                return null;
-            }
-
-            // create gradebook item
-            $ex->update_gradebook_item();
-
-            // update the max points of the round
-            if ($updateRoundMaxPoints) {
-                $this->update_max_points();
-            }
-        }
-
-        return $ex;
-    }
-    
     /**
      * Find an unused gradebook item number from the exercises of this round.
      */
