@@ -131,7 +131,7 @@ class course_config extends \mod_adastra\local\data\database_object {
      * @return int
      */
     public static function get_default_module_numbering() {
-        return self::MODULE_NUMERING_ARABIC;
+        return self::MODULE_NUMBERING_ARABIC;
     }
 
     /**
