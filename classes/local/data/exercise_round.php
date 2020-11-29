@@ -805,7 +805,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
 
             // update the max points of the round
             if ($updateRoundMaxPoints) {
-                $this->updateMaxPoints();
+                $this->update_max_points();
             }
         }
 
