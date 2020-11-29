@@ -668,6 +668,141 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Update the grades of students in the gradebook for this exercise round
+     * (only the round, not its exercises). The gradebook item must have been
+     * created earlier.
+     *
+     * @param array $grades Student grades of this exercise round, indexed by Moodle user IDs.
+     * The grade is given either as an integer or as a \stdClass object with fields userid and
+     * rawgrade. Do not mix these two input types in the same array!
+     *
+     * For example:
+     * array(userid => 100);
+     * OR
+     * $g = new \stdClass(); $g->userid = userid; $->rawgrade = 100;
+     * array(userid => $g);
+     * @return int Return value of grade_update: one of GRADE_UPDATE_OK,
+     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED.
+     */
+    public function update_grades(array $grades) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+
+        // Transform integer grades to objects (if the first array value is integer).
+        if (is_int(reset($grades))) {
+            $grades = self::grade_array_to_grade_objects($grades);
+        }
+
+        return grade_update(
+            'mod/' . self::TABLE,
+            $this->record->course,
+            'mod',
+            self::TABLE,
+            $this->record->id,
+            0,
+            $grades,
+            null
+        );
+    }
+
+    /**
+     * Synchronize exercise round grades in the gradebook by reading the exercise
+     * grades from the gradebook and summing those together.
+     *
+     * @param array|null $userids Array of user ids whose grades should be synchronized.
+     * If null, synchronize all users who have made submissions in the round.
+     * @return int Return value of grade_update: one of GRADE_UPDATE_OK,
+     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED.
+     */
+    public function synchronize_grades(array $userids = null) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/grade/constants.php');
+
+        if ($userids === null) {
+            /*
+             * Read the user ids of submitters from the gradebook. If an exercise
+             * has been deleted, the actual submission has been deleted too, but
+             * the exercise round still contains an old grade in the gradebook that
+             * must be synchronized.
+             */
+            $gi = $this->get_grade_item();
+            if (!$gi) {
+                // No grade item, hence no grades to sync.
+                return GRADE_UPDATE_OK;
+            }
+            $oldgrades = $gi->get_final();
+            $userids = array_keys($oldgrades);
+            unset($oldgrades);
+        }
+        $grades = grade_get_grades(
+                $this->get_course()->courseid,
+                'mod',
+                self::TABLE,
+                $this->get_id(),
+                $userids
+        );
+        // Sum exercise grades together and save the new exercise round grades in the gradebook.
+        $newgrades = array();
+        foreach ($grades->items as $gradeitemnumber => $item) {
+            if ($gradeitemnumber == 0 || $item->hidden) {
+                // Skip the old exercise round grade and hidden exercises.
+                continue;
+            }
+            foreach ($item->grades as $userid => $grade) {
+                if (isset($newgrades[$userid])) {
+                    if ($grade->grade !== null) {
+                        $newgrades[$userid]->rawgrade += $grade->grade;
+                    }
+                } else {
+                    $gradeobj = new \stdClass();
+                    $gradeobj->userid = $userid;
+                    $gradeobj->rawgrade = $grade->grade;
+                    $newgrades[$userid] = $gradeobj;
+                }
+            }
+        }
+
+        return $this->update_grades($newgrades);
+    }
+
+    /**
+     * Return the gradebook grade item of this exercise round.
+     *
+     * @return \grade_item Or false if not found.
+     */
+    protected function get_grade_item() {
+        global $CFG;
+        require_once($CFG->libdir . '/grade/grade_item.php');
+
+        return \grade_item::fetch(array(
+            'courseid' => $this->get_course()->courseid,
+            'itemtype' => 'mod',
+            'itemmodule' => self::TABLE,
+            'iteminstance' => $this->get_id(),
+            'itemnumber' => 0,
+        ));
+    }
+
+    /**
+     * Convert an array of grades (userid => points) to a corresponding array
+     * of grade objects (userid => object). Object has fields userid and rawgrade.
+     *
+     * @param array $grades
+     * @return array
+     */
+    public static function grade_array_to_grade_objects(array $grades) {
+        $objects = array();
+        foreach ($grades as $userid => $grade) {
+            $obj = new \stdClass();
+            $obj->userid = $userid;
+            $obj->rawgrade = $grade;
+            $objects[$userid] = $obj;
+        }
+        return $objects;
+    }
+
+    /**
      * Get the exercise rounds present in the course.
      *
      * @param int $courseid
