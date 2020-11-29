@@ -121,6 +121,28 @@ class category extends database_object {
     }
 
     /**
+     * Return all learning objects in this category.
+     *
+     * @param boolean $includehidden If true, hidden learning objects are included.
+     * @return \mod_adastra\local\data\learning_object[] Indexed by learning object IDs.
+     */
+    public function get_learning_objects($includehidden = false) {
+        global $DB;
+
+        list($chapterssql, $chparams) = $this->get_learning_objects_sql(\mod_adastra\local\data\chapter::TABLE, $includehidden);
+        $chapterrecords = $DB->get_records_sql($chapterssql, $chparams);
+
+        $learningobjects = $this->get_exercises($includehidden);
+
+        foreach ($chapterrecords as $rec) {
+            $chapter = new \mod_adastra\local\data\chapter($rec);
+            $learningobjects[$chapter->get_id()] = $chapter;
+        }
+
+        return $learningobjects;
+    }
+
+    /**
      * Return all exercises in this category.
      *
      * @param boolean $includehidden If true, hidden exercises are included.
@@ -206,6 +228,53 @@ class category extends database_object {
     public static function create_new(\stdClass $categoryrecord) {
         global $DB;
         return $DB->insert_record(self::TABLE, $categoryrecord);
+    }
+
+    /**
+     * Update an existing category record or create a new one if it does not exist yet
+     * (based on course and the name).
+     *
+     * @param \stdClass $newrecord Must have at least course and name fields as they are used to look
+     * up the record. Course and name are not modified in an existing record.
+     * @return int ID of the new/modified record.
+     */
+    public static function update_or_create(\stdClass $newrecord) {
+        global $DB;
+
+        $catrecord = $DB->get_record(self::TABLE, array(
+                'course' => $newrecord->course,
+                'name' => $newrecord->name,
+        ), '*', IGNORE_MISSING);
+        if ($catrecord === false) {
+            // Create new.
+            return $DB->insert_record(self::TABLE, $newrecord);
+        } else {
+            // Update.
+            if (isset($newrecord->status)) {
+                $catrecord->status = $newrecord->status;
+            }
+            if (isset($newrecord->pointstopass)) {
+                $catrecord->pointstopass = $newrecord->pointstopass;
+            }
+            $DB->update_record(self::TABLE, $catrecord);
+            return $catrecord->id;
+        }
+    }
+
+    /**
+     * Delete this category instance from DB.
+     *
+     * @return bool True.
+     */
+    public function delete() {
+        global $DB;
+
+        // Delete learning objects in this category.
+        foreach ($this->get_learning_objects(true) as $lobject) {
+            $lobject->delete_instance();
+        }
+
+        return $DB->delete_records(self::TABLE, array('id' => $this->get_id()));
     }
 
     /**

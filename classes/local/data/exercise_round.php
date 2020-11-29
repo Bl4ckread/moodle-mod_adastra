@@ -329,6 +329,30 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         $this->record->name = $name;
     }
 
+    public static function update_name_with_order($oldname, $order, $numberingstyle) {
+        require_once(__DIR__ . '/../../../locallib.php');
+
+        // Remove possible old ordinal number.
+        $name = preg_replace('/^(\d+\.)|^([IVXCML]+ )/', '', $oldname, 1);
+        // Require space after the roman numeral, or it catches words like "Very".
+        if ($name !== null) {
+            $name = trim($name);
+            switch ($numberingstyle) {
+                case \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC:
+                    $name = "{$order}. {$name}";
+                    break;
+                case \mod_adastra\local\data\course_config::MODULE_NUMBERING_ROMAN:
+                    $name = \adastra_roman_numeral($order) . ' ' . $name;
+                    break;
+                default:
+                    // Do not add anything to the name.
+            }
+            return $name;
+        } else {
+            return $oldname;
+        }
+    }
+
     /**
      * Return an array of the learning objects in this round (as
      * \mod_adastra\local\data\learning_object instances).
@@ -849,8 +873,10 @@ class exercise_round extends \mod_adastra\local\data\database_object {
      *                                                  database operations.
      * @return \mod_adastra\local\data\exercise the new exercise, or null if failed
      */
-    public function create_new_exercise(\stdClass $exercise, \mod_adastra\local\data\category $category,
-        bool $updateroundmaxpoints = true
+    public function create_new_exercise(
+            \stdClass $exercise,
+            \mod_adastra\local\data\category $category,
+            bool $updateroundmaxpoints = true
     ) {
         global $DB;
 
