@@ -333,7 +333,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
             }
         }
 
-        $name = adastra_parse_localization($this->record->name, $land, $multilang);
+        $name = adastra_parse_localization($this->record->name, $lang, $multilang);
         if (is_array($name)) {
             if (count($name) > 1) {
                 // Multilang with spans.

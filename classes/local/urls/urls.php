@@ -296,7 +296,7 @@ class urls {
      * @return \moodle_url|string
      */
     public static function auto_setup($courseid, $asmoodleurl = false) {
-        $query = array('id' => $courseid);
+        $query = array('course' => $courseid);
         return self::build_url('/teachers/auto_setup.php', $query, $asmoodleurl);
     }
 

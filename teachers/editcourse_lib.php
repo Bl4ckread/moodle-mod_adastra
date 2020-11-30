@@ -53,7 +53,7 @@ function adastra_sort_activities_in_section($courseid, $coursesection) {
      * assignment 1 immediately before assignment 2, in alphabetical order of
      * subassignment names.
      */
-    $sortfunc = function($cmid1, $cmid2) use ($cousemodinfo, $adastras) {
+    $sortfunc = function($cmid1, $cmid2) use ($coursemodinfo, $adastras) {
         $cm1 = $coursemodinfo[$cmid1];
         $cm2 = $coursemodinfo[$cmid2];
         // Figure out Ad Astra round order numbers.
@@ -116,7 +116,7 @@ function adastra_sort_activities_in_section($courseid, $coursesection) {
  */
 function adastra_sort_gradebook_items($courseid) {
     global $CFG;
-    require_once($CFG->libdir - '/grade/grade_item.php');
+    require_once($CFG->libdir . '/grade/grade_item.php');
 
     // Retrieve gradebook grade items in the course.
     $params = array('courseid' => $courseid);

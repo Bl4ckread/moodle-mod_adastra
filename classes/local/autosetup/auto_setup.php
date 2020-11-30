@@ -316,7 +316,7 @@ class auto_setup {
             $courseid,
             $sectionnumber,
             $sectionvisible,
-            \sdtClass $module,
+            \stdClass $module,
             $moduleorder,
             $exerciseorder,
             array &$categories,
@@ -370,7 +370,11 @@ class auto_setup {
         } else {
             $numberingstyle = \mod_adastra\local\data\course_config::get_default_module_numbering();
         }
-        $roundrecord->name = \mod_adastra\local\data\exercise_round::update_name_with_order($modulename, $roundrecord->ordernum, $numberingstyle);
+        $roundrecord->name = \mod_adastra\local\data\exercise_round::update_name_with_order(
+                $modulename,
+                $roundrecord->ordernum,
+                $numberingstyle
+        );
         // In order to show the ordinal number of the exercise round in the Moodle course page,
         // the number must be stored in the name.
 
@@ -409,7 +413,7 @@ class auto_setup {
         } else if (isset($module->duration)) {
             $d = $this->parse_duration($roundrecord->openingtime, $module->duration, $errors);
             if ($d !== null) {
-                $roundrecord->colsingtime = $d;
+                $roundrecord->closingtime = $d;
             }
         }
         if (!isset($roundrecord->closingtime)) {
@@ -527,7 +531,7 @@ class auto_setup {
          */
         $autosetup = $this;
         $unusederrors = array();
-        $hasallowassistantsetting = function($children) use ($autosetup, &$unusederrors, $hasallowassistantsetting) {
+        $hasallowassistantsetting = function($children) use ($autosetup, &$unusederrors, &$hasallowassistantsetting) {
             foreach ($children as $child) {
                 if (
                         isset($child->allow_assistant_grading) &&
@@ -620,7 +624,9 @@ class auto_setup {
                     unset($catrecord->pointstopass);
                 }
             }
-            $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::update_or_create($catrecord));
+            $category = \mod_adastra\local\data\category::create_from_id(
+                    \mod_adastra\local\data\category::update_or_create($catrecord)
+            );
             $categories[$key] = $category;
             $seencats[] = $category->get_id();
         }
@@ -636,6 +642,20 @@ class auto_setup {
         return $categories;
     }
 
+    /**
+     * Configure (create/update) learning objects (exercises/chapters) in an
+     * exercise round based on the configuration JSON.
+     *
+     * @param array $categories \mod_adastra\local\data\category objects indexed by keys.
+     * @param \mod_adastra\local\data\exercise_round $exround
+     * @param array $config Configuration JSON of the exercises.
+     * @param array $seen Array of exercise IDs that have been seen in the config.
+     * @param array $errors
+     * @param \mod_adastra\local\data\learning_object $parent Set if the object is listed under another object,
+     * null if there is no parent object.
+     * @param integer $n Ordering number.
+     * @return int New ordering number, use if exercises are numerated course-wide.
+     */
     protected function configure_learning_objects(
             array &$categories,
             \mod_adastra\local\data\exercise_round $exround,
@@ -645,50 +665,449 @@ class auto_setup {
             \mod_adastra\local\data\learning_object $parent = null,
             $n = 0
     ) {
-        // TODO
+        global $DB;
+
+        foreach ($config as $o) {
+            if (!isset($o->key)) {
+                $errors[] = \get_string('configexercisekeymissing', \mod_adastra\local\data\exercise_round::MODNAME);
+                continue;
+            }
+            if (!isset($o->category)) {
+                $errors[] = \get_string('configexercisecatmissing', \mod_adastra\local\data\exercise_round::MODNAME);
+                continue;
+            }
+            if (!isset($categories[$o->category])) {
+                $errors[] = \get_string('configexerciseunknowncat', \mod_adastra\local\data\exercise_round::MODNAME, $o->category);
+                continue;
+            }
+
+            // Find out if a learning object with the key exists in the exercise round.
+            $lobjectrecord = $DB->get_record(\mod_adastra\local\data\learning_object::TABLE, array(
+                'remotekey' => $o->key,
+                'roundid' => $exround->get_id(),
+            ), '*', IGNORE_MISSING);
+            if ($lobjectrecord === false) {
+                // Create a new one later.
+                $lobjectrecord = new \stdClass();
+                $lobjectrecord->remotekey = $o->key;
+                $oldroundid = null;
+            } else {
+                $oldroundid = $lobjectrecord->roundid;
+            }
+
+            $lobjectrecord->roundid = $exround->get_id();
+            $lobjectrecord->categoryid = $categories[$o->category]->get_id();
+            if ($parent !== null) {
+                $lobjectrecord->parentid = $parent->get_id();
+            } else {
+                $lobjectrecord->parentid = null;
+            }
+
+            // Is it an exercise or a chapter?
+            if (isset($o->max_submissions)) { // Exercise.
+                if (isset($lobjectrecord->id)) { // The exercise exists in Moodle, read old field values.
+                    $exerciserecord = $DB->get_record(\mod_adastra\local\data\exercise::TABLE, array(
+                            'lobjectid' => $lobjectrecord->id,
+                    ), '*', MUST_EXIST);
+                    // Copy object fields.
+                    foreach ($exerciserecord as $key => $val) {
+                        // Exercise table has its own id, keep that id here since lobjectid is the base table id.
+                        $lobjectrecord->$key = $val;
+                    }
+                }
+
+                if (isset($o->allow_assistant_grading)) {
+                    $lobjectrecord->allowastgrading = $this->parse_bool($o->allow_assistant_grading, $errors);
+                } else {
+                    $lobjectrecord->allowastgrading = false;
+                }
+                if (isset($o->allow_assistant_viewing)) {
+                    $lobjectrecord->allowastviewing = $this->parse_bool($o->allow_assistant_viewing, $errors);
+                } else {
+                    $lobjectrecord->allowastviewing = false;
+                }
+
+                // Property max_submission is set since it was used to separate exercises and chapters.
+                $maxsbms = $this->parse_int($o->max_submissions, $errors);
+                if ($maxsbms !== null) {
+                    $lobjectrecord->maxsubmissions = $maxsbms;
+                }
+
+                if (isset($o->max_points)) {
+                    $maxpoints = $this->parse_int($o->max_points, $errors);
+                    if ($maxpoints !== null) {
+                        $lobjectrecord->maxpoints = $maxpoints;
+                    }
+                }
+                if (!isset($lobjectrecord->maxpoints)) {
+                    $lobjectrecord->maxpoints = 100;
+                }
+
+                if (isset($o->points_to_pass)) {
+                    $pointstopass = $this->parse_int($o->points_to_pass, $errors);
+                    if ($pointstopass !== null) {
+                        $lobjectrecord->pointstopass = $pointstopass;
+                    }
+                }
+                if (!isset($lobjectrecord->pointstopass)) {
+                    $lobjectrecord->pointstopass = 0;
+                }
+
+                if (isset($o->submission_file_max_size)) { // A+ does not have this setting.
+                    $sbmsmaxsize = $this->parse_int($o->submission_file_max_size, $errors);
+                    if ($sbmsmaxsize !== null) {
+                        $lobjectrecord->maxsbmssize = $sbmsmaxsize;
+                    }
+                }
+            } else {
+                // Chapter.
+                if (isset($lobjectrecord->id)) { // The chapter exists in Moodle, read old field values.
+                    $chapterrecord = $DB->get_record(\mod_adastra\local\data\chapter::TABLE, array(
+                            'lobjectid' => $lobjectrecord->id,
+                    ), '*', MUST_EXIST);
+                    // Copy object fields.
+                    foreach ($chapterrecord as $key => $val) {
+                        // Chapter table has its own id, keep that id here since lobjectid is the base table id.
+                        $lobjectrecord->$key = $val;
+                    }
+                }
+
+                if (isset($o->generate_table_of_contents)) {
+                    $lobjectrecord->generatetoc = $this->parse_bool($o->generate_table_of_contents, $errors);
+                }
+            }
+
+            if (isset($o->order)) {
+                $order = $this->parse_int($o->order, $errors);
+                if ($order !== null) {
+                    $lobjectrecord->ordernum = $order;
+                }
+            } else {
+                $n += 1;
+                $lobjectrecord->ordernum = $n;
+            }
+
+            if (isset($o->url)) {
+                $lobjectrecord->serviceurl = $this->format_localization($o->url);
+            }
+            if (isset($o->status)) {
+                $lobjectrecord->status = $this->parse_learning_object_status($o->status, $errors);
+            } else {
+                // Default.
+                $lobjectrecord->status = \mod_adastra\local\data\learning_object::STATUS_READY;
+            }
+            if (isset($o->use_wide_column)) {
+                $lobjectrecord->usewidecolumn = $this->parse_bool($o->use_wide_column, $errors);
+            }
+
+            if (isset($o->title)) {
+                $lobjectrecord->name = $this->format_localization($o->title);
+            } else if (isset($o->name)) {
+                $lobjectrecord->name = $this->format_localization($o->name);
+            }
+            if (empty($lobjectrecord->name)) {
+                $lobjectrecord->name = '-';
+            }
+
+            if (isset($lobjectrecord->id)) {
+                // Update existing.
+                if (isset($o->max_submissions)) { // Exercise.
+                    $learningobject = new \mod_adastra\local\data\exercise($lobjectrecord);
+                    if ($oldroundid == $lobjectrecord->roundid) { // Round not changed.
+                        $learningobject->save();
+                        // Updates the gradebook for the exercise.
+                    } else {
+                        // Round changed.
+                        $learningobject->delete_gradebook_item();
+                        // Gradeitemnumber must be unique in the new round.
+                        $newround = $learningobject->get_exercise_round();
+                        $lobjectrecord->gradeitemnumber = $newround->get_new_gradebook_item_number();
+                        $learningobject->save();
+                        // Updates the gradebook item (creates a new item).
+                    }
+                } else {
+                    // Chapter.
+                    $learningobject = new \mod_adastra\local\data\chapter($lobjectrecord);
+                    $learningobject->save();
+                }
+            } else {
+                // Create new.
+                if (isset($o->max_submissions)) {
+                    // Create new exercise.
+                    $learningobject = $exround->create_new_exercise($lobjectrecord, $categories[$o->category], false);
+                } else {
+                    // Chapter.
+                    $learningobject = $exround->create_new_chapter($lobjectrecord, $categories[$o->category]);
+                }
+            }
+
+            $seen[] = $learningobject->get_id();
+
+            if (isset($o->children)) {
+                $this->configure_learning_objects($categories, $exround, $o->children, $seen, $errors, $learningobject);
+            }
+        }
+
+        return $n;
     }
 
+    /**
+     * Parse localised elements into |lang:val|lang:val| -format strings.
+     * Adapted from A+ (a-plus/lib/localization_syntax.py).
+     *
+     * @param object|string $elem
+     * @return string
+     */
     protected function format_localization($elem) : string {
-        // TODO
+        if (is_object($elem)) {
+            $res = '';
+            foreach ($elem as $lang => $val) {
+                if (in_array($lang, $this->languages)) {
+                    $res .= "|{$lang}:{$val}";
+                }
+            }
+            return $res . '|';
+        }
+        return $elem;
     }
 
+    /**
+     * Parse localised elements into multilang spans used by the Moodle multilang filter.
+     * (<span lang="en" class="multilang">English text</span>)
+     * Adapted from A+ (a-plus/lib/localization_syntax.py).
+     *
+     * @param object|string $elem
+     * @return string
+     */
     protected function format_localization_for_activity_name($elem) : string {
-        // TODO
+        if (is_object($elem)) {
+            $res = array();
+            foreach ($elem as $lang => $val) {
+                if (in_array($lang, $this->languages)) {
+                    $res[] = "<span lang=\"{$lang}\" class=\"multilang\">{$val}</span>";
+                }
+            }
+            return implode(' ', $res);
+        }
+        return $elem;
     }
 
+    /**
+     * Parse the learning object status string and return the appropriate class constant value.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return int
+     */
     protected function parse_learning_object_status($value, &$errors) {
-        // TODO
+        switch ($value) {
+            case 'ready':
+                return \mod_adastra\local\data\learning_object::STATUS_READY;
+            break;
+            case 'hidden':
+                return \mod_adastra\local\data\learning_object::STATUS_HIDDEN;
+            break;
+            case 'maintenance':
+                return \mod_adastra\local\data\learning_object::STATUS_MAINTENANCE;
+            break;
+            case 'unlisted':
+                return \mod_adastra\local\data\learning_object::STATUS_UNLISTED;
+            break;
+            default:
+                $errors[] = \get_string('configbadstatus', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+                return \mod_adastra\local\data\learning_object::STATUS_HIDDEN;
+        }
     }
 
+    /**
+     * Parse the module status string and return the appropriate class constant value.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return int
+     */
     protected function parse_module_status($value, &$errors) {
-        // TODO
+        switch ($value) {
+            case 'ready':
+                return \mod_adastra\local\data\exercise_round::STATUS_READY;
+            break;
+            case 'hidden':
+                return \mod_adastra\local\data\exercise_round::STATUS_HIDDEN;
+            break;
+            case 'maintenance':
+                return \mod_adastra\local\data\exercise_round::STATUS_MAINTENANCE;
+            break;
+            case 'unlisted':
+                return \mod_adastra\local\data\exercise_round::STATUS_UNLISTED;
+            break;
+            default:
+                $errors[] = \get_string('configbadstatus', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+                return \mod_adastra\local\data\exercise_round::STATUS_HIDDEN;
+        }
     }
 
+    /**
+     * Parse the category status string and return the appropriate class constant value.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return int
+     */
     protected function parse_category_status($value, &$errors) {
-
+        switch ($value) {
+            case 'ready':
+                return \mod_adastra\local\data\category::STATUS_READY;
+            break;
+            case 'hidden':
+                return \mod_adastra\local\data\category::STATUS_HIDDEN;
+            break;
+            case 'nototal':
+                return \mod_adastra\local\data\category::STATUS_NOTOTAL;
+            break;
+            default:
+                $errors[] = \get_string('configbadstatus', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+                return \mod_adastra\local\data\category::STATUS_HIDDEN;
+        }
     }
 
+    /**
+     * Parse a numeric string value into an int.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return int|null
+     */
     protected function parse_int($value, &$errors) {
-        // TODO
+        if (\is_numeric($value)) {
+            return (int) $value;
+        } else {
+            $errors[] = \get_string('configbadint', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+            return null;
+        }
     }
 
+    /**
+     * Parse a numeric string value into a float.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return float|null
+     */
     protected function parse_float($value, &$errors) {
-        // TODO
+        if (\is_numeric($value)) {
+            return (float) $value;
+        } else {
+            $errors[] = \get_string('configbadfloat', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+            return null;
+        }
     }
 
+    /**
+     * Parse a value into a boolean. It may be either a straight boolean or a string representation of a truth value.
+     *
+     * @param string|bool $value
+     * @param array $errors
+     * @return bool
+     */
     protected function parse_bool($value, &$errors) {
-        // TODO
+        return ($value === true ||
+                \is_string($value) && \in_array($value, array('yes', 'Yes', 'true', 'True')));
     }
 
+    /**
+     * Parse a date string into a Unix timestamp.
+     *
+     * @param string $value
+     * @param array $errors
+     * @return int A Unix timestamp.
+     */
     protected function parse_date($value, &$errors) {
-        // TODO
+        // Example: 2016-01-27T23:59:55UTC.
+        // Literal T in the middle (\T), timezone T at the end.
+        $formats = array('Y-m-d\TH:i:sT', 'Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'Y-m-d H:i', 'Y-m-d H', 'Y-m-d');
+        foreach ($formats as $format) {
+            $date = \DateTime::createFromFormat($format, $value);
+            if ($date !== false) {
+                return $date->getTimestamp();
+            }
+        }
+        $errors[] = \get_string('configbaddate', \mod_adastra\local\data\exercise_round::MODNAME, $value);
+        return null;
     }
 
+    /**
+     * Parse a duration string and convert it into a timestamp representing course closing time.
+     *
+     * @param int $openingtime A Unix timestamp.
+     * @param string $duration
+     * @param array $errors
+     * @return int A Unix timestamp.
+     */
     protected function parse_duration($openingtime, $duration, &$errors) {
-        // TODO
+        $len = \strlen($duration);
+        if ($len > 1) {
+            $unit = $duration[$len - 1];
+            $value = \substr($duration, 0, $len - 1);
+            if (\is_numeric($value)) {
+                $value = (int) $value;
+                if (\in_array(\strtolower($unit), array('h', 's'))) {
+                    // Time (hours), mooc-grader uses m for months, not minutes.
+                    $intervalspec = "PT{$value}" . \strtoupper($unit);
+                } else {
+                    // Date (days, months, years).
+                    $intervalspec = "P{$value}" . \strtoupper($unit);
+                }
+                try {
+                    $interval = new \DateInterval($intervalspec);
+                    $start = new \DateTime("@{$openingtime}"); // From Unix timestamp.
+                    $start->add($interval);
+                    return $start->getTimestamp();
+                } catch (\Exception $e) {
+                    // Invalid interval.
+                    $errors[] = \get_string('configbadduration', \mod_adastra\local\data\exercise_round::MODNAME, $duration);
+                    return null;
+                }
+            }
+        }
+        $errors[] = \get_string('configbadduration', \mod_adastra\local\data\exercise_round::MODNAME, $duration);
+        return null;
     }
 
+    /**
+     * Return an array of Moodle user records corresponding to the given student ids.
+     *
+     * @param array $studentids An array of student ids (user idnumber in Moodle).
+     * @param array $errors
+     * @return \stdClass[]
+     */
     protected function parse_student_id_list($studentids, &$errors) {
-        // TODO
+        global $DB;
+
+        $users = array();
+        $notfoundids = array();
+
+        if (!\is_array($studentids)) {
+            $errors[] = \get_string('configasssistantsnotarray', \mod_adastra\local\data\exercise_round::MODNAME);
+            return $users;
+        }
+
+        foreach ($studentids as $studentid) {
+            $user = $DB->get_record('user', array('idnumber' => $studentid));
+            if ($user === false) {
+                $notfoundids[] = $studentid;
+            } else {
+                $users[] = $user;
+            }
+        }
+
+        if (!empty($notfoundids)) {
+            $errors[] = \get_string(
+                    'configassistantnotfound',
+                    \mod_adastra\local\data\exercise_round::MODNAME,
+                    \implode(', ', $notfoundids)
+            );
+        }
+
+        return $users;
     }
 }

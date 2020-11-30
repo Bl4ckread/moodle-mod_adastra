@@ -125,7 +125,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
             \context_module::instance($this->get_exercise_round()->get_course_module()->id)->id,
             \mod_adastra\local\data\exercise_round::MODNAME,
             \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
-            'IN (SELECT id FROM {' . \mod_adastra\local\data\submission::TABLE . '} WHERE exerciseid = :adastraexerciseid',
+            'IN (SELECT id FROM {' . \mod_adastra\local\data\submission::TABLE . '} WHERE exerciseid = :adastraexerciseid)',
             array('adastraexerciseid' => $this->get_id())
         );
         // All submissions to this exercise.
@@ -157,7 +157,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
     public function delete_deviations() {
         global $DB;
 
-        $DB->delete_records(\mod_adastra\local\data\deadline_deviationn::TABLE, array('exerciseid' => $this->get_id()));
+        $DB->delete_records(\mod_adastra\local\data\deadline_deviation::TABLE, array('exerciseid' => $this->get_id()));
         $DB->delete_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array('exerciseid' => $this->get_id()));
     }
 
@@ -223,7 +223,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
             'mod/' . \mod_adastra\local\data\exercise_round::TABLE,
             $courseid,
             'mod',
-            \mod_adastra\local\data\execise_round::TABLE,
+            \mod_adastra\local\data\exercise_round::TABLE,
             $this->record->roundid,
             $this->get_gradebook_item_number(),
             null,

@@ -16,13 +16,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Define cache areas for the Moodle Cache API (Moodle Universal Cache, MUC).
+/*
+ * Local settings defined with constants.
+ * These are not expected to change after the plugin installation so
+ * they are not saved in the Moodle configuration database.
+ */
 
-$definitions = array(
-    // Exercise HTML descriptions are cached so that they do not have to be retrieved from the exercise service every time.
-    'exercisedesc' => array(
-        'mode' => cache_store::MODE_APPLICATION, // Cache is shared across users.
-        'simpledata' => true, // Scalar data (array of strings and ints).
-        'simplekeys' => true,
-    ),
-);
+define('ADASTRA_REMOTE_PAGE_HOSTS_MAP', array());
+
+define('ADASTRA_OVERRIDE_SUBMISSION_HOST', null);

@@ -18,6 +18,12 @@ namespace mod_adastra\form;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . '/formslib.php');
+
+/**
+ * Form for input that is needed to automatically create and update
+ * Ad Astra exercises in a course.
+ */
 class autosetup_form extends \moodleform {
 
     private $defaultvalues; // Variable of class stdClass with keys apikey, configurl and sectionnum.

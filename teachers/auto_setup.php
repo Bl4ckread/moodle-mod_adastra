@@ -22,7 +22,7 @@ $course = get_course($cid);
 
 require_login($course, false);
 $context = context_course::instance($cid);
-require_capability('mod/adastra::addinstance', $context);
+require_capability('mod/adastra:addinstance', $context);
 
 $pageurl = mod_adastra\local\urls\urls::auto_setup($cid, true);
 
@@ -30,7 +30,7 @@ $pageurl = mod_adastra\local\urls\urls::auto_setup($cid, true);
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_url($pageurl);
 $PAGE->set_title(format_string(get_string('autosetup', mod_adastra\local\data\exercise_round::MODNAME)));
-$PAGE->set_heading(format_string($course->$fullname));
+$PAGE->set_heading(format_string($course->fullname));
 
 // Setup the navbar.
 adastra_edit_course_navbar_add(
@@ -48,7 +48,7 @@ if ($defaultvalues === false) {
 
 // Output starts here.
 // Moodle forms should be initialized before $output->header.
-$form = new \mod_adastra\form\autosetup_form($defaultvalues, 'autosetup.php?course=' . $cid);
+$form = new \mod_adastra\form\autosetup_form($defaultvalues, 'auto_setup.php?course=' . $cid);
 if ($form->is_cancelled()) {
     // Handle form cancel operation, if cancel button is present on form.
     redirect(\mod_adastra\local\urls\urls::edit_course($cid, true));
@@ -72,4 +72,25 @@ if ($fromform = $form->get_data()) {
         $fromform->configurl,
         $fromform->apikey
     );
+    if (empty($errors)) {
+        echo '<p>' . get_string('autosetupsuccess', \mod_adastra\local\data\exercise_round::MODNAME) . '</p>';
+    } else {
+        // Errors in creating/updating some course content.
+        echo '<p>' . get_string('autosetuperror', \mod_adastra\local\data\exercise_round::MODNAME) . '</p>';
+        echo html_writer::alist($errors);
+    }
+
+    echo '<p>' .
+            html_writer::link(
+                \mod_adastra\local\urls\urls::edit_course($cid, true),
+                get_string('backtocourseedit', \mod_adastra\local\data\exercise_round::MODNAME)
+            ) .
+        '</p>';
+} else {
+    // This branch is executed if the form is submitted but the date doesn't validate
+    // and the form should be redisplayed, or on the first display of the form.
+    $form->display();
 }
+
+// Finish the page.
+echo $output->footer();

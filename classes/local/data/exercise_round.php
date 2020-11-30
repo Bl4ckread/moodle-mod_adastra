@@ -862,16 +862,14 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     /**
      * Create a new exercise to this exercise round.
      *
-     * @param  stdClass           $exercise             settings for the nex exercise: object with fields
-     *                                                  status, parentid, ordernum, remotekey, name,
-     *                                                  serviceurl, maxsubmissions, pointstopass,
-     *                                                  maxpoints
-     * @param  \mod_adastra\local\data\category $category             category of the exercise
-     * @param  bool               $updateRoundMaxPoints if true, the max points of the round are
-     *                                                  updated here. Use false if the round is
-     *                                                  handled elsewhere in order to reduce
-     *                                                  database operations.
-     * @return \mod_adastra\local\data\exercise the new exercise, or null if failed
+     * @param \stdClass $exercise Settings for the new exercise: object with fields
+     * status, parentid, ordernum, remotekey, name, serviceurl, maxsubmissions,
+     * pointstopass, maxpoints
+     * @param \mod_adastra\local\data\category $category Category of the exercise.
+     * @param boolean $updateroundmaxpoints If true, the max points of the round are
+     * updated here. Use false if the round is handled elsewhere in order to reduce
+     * database operations.
+     * @return \mod_adastra\local\data\exercise|null The new exercise, or null if failed.
      */
     public function create_new_exercise(
             \stdClass $exercise,
@@ -891,8 +889,8 @@ class exercise_round extends \mod_adastra\local\data\database_object {
 
             try {
                 $ex = \mod_adastra\local\data\exercise::create_from_id($exercise->lobjectid);
-            } catch (dml_exception $e) {
-                // Learning object row was created but not the exercise row, remove learning object.
+            } catch (\dml_exception $e) {
+                // The learning object row was created but not the exercise row, remove the learning object.
                 $DB->delete_records(\mod_adastra\local\data\learning_object::TABLE, array('id' => $exercise->lobjectid));
                 return null;
             }
@@ -907,6 +905,36 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         }
 
         return $ex;
+    }
+
+    /**
+     * Create a new chapter to this exercise round.
+     *
+     * @param \stdClass $chapter Settings for the new chapter: object with fields
+     * status, parentid, ordernum, remotekey, name, serviceurl, generatetoc.
+     * @param \mod_adastra\local\data\category $category Category of the chapter.
+     * @return \mod_adastra\local\data\chapter|null The new chapter, of null if failed.
+     */
+    public function create_new_chapter(\stdClass $chapter, \mod_adastra\local\data\category $category) {
+        global $DB;
+
+        $chapter->categoryid = $category->get_id();
+        $chapter->roundid = $this->get_id();
+
+        $chapter->lobjectid = $DB->insert_record(\mod_adastra\local\data\learning_object::TABLE, $chapter);
+        $ch = null;
+        if ($chapter->lobjectid) {
+            $chapter->id = $DB->insert_record(\mod_adastra\local\data\chapter::TABLE, $chapter);
+
+            try {
+                $ch = \mod_adastra\local\data\chapter::create_from_id($chapter->lobjectid);
+            } catch (\dml_exception $e) {
+                // The learning object row was created but not the chapter row, remove the learning object.
+                $DB->delete_records(\mod_adastra\local\data\learning_object::TABLE, array('id' => $chapter->lobjectid));
+            }
+        }
+
+        return $ch;
     }
 
     /**

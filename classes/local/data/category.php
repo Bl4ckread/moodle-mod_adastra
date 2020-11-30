@@ -113,7 +113,7 @@ class category extends database_object {
         $params = array($this->get_id());
 
         if (!$includehidden) {
-            $sql .= 'AND status != ?';
+            $sql .= ' AND status != ?';
             $params[] = \mod_adastra\local\data\learning_object::STATUS_HIDDEN;
         }
 
@@ -175,7 +175,7 @@ class category extends database_object {
         global $DB;
 
         list($sql, $params) = $this->get_learning_objects_sql(\mod_adastra\local\data\exercise::TABLE,
-                $includehidden, 'COUNT(lob.id');
+                $includehidden, 'COUNT(lob.id)');
 
         return $DB->count_records_sql($sql, $params);
     }

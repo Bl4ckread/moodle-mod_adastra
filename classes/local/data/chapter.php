@@ -37,7 +37,7 @@ class chapter extends \mod_adastra\local\data\learning_object {
      * @param boolean $includesiblins
      * @return \stdClass
      */
-    public function get_template_context($includecoursemodule = true, $includesiblins = false) {
+    public function get_template_context($includecoursemodule = true, $includesiblings = false) {
         $ctx = parent::get_template_context($includecoursemodule, $includesiblings);
         $ctx->generatetoc = $this->should_generate_table_of_contents();
         return $ctx;

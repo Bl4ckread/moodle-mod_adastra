@@ -129,7 +129,7 @@ class remote_page {
         }
 
         $response = curl_exec($ch);
-        if ($reponse === false) {
+        if ($response === false) {
             // Curl failed.
             $error = curl_error($ch);
             curl_close($ch);

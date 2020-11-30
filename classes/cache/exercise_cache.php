@@ -75,7 +75,7 @@ class exercise_cache {
 
         foreach ($learningobjectids as $lobjid) {
             foreach ($languages as $lang) {
-                $keys[] = self::key($lobjid, $lang))
+                $keys[] = self::key($lobjid, $lang);
             }
         }
 
