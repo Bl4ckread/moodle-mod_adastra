@@ -28,6 +28,9 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="remotekey" UNIQUE="false" FIELDS="remotekey" COMMENT="Not unique because it might only be unique within a course."/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="adastra_course_settings" COMMENT="Course-wide settings concerning Ad Astra exercises">
       <FIELDS>
