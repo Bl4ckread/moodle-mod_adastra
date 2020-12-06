@@ -679,7 +679,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
                 ($gradecategory->aggregation != GRADE_AGGREGATE_SUM || $gradecategory->aggregateonlygraded != 0)
         ) {
             // Set course gradebook total grade aggregation method to "natural" i.e. sum.
-            $gradecategory->aggregation = GRADE_CATEGORY_SUM;
+            $gradecategory->aggregation = GRADE_AGGREGATE_SUM;
             // Include ungraded assignments in the aggregation. Course total does not show
             // 100 % when only one exercise has been submitted with correct solution.
             $gradecategory->aggregateonlygraded = 0;
