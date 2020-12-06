@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace mod_adastra\local\data;
 
@@ -179,6 +179,37 @@ class exercise extends \mod_adastra\local\data\learning_object {
                 null,
                 array('deleted' => 1)
         );
+    }
+
+    /**
+     * Return the number of submissions the student has made in this exercise.
+     *
+     * @param int $userid
+     * @param boolean $excludeerrors If true, the submissions with status error are not counted.
+     * @return int
+     */
+    public function get_submission_count_for_student($userid, $excludeerrors = false) {
+        global $DB;
+
+        if ($excludeerrors) {
+            // Exclude submissions with status error.
+            $count = $DB->count_records_select(
+                    \mod_adastra\local\data\submission::TABLE,
+                    'exerciseid = ? AND submitter = ? AND status != ?',
+                    array(
+                            $this->get_id(),
+                            $userid,
+                            \mod_adastra\local\data\submissio::STATUS_ERROR,
+                    ),
+                    "COUNT('id')"
+            );
+        } else {
+            $count = $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+                    'exerciseid' => $this->get_id(),
+                    'submitter' => $userid,
+            ));
+        }
+        return $count;
     }
 
     /**
@@ -370,5 +401,68 @@ class exercise extends \mod_adastra\local\data\learning_object {
             return $max + $deviation->get_extra_submissions();
         }
         return $max;
+    }
+
+    /**
+     * Return true if student still has submissions left.
+     *
+     * @param \stdClass $user
+     * @return boolean
+     */
+    public function student_has_submissions_left(\stdClass $user) {
+        if ($this->get_max_submissions() == 0) {
+            return true;
+        }
+        return $this->get_submission_count_for_student($user->id) < $this->get_max_submissions_for_student($user);
+    }
+
+    /**
+     * Return true if student has access to the exercise.
+     *
+     * @param \stdClass $user
+     * @param int $when A Unix timestamp.
+     * @return boolean
+     */
+    public function student_has_access(\stdClass $user, $when = null) {
+        // Check deadlines.
+        if ($when === null) {
+            $when = time();
+        }
+        $exround = $this->get_exercise_round();
+        if ($exround->is_open($when) || $exround->is_late_submission_open($when)) {
+            return true;
+        }
+        if ($exround->has_started($when)) {
+            // Check deviations.
+            $deviation = \mod_adastra\local\data\deadline_deviation::find_deviation($this->get_id(), $user->id)
+            if ($deviation !== null && $when <= $deviation->get_new_deadline()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Return true if $user is allowed to make a submission.
+     *
+     * @param \stdClass $user
+     * @return boolean
+     */
+    public function is_submission_allowed(\stdClass $user) {
+        $context = \context_module::instance($this->get_exercise_round()->get_course_module()->id);
+        if (
+                has_capability('mod/adastra:addinstance', $context, $user) ||
+                has_capability('mod/adastra:viewallsubmissions', $context, $user)
+        ) {
+            // Always allow for teachers.
+            return true;
+        }
+        if (!$this->student_has_access($user)) {
+            return false;
+        }
+        if (!$this->student_has_submissions_left($user)) {
+            return false;
+        }
+        return true;
     }
 }
