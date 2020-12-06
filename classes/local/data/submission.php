@@ -295,6 +295,43 @@ class submission extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Create a new submission to an exercise.
+     *
+     * @param \mod_adastra\local\data\exercise $ex
+     * @param int $submitterid ID of a Moodle user.
+     * @param array $submissiondata associative array of submission data,
+     * e.g. form input (not files) from the user. Keys should be strings (form input names).
+     * Null if there is no data.
+     * @param int $status
+     * @param int|null $submissiontime Unix timestamp of the submission time. If null, uses
+     * the current time.
+     * @return int ID of the new submission record, zero on failure.
+     */
+    public static function create_new_submission(
+            \mod_adastra\local\data\exercise $ex,
+            $submitterid,
+            $submissiondata = null,
+            $status = self::STATUS_INITIALIZED,
+            $submissiontime = null
+    ) {
+        global $DB;
+        $row = new \stdClass();
+        $row->status = $status;
+        $row->submissiontime = ($submissiontime === null ? time() : $submissiontime);
+        $row->hash = self::get_random_string();
+        $row->exerciseid = $ex->get_id();
+        $row->submitter = $submitterid;
+        if ($submissiondata === null) {
+            $row->submissiondata = null;
+        } else {
+            $row->submissiondata = self::submission_data_to_string($submissiondata);
+        }
+
+        $id = $DB->insert_record(self::TABLE, $row);
+        return $id; // 0 if failed.
+    }
+
+    /**
      * Return true if the submission has been graded.
      *
      * @return boolean
@@ -319,6 +356,41 @@ class submission extends \mod_adastra\local\data\database_object {
             false
         );
         return $files;
+    }
+
+    /**
+     * Encode a submissiondata array into a json string.
+     *
+     * @param array $submissiondata
+     * @return string
+     */
+    public static function submission_data_to_string(array $submissiondata) {
+        $json = json_encode($submissiondata);
+        if ($json === false) {
+            return null; // Failed to encode.
+        }
+        return $json;
+    }
+
+    /**
+     * Return a string of a random character sequence.
+     *
+     * @param integer $length Length of the generated string.
+     * @param boolean $specialcharacters If true, include common special characters. If false, alphanumeric only.
+     * @return string
+     */
+    public static function get_random_string($length = 32, $specialcharacters = false) {
+        // Digits 0-9, alphabets a-z, A-Z.
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if ($specialcharacters) {
+            $chars .= '!"#%&/()=?+@{[]},.-_:;*\'\\';
+        }
+        $rmax = strlen($chars) - 1; // Max value for rand, inclusive.
+        $res = '';
+        for ($i = 0; $i < $length; ++$i) {
+            $res .= substr($chars, mt_rand(0, $rmax), 1);
+        }
+        return $res;
     }
 
     /**
