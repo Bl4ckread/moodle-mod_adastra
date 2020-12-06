@@ -434,7 +434,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
         }
         if ($exround->has_started($when)) {
             // Check deviations.
-            $deviation = \mod_adastra\local\data\deadline_deviation::find_deviation($this->get_id(), $user->id)
+            $deviation = \mod_adastra\local\data\deadline_deviation::find_deviation($this->get_id(), $user->id);
             if ($deviation !== null && $when <= $deviation->get_new_deadline()) {
                 return true;
             }
