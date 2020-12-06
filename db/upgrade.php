@@ -303,6 +303,7 @@ function xmldb_adastra_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020111504, 'adastra');
     }
 
+    // Add required fields to adastra table.
     if ($oldversion < 2020111505) {
 
         // Define field ordernum to be added to adastra.
@@ -396,6 +397,20 @@ function xmldb_adastra_upgrade($oldversion) {
 
         // Adastra savepoint reached.
         upgrade_mod_savepoint(true, 2020111505, 'adastra');
+    }
+
+    // Change grader to null.
+    if ($oldversion < 2020120600) {
+
+        // Changing nullability of field grader on table adastra_submissions to null.
+        $table = new xmldb_table('adastra_submissions');
+        $field = new xmldb_field('grader', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'submitter');
+
+        // Launch change of nullability for field grader.
+        $dbman->change_field_notnull($table, $field);
+
+        // Adastra savepoint reached.
+        upgrade_mod_savepoint(true, 2020120600, 'adastra');
     }
 
     // For further information please read the Upgrade API documentation:

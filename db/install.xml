@@ -139,7 +139,7 @@
         <FIELD NAME="hash" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="Random string."/>
         <FIELD NAME="exerciseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Exercise learning object ID (lobjectid)."/>
         <FIELD NAME="submitter" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle user ID of the submitter."/>
-        <FIELD NAME="grader" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle user ID of the grader (if manual feedback or grading is used)."/>
+        <FIELD NAME="grader" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Moodle user ID of the grader (if manual feedback or grading is used)."/>
         <FIELD NAME="feedback" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Machine-generated feedback."/>
         <FIELD NAME="assistfeedback" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Assistant feedback."/>
         <FIELD NAME="grade" TYPE="int" LENGTH="7" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Grade (points) that the submission is given."/>
