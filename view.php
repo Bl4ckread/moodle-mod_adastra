@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Prints an instance of mod_adastra.
+ * Prints an instance of ad astra (exercise round).
  *
  * @package     mod_adastra
  * @copyright   2020 Your Name <you@example.com>
@@ -23,43 +23,57 @@
  */
 
 require(__DIR__.'/../../config.php');
-require_once(__DIR__.'/lib.php');
+require_once(__DIR__.'/locallib.php');
 
-// Course_module ID, or
-$id = optional_param('id', 0, PARAM_INT);
+$id = optional_param('id', 0, PARAM_INT); // Course module ID, or
+$n = optional_param('s', 0, PARAM_INT); // ... exercise round ID.
 
-// ... module instance id.
-$a  = optional_param('a', 0, PARAM_INT);
 
 if ($id) {
-    $cm             = get_coursemodule_from_id('adastra', $id, 0, false, MUST_EXIST);
-    $course         = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('adastra', array('id' => $cm->instance), '*', MUST_EXIST);
-} else if ($a) {
-    $moduleinstance = $DB->get_record('adastra', array('id' => $n), '*', MUST_EXIST);
-    $course         = $DB->get_record('course', array('id' => $moduleinstance->course), '*', MUST_EXIST);
-    $cm             = get_coursemodule_from_instance('adastra', $moduleinstance->id, $course->id, false, MUST_EXIST);
+    list($course, $cm) = get_course_and_cm_from_cmid($id, mod_adastra\local\data\exercise_round::TABLE);
+    $adastra = $DB->get_record(mod_adastra\local\data\exercise_round::TABLE, array('id' => $cm->instance), '*', MUST_EXIST);
+} else if ($n) {
+    $adastra = $DB->get_record(mod_adastra\local\data\exercise_round::TABLE, array('id' => $n), '*', MUST_EXIST);
+    list($course, $cm) = get_course_and_cm_from_cmid($adastra->id, mod_adastra\local\data\exercise_round::TABLE);
 } else {
-    print_error(get_string('missingidandcmid', 'mod_adastra'));
+    print_error('missingparam', '', '', 'id');
 }
 
-require_login($course, true, $cm);
+require_login($course, false, $cm);
+$context = context_module::instance($cm->id);
 
-$modulecontext = context_module::instance($cm->id);
+$exround = new mod_adastra\local\data\exercise_round($adastra);
 
-$event = \mod_adastra\event\course_module_viewed::create(array(
-    'objectid' => $moduleinstance->id,
-    'context' => $modulecontext
+// This should prevent guest access.
+require_capability('mod/adastra:view', $context);
+if (
+        (!$cm->visible || $exround->is_hidden()) &&
+        !has_capability('moodle/course:manageactivities', $context)
+) {
+    // Show hidden activity (exercise round page) only to teachers.
+    throw new required_capability_exception($context, 'moodle/course:manageactivities', 'nopermissions', '');
+}
+
+// Event for logging (viewing the page).
+$event = mod_adastra\event\course_module_viewed::create(array(
+        'objectid' => $PAGE->cm->instance,
+        'context' => $PAGE->context,
 ));
-$event->add_record_snapshot('course', $course);
-$event->add_record_snapshot('adastra', $moduleinstance);
+$event->add_record_snapshot('course', $PAGE->course);
+$event->add_record_snapshot($PAGE->cm->modname, $adastra);
 $event->trigger();
 
-$PAGE->set_url('/mod/adastra/view.php', array('id' => $cm->id));
-$PAGE->set_title(format_string($moduleinstance->name));
+$PAGE->set_url('/mod/' . mod_adastra\local\data\exercise_round::TABLE . '/view.php', array('id' => $cm->id));
+$PAGE->set_title(format_string($exround->get_name()));
 $PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($modulecontext);
 
-echo $OUTPUT->header();
+// Render page content.
+$output = $PAGE->get_renderer(mod_adastra\local\data\exercise_round::MODNAME);
 
-echo $OUTPUT->footer();
+// Print the page header (Moodle navbar etc.).
+echo $output->header();
+
+$renderable = new mod_adastra\output\exercise_round_page($exround, $USER);
+echo $output->render($renderable);
+
+echo $output->footer();

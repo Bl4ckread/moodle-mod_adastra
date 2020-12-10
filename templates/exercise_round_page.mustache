@@ -1,0 +1,68 @@
+{{!
+Show one exercise round.
+
+Context variables:
+* variables required by exercise_round.mustache
+    - course_module requires additional fields used in _siblings.mustache
+* toc (object) table of contents context for the round, has fields as required by
+        _round_toc.mustache
+}}
+
+{{# coursemodule }}
+{{> mod_adastra/_siblings }}
+{{/ coursemodule }}
+
+<!-- Nav tabs -->
+<ul class="nav nav-tabs" role="tablist">
+  <li class="nav-item">
+    <a href="#round-summary-tab" aria-controls="round-summary-tab" role="tab" data-toggle="tab"
+        class="nav-link active" id="round-summary-link" aria-expanded="true">
+      {{#str}} exerciseresults, mod_adastra {{/str}}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a href="#round-toc-tab" aria-controls="round-toc-tab" role="tab" data-toggle="tab"
+        class="nav-link" id="round-toc-link">
+      {{#str}} toc, mod_adastra {{/str}}
+    </a>
+  </li>
+</ul>
+
+<!-- Tab panes -->
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane fade show active" id="round-summary-tab"
+      aria-labelledby="round-summary-link">
+    {{> mod_adastra/exercise_round }}
+  </div> <!-- close tab-pane -->
+
+  <div role="tabpanel" class="tab-pane fade" id="round-toc-tab" aria-labelledby="round-toc-link">
+    <h3>{{#str}} toc, mod_adastra {{/str}}</h3>
+    {{# toc }}
+      {{> mod_adastra/_round_toc }}
+    {{/ toc }}
+  </div> <!-- close tab-pane -->
+
+</div> <!-- close tab-content -->
+
+{{# coursemodule }}
+{{> mod_adastra/_siblings }}
+{{/ coursemodule }}
+
+{{> mod_adastra/_page_file_modals }}
+
+<!--
+{{#js}}
+require(['theme_boost/loader']);
+require(['jquery', 'theme_boost/tooltip', 'mod_astra/aplus_modal'], function($) {
+  /* enable Bootstrap tooltips */
+  $(function() {
+    $('[data-toggle="tooltip"]').tooltip();
+
+    /* Enable modal dialogs */
+    $('.page-modal').aplusModalLink();
+    $('.file-modal').aplusModalLink({file:true});
+  });
+});
+{{/js}}
+-->

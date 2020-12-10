@@ -57,7 +57,7 @@ class user_exercise_summary {
         $this->submissioncount = $submissioncount;
         $this->bestsubmission = $bestsubmission;
         $this->submissions = $submissions;
-        if (is_null($cagegory)) {
+        if (is_null($category)) {
             $this->category = $ex->get_category();
         } else {
             $this->category = $category;
@@ -154,7 +154,7 @@ class user_exercise_summary {
      * @return \mod_adastra\local\data\submission
      */
     public function get_best_submission() {
-        return $this->bestsubmision;
+        return $this->bestsubmission;
     }
 
     /**

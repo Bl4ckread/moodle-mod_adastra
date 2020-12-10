@@ -81,7 +81,7 @@ class user_category_summary {
     public function get_max_points() {
         $max = 0;
         foreach ($this->exercisesummaries as $exsummary) {
-            $max += $exsummary->getmaxpoints();
+            $max += $exsummary->get_max_points();
         }
         return $max;
     }

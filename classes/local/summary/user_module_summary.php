@@ -93,7 +93,7 @@ class user_module_summary {
                     'best' => null, // Best submission.
                     'all' => array(),
                 );
-                $exerciseids = $ex->get_id();
+                $exerciseids[] = $ex->get_id();
             }
         }
 
@@ -105,7 +105,7 @@ class user_module_summary {
         ORDER BY submissiontime DESC";
 
         if (!empty($exerciseids)) {
-            $submissions = $DB->get_recordset_sql($sql, array($this->user->idate));
+            $submissions = $DB->get_recordset_sql($sql, array($this->user->id));
             // Find the best submission for each exercise.
             foreach ($submissions as $record) {
                 $sbms = new \mod_adastra\local\data\submission($record);
@@ -312,7 +312,7 @@ class user_module_summary {
             } else {
                 $data->exercise = $lobject->get_template_context(false);
             }
-            $ctx->$data;
+            $ctx[] = $data;
         }
 
         return $ctx;

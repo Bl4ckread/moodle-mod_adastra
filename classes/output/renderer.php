@@ -32,6 +32,17 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Render view.php.
+     *
+     * @param \mod_adastra\output\exercise_round_page $page
+     * @return string Html for the page.
+     */
+    protected function render_exercise_round_page(\mod_adastra\output\exercise_round_page $page) {
+        $data = $page->export_for_template($this);
+        return parent::render_from_template(\mod_adastra\local\data\exercise_round::MODNAME . '/exercise_round_page', $data);
+    }
+
+    /**
      * Render edit_course.php.
      *
      * @param \mod_adastra\output\edit_course_page $page

@@ -309,7 +309,7 @@ class urls {
      */
     public static function rounds_index($courseid, $asmoodleurl = false) {
         $query = array('id' => $courseid);
-        return self::buildurl('/index.php', $query, $asmoodleurl);
+        return self::build_url('/index.php', $query, $asmoodleurl);
     }
 
     /**

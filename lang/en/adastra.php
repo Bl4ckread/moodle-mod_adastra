@@ -26,8 +26,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['modulename'] = 'Ad Astra';
-$string['pluginname'] = 'Ad Astra';
-$string['modulenameplural'] = 'Ad Astras';
+$string['pluginname'] = 'Ad Astra exercises'; // Used by Moodle core.
+$string['modulenameplural'] = 'Ad Astra Exercises';
+$string['noadastras'] = 'No Ad Astra exercises in this course';
+$string['modulename_help'] = 'Ad Astra module integrates <a href="https://apluslms.github.io/" target="_blank">A+ LMS courses</a> into Moodle.
+
+Ad Astra activities should not be created manually from this activity selector. Instead, add the "Ad Astra exercises setup" block to your course space and import the Ad Astra exercise configurations from your exercise service.
+
+There are instructions about Ad Astra in the aplus-manual course:
+
+* <a href="https://plus.cs.aalto.fi/aplus-manual/master/moodle_astra/introduction/" target="_blank">https://plus.cs.aalto.fi/aplus-manual/master/moodle_astra/introduction/</a>
+* <a href="https://github.com/apluslms/course-templates/blob/master/moodle_astra/introduction.rst" target="_blank">https://github.com/apluslms/course-templates/blob/master/moodle_astra/introduction.rst</a>';
 
 $string['apikey'] = 'Set Plussa API key';
 $string['apikey_desc'] = 'The API key is required to fetch course data.';
@@ -35,6 +44,11 @@ $string['apikey_desc'] = 'The API key is required to fetch course data.';
 $string['url'] = 'Set Plussa API base url';
 $string['url_desc'] = 'The base URL for Plussa API. The URL must end with a forward slash, e.g. https://plus.tuni.fi/api/v2/';
 
+$string['adastra'] = 'Ad Astra';
+$string['pluginadministration'] = 'Ad Astra exercises administration';
+
+// Moodle Message API.
+$string['messageprovider:assistant_feedback_notification'] = 'Notification about new assistant feedback';
 
 // Strings for mod_form.php.
 $string['deadline'] = 'Deadline';

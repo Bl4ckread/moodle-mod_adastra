@@ -589,7 +589,7 @@ class auto_setup {
             }
             $visible = ($status != \mod_adastra\local\data\learning_object::STATUS_HIDDEN &&
                     $catstatus != \mod_adastra\local\data\category::STATUS_HIDDEN);
-            if (isset($o->maxpoints) && $visible) {
+            if (isset($o->max_points) && $visible) {
                 $maxpoints = $this->parse_int($o->max_points, $errors);
                 if ($maxpoints !== null) {
                     $totalmax += $maxpoints;
@@ -602,6 +602,14 @@ class auto_setup {
         return $totalmax;
     }
 
+    /**
+     * Configure exercise categories in the course using the configuration JSON.
+     *
+     * @param int $courseid Moodle course ID.
+     * @param \stdClass $categoriesconf Configuration JSON.
+     * @param array $errors Possible errors are added here.
+     * @return array An array of \mod_adastra\local\data\category objects indexed by category keys.
+     */
     protected function configure_categories($courseid, \stdClass $categoriesconf, &$errors) {
         $categories = array();
         $seencats = array();

@@ -124,7 +124,7 @@ class user_course_summary {
         // All submissions from the user in any visible exercise in the course.
         $sql = "SELECT id, status, submissiontime, exerciseid, submitter, grader, assistfeedback, grade,
                 gradingtime, latepenaltyapplied, servicepoints, servicemaxpoints
-                FROM {" . \mod_adastra\local\data\submissions::TABLE . "}
+                FROM {" . \mod_adastra\local\data\submission::TABLE . "}
                 WHERE submitter = ? AND exerciseid IN (" . implode(',', $exerciseids) . ")
                 ORDER BY submissiontime DESC";
 
