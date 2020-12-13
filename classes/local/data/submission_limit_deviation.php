@@ -25,4 +25,19 @@ class submission_limit_deviation extends \mod_adastra\local\data\deviation_rule 
         return (int) $this->record->extrasubmissions;
     }
 
+    public static function create_new($exerciseid, $userid, $extrasubmissions) {
+        global $DB;
+
+        if (self::find_deviation($exerciseid, $userid) === null) {
+            // Does not exist yet.
+            $record = new \stdClass();
+            $record->submitter = $userid;
+            $record->exerciseid = $exerciseid;
+            $record->extrasubmissions = $extrasubmissions;
+            return $DB->insert_record(self::TABLE, $record);
+        } else {
+            // User already has a deviation in the exercise.
+            return null;
+        }
+    }
 }
