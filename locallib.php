@@ -59,6 +59,49 @@ function adastra_roman_numeral($number) {
 }
 
 /**
+ * Add a learning object with its parent objects to the page navbar after the exercise round node.
+ *
+ * @param moodle_page $page
+ * @param int $cmid Moodle course module ID of the exercise round.
+ * @param mod_adastra\local\data\learning_object $exercise
+ * @return navigation_node The navigation node of the given exercise.
+ */
+function adastra_navbar_add_exercise(moodle_page $page, $cmid, mod_adastra\local\data\learning_object $exercise) {
+    $roundnav = $page->navigation->find($cmid, navigation_node::TYPE_ACTIVITY);
+
+    $parents = array($exercise);
+    $ex = $exercise;
+    while ($ex = $ex->get_parent_object()) {
+        $parents[] = $ex;
+    }
+
+    $previousnode = $roundnav;
+    // Leaf child comes last in the navbar.
+    for ($i = count($parents) -1; $i >= 0; --$i) {
+        $previousnode = adastra_navbar_add_one_exercise($previousnode, $parents[$i]);
+    }
+
+    return $previousnode;
+}
+
+/**
+ * Add a single learning object navbar node after the given node.
+ *
+ * @param navigation_node $previousnode
+ * @param mod_adastra\local\data\learning_object $learningobject
+ * @return navigation_node
+ */
+function adastra_navbar_add_one_exercise(navigation_node $previousnode, mod_adastra\local\data\learning_object $learningobject) {
+    return $previousnode->add(
+            $learningobject->get_name(),
+            mod_adastra\local\urls\urls::exercise($learningobject, true, false),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'ex' . $learningobject->get_id()
+    );
+}
+
+/**
  * Picks the selected language's value from |lang:value|lang:value| format text.
  * Adapted from A+ (a-plus/lib/localization_syntax.py)
  *

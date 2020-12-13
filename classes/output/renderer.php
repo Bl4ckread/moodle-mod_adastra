@@ -43,6 +43,17 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Render exercise page.
+     *
+     * @param mod_adastra\output\exercise_page $page
+     * @return string Html for the page.
+     */
+    protected function render_exercise_page(mod_adastra\output\exercise_page $page) {
+        $data = $page->export_for_template($this);
+        return parent::render_from_template(\mod_adastra\local\data\exercise_round::MODNAME . '/exercise_page', $data);
+    }
+
+    /**
      * Render edit_course.php.
      *
      * @param \mod_adastra\output\edit_course_page $page
