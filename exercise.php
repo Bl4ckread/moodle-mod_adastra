@@ -54,7 +54,7 @@ if (adastra_is_ajax()) {
     // Render page content.
     $output = $PAGE->get_renderer(\mod_adastra\local\data\exercise_round::MODNAME);
 
-    $renderable = new \mod_adastra\output\exercise_plain_page(
+    $renderable = new mod_adastra\output\exercise_plain_page(
             $exround,
             $learningobject,
             $USER,
@@ -64,7 +64,6 @@ if (adastra_is_ajax()) {
     );
     header('Content-Type: text/html');
     echo $output->render($renderable);
-
     // No Moodle header/footer in the output.
 } else {
     if (

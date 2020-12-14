@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 namespace mod_adastra\output;
 
 defined('MOODLE_INTERNAL') || die;
@@ -44,7 +42,7 @@ class exercise_plain_page implements \renderable, \templatable {
         $this->learningobject = $learningobject;
         $this->user = $user;
         if ($learningobject->is_submittable()) {
-            $this->exercisesummary = new \mod_adastra\summary\user_exercise_summary($learningobject, $user);
+            $this->exercisesummary = new \mod_adastra\local\summary\user_exercise_summary($learningobject, $user);
         } else {
             $this->exercisesummary = null;
         }

@@ -42,7 +42,7 @@ function adastra_filter_exercise_content($content, $ctx) {
         'filter' => true, // Actiave Moodle filters.
         'para' => false, // No extra <div> wrapping.
         'context' => $ctx,
-        'allowid' => true, // Retaing HTML element IDs.
+        'allowid' => true, // Retain HTML element IDs.
     ));
 }
 

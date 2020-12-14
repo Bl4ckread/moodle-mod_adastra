@@ -708,7 +708,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
             throw $e;
         } catch (\mod_adastra\local\protocol\exercise_service_exception $e) {
             $event = \mod_adastra\event\exercise_service_failed::create(array(
-                    'context' => context_module::instance($this->get_exercise_round()->get_course_module()->id),
+                    'context' => \context_module::instance($this->get_exercise_round()->get_course_module()->id),
                     'other' => array(
                             'error' => $e->getMessage(),
                             'url' => $serviceurl,

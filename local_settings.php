@@ -24,4 +24,11 @@ defined('MOODLE_INTERNAL') || die();
 
 define('ADASTRA_REMOTE_PAGE_HOSTS_MAP', array());
 
-define('ADASTRA_OVERRIDE_SUBMISSION_HOST', null);
+//define('ADASTRA_OVERRIDE_SUBMISSION_HOST', null);
+
+// Development and testing settings
+//define('ASTRA_REMOTE_PAGE_HOSTS_MAP', array(
+//    'grader:8080' => 'localhost:8080',
+//));
+
+define('ADASTRA_OVERRIDE_SUBMISSION_HOST', 'http://moodle');

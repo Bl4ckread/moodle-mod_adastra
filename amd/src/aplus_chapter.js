@@ -254,7 +254,9 @@ define(['jquery', 'core/event', 'mod_adastra/aplus_poll', 'theme_boost/dropdown'
                 this.element.append(this.loader);
 
                 // Inputs are different from actual exercises and need only be loaded.
-                if (this.settings.input) this.load();
+                if (this.settings.input) {
+                    this.load();
+                }
 
                 if (!this.active_element && this.ajax) {
                     // Add an Ajax exercise event listener to refresh the summary.
