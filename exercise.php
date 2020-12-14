@@ -77,6 +77,9 @@ if (adastra_is_ajax()) {
         exit(0);
     }
 
+    // Add CSS and JS.
+    adastra_page_require($PAGE);
+
     // Add Moodle navbar item for the exercise, round is already there.
     $exercisenav = adastra_navbar_add_exercise($PAGE, $cm->id, $learningobject);
     $exercisenav->make_active();

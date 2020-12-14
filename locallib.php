@@ -16,6 +16,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+function adastra_page_require($page) {
+    // Custom CSS.
+    $page->requires->css(new moodle_url('/mod/' . mod_adastra\local\data\exercise_round::TABLE . '/assets/css/main.css'));
+
+    // Include highlight.js for source code syntax highlighting.
+    $page->requires->css(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/styles/default.min.css'));
+    // JS code is included as an AMD module.
+}
+
 /**
  * Filter/format exercise page content so that Moodle filters are activated,
  * e.g. the Moodle MathJax loader renders Latex math formulas.

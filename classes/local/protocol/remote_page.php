@@ -604,7 +604,7 @@ class remote_page {
         }
 
         // Add [] to the checkbox names, if they form a group.
-        foreach ($chechboxesbyname as $name => $inputnodes) {
+        foreach ($checkboxesbyname as $name => $inputnodes) {
             if (\count($inputnodes) > 1) {
                 foreach ($inputnodes as $inputnode) {
                     $inputnode->setAttribute('name', $name . '[]');
