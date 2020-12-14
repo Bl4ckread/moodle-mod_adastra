@@ -1,0 +1,12 @@
+{{!
+Show an error alert.
+
+Context variables:
+* error (string) the message
+}}
+
+<div class="alert alert-danger" role="alert">
+  {{#pix}}i/risk_xss{{/pix}}
+  <span class="sr-only">{{#str}} error, mod_adastra {{/str}}: </span>
+  {{{ error }}}
+</div>

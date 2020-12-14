@@ -1,0 +1,125 @@
+{{!
+Template for an embedded exercise that can be inserted into a chapter page.
+Derived from A+ (a-plus/exercise/templates/exercise/exercise_plain.html).
+
+Context variables:
+* exercise (object) with fields
+    - is_submittable (bool) true if the learning object can receive submissions (is an exercise, not chapter)
+    - max_submissions_for_user (int) max number of submissions the user may submit
+    - points_to_pass (int)
+    - submissionlisturl (string) URL to the list of all submissions
+    - can_view_submissions (bool) true if the user can see the submission list
+* summary (object) exercise summary with fields
+    - fields required by _points_badge.mustache
+    - best_submission_url (string) URL to view the best submission
+    - submission_count (int) number of submissions from the user
+    - has_any_sbms_assist_feedback (bool) true if any submission has received assistant feedback
+* submissions (array of objects, the latest submission first), each object has keys
+    url (string), submission_time (int, timestamp), nth (int, ordinal number),
+    has_assistant_feedback (bool),
+    the variables required by _points_badge.mustache (set status if the submission is not graded)
+* module (object) exercise round, with fields
+    - closingtime (int) Unix timestamp of the round closing time
+    - is_late_submission_open (boolean) true if late submissions are accepted now
+      (deadline passed but the late deadline has not)
+    - late_submission_deadline (int) timestamp
+    - show_late_submission_point_worth (boolean) true if late submissions receive a penalty
+    - late_submission_penalty (int) percentage that is reduced from the points
+* is_course_staff (bool) true if the user can view all submissions
+* toDateStr callable Function that converts a Unix timestamp to a date string
+* error (string) set if an error message should be displayed
+* page (stdClass) with fields
+    content (html string)
+    is_wait (boolean) true if JS should poll for the status of the new submission to see when it is ready
+* submission (object) a new submission for _exercise_wait.mustache
+}}
+
+<div id="exercise-all">
+
+    {{# exercise.issubmittable }}
+        <nav class="exercise-summary navbar navbar-expand navbar-light">
+          <ul class="navbar-nav exercise-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{{# summary.bestsubmissionurl }}{{ summary.bestsubmissionurl }}{{/ summary.bestsubmissionurl }}{{^ summary.bestsubmissionurl }}#{{/ summary.bestsubmissionurl }}">
+                    {{#str}} points, mod_adastra {{/str}}
+                    {{# summary }}
+                      {{> mod_adastra/_points_badge }}
+                    {{/ summary }}
+                </a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"
+                    id="sbmsdropdown-{{uniqid}}" aria-haspopup="true" aria-expanded="false">
+                    {{#str}} submissions, mod_adastra {{/str}}
+                    <span class="badge badge-secondary">
+                        {{# summary.hasanysbmsassistfeedback }}
+                          {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                        {{/ summary.hasanysbmsassistfeedback }}
+                        {{ summary.submissioncount }}
+                        {{# exercise.maxsubmissionsforuser }}
+                        / {{ exercise.maxsubmissionsforuser }}
+                        {{/ exercise.maxsubmissionsforuser }}
+                    </span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="sbmsdropdown-{{uniqid}}">
+                    {{# submissions }}
+                        <a class="dropdown-item" href="{{{ url }}}">
+                            {{ nth }}.
+                            {{# todatestr }}{{ submissiontime }}{{/ todatestr }}
+                            {{> mod_adastra/_points_badge }}
+                            {{# hasassistantfeedback }}
+                              {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                            {{/ hasassistantfeedback }}
+                        </a>
+                    {{/ submissions }}
+                    {{^ submissions }}
+                        <a class="dropdown-item" href="#">{{#str}} nosubmissionsyet, mod_adastra {{/str}}</a>
+                    {{/ submissions }}
+                </div>
+            </li>
+          </ul>
+            <span class="navbar-text">
+                <small>
+                    {{# exercise.pointstopass }}
+                      {{#str}} requiredpoints, mod_adastra, {{ exercise.pointstopass }} {{/str}}.
+                    {{/ exercise.pointstopass }}
+                    {{# exercise.dlextendedminutes }}
+                      {{#str}} deadline, mod_adastra {{/str}} {{# todatestr }}{{ exercise.deadline }}{{/ todatestr }}
+                      {{#str}} withyourextension, mod_adastra {{/str}}
+                    {{/ exercise.dlextendedminutes }}
+                    {{^ exercise.dlextendedminutes }}
+                    {{# module.islatesubmissionopen }}
+                      {{#str}} latesbmsdl, mod_adastra {{/str}} {{# todatestr }}{{ module.latesubmissiondeadline }}{{/ todatestr }}
+                      {{# module.showlatesubmissionpointworth }}
+                        (-{{ module.latesubmissionpenalty }}%)
+                      {{/ module.showlatesubmissionpointworth }}
+                    {{/ module.islatesubmissionopen }}
+                    {{^ module.islatesubmissionopen }}
+                      {{#str}} deadline, mod_adastra {{/str}} {{# todatestr }}{{ module.closingtime }}{{/ todatestr }}
+                    {{/ module.islatesubmissionopen }}
+                    {{/ exercise.dlextendedminutes }}
+                </small>
+            </span>
+          {{# exercise.canviewsubmissions }}
+            <a class="btn btn-secondary btn-sm" href="{{{ exercise.submissionlisturl }}}">
+                {{#pix}}a/view_list_active{{/pix}}
+                {{#str}} viewallsubmissions, mod_adastra {{/str}}
+            </a>
+          {{/ exercise.canviewsubmissions }}
+        </nav>
+    {{/ exercise.issubmittable }}
+
+    <div class="exercise-response">
+        {{# error }}
+          {{> mod_astra/_error_alert }}
+        {{/ error }}
+        <div>
+            {{{ page.content }}}
+        </div>
+        {{! if this page receives submissions (is rendered when a new submission is uploaded,
+        and exercise service tells us to wait a short time,
+        poll for the grading status of the new submission
+        (then the aplus_poll AMD JS module should also be included in this page) }}
+        {{> mod_astra/_exercise_wait }}
+    </div>
+</div>

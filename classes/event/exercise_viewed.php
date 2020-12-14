@@ -45,7 +45,7 @@ class exercise_viewed extends \core\event\base {
      *
      * @return string
      */
-    public static function get_description() {
+    public function get_description() {
         return "The user with the id '{$this->userid}' viewed an Ad Astra exercise (id = {$this->objectid}).";
     }
 

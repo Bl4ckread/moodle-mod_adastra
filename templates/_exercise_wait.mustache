@@ -1,0 +1,25 @@
+{{!
+Progress bar for waiting a submission to be graded asynchronously.
+Derived from A+ (a-plus/exercise/templates/exercise/_exercise_wait.html).
+
+Context variables:
+* page (object) with fields
+    - is_wait (bool) true if Moodle should wait a short time and poll while waiting
+        for the submission to be graded asynchronously
+* submission (object) with fields
+    - poll_url (string) URL for polling the status of the submission
+        (response consists of only the status string of the submission)
+    - url (string) URL of the submission (feedback) page
+}}
+
+{{# page.iswait }}
+<div class="exercise-wait progress" style="display: none;"
+  data-poll-url="{{{ submission.pollurl }}}"
+  data-ready-url="{{{ submission.url }}}"
+  data-msg-error="{{#str}} exercisecommerror, mod_adastra {{/str}}"
+  data-msg-timeout="{{#str}} gradingtakeslonger, mod_adastra {{/str}}">
+  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:100%;">
+    {{#str}} gradingsubmission, mod_adastra {{/str}}
+  </div>
+</div>
+{{/ page.iswait }}

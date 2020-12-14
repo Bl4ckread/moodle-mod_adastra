@@ -43,12 +43,12 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
-     * Render exercise page.
+     * Render exercise.php.
      *
      * @param mod_adastra\output\exercise_page $page
      * @return string Html for the page.
      */
-    protected function render_exercise_page(mod_adastra\output\exercise_page $page) {
+    protected function render_exercise_page(\mod_adastra\output\exercise_page $page) {
         $data = $page->export_for_template($this);
         return parent::render_from_template(\mod_adastra\local\data\exercise_round::MODNAME . '/exercise_page', $data);
     }
@@ -62,5 +62,16 @@ class renderer extends \plugin_renderer_base {
     protected function render_edit_course_page(\mod_adastra\output\edit_course_page $page) {
         $data = $page->export_for_template($this);
         return $this->render_from_template(\mod_adastra\local\data\exercise_round::MODNAME . '/edit_course_page', $data);
+    }
+
+    /**
+     * Render exercise.php as a plain page (AJAX).
+     *
+     * @param \mod_adastra\output\exercise_plain_page $page
+     * @return void
+     */
+    protected function render_exercise_plain_page(\mod_adastra\output\exercise_plain_page $page) {
+        $data = $page->export_for_template($this);
+        return $this->render_from_template(\mod_adastra\local\data\exercise_round::MODNAME . '/exercise_plain', $data);
     }
 }

@@ -213,6 +213,67 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
+     * Return the submissions for a student in this exercise.
+     *
+     * @param int $userid
+     * @param boolean $excludeerrors
+     * @param string $orderby
+     * @param boolean $includefeedback
+     * @param boolean $includeassistfeedback
+     * @param boolean $includesbmsdata
+     * @param boolean $includegradingdata
+     * @return moodle_recordset An iterator of database records (\stdClass). The caller
+     * of this method must call the close() method.
+     */
+    public function get_submissions_for_student (
+            $userid,
+            $excludeerrors = false,
+            $orderby = 'submissiontime ASC',
+            $includefeedback = false,
+            $includeassistfeedback = false,
+            $includesbmsdata = false,
+            $includegradingdata = false
+    ) {
+        global $DB;
+
+        $fields = 'id,status,submissiontime,hash,exerciseid,submitter,grader,' .
+                'grade,gradingtime,latepenaltyapplied,servicepoints,servicemaxpoints';
+        if ($includefeedback) {
+            $fields .= ',feedback';
+        }
+        if ($includeassistfeedback) {
+            $fields .= ',assistfeedback';
+        }
+        if ($includesbmsdata) {
+            $fields .= ',submissiondata';
+        }
+        if ($includegradingdata) {
+            $fields .= ',gradingdata';
+        }
+
+        if ($excludeerrors) {
+            // Exclude submissions with status error.
+            $submissions = $DB->get_recordset_select(
+                    \mod_adastra\local\data\submission::TABLE,
+                    'exerciseid = ? AND submitter = ? AND status != ?',
+                    array(
+                            $this->get_id(),
+                            $userid,
+                            \mod_adastra\local\data\submission::STATUS_ERROR,
+                    ),
+                    $orderby,
+                    $fields
+            );
+        } else {
+            $submissions = $DB->get_recordset(\mod_adastra\local\data\submission::TABLE, array(
+                    'exerciseid' => $this->get_id(),
+                    'submitter' => $userid,
+            ), $orderby, $fields);
+        }
+        return $submissions;
+    }
+
+    /**
      * Create or update the Moodle gradebook item for this exercise.
      * In order to add grades for students, use the method update_grades.
      *
@@ -309,6 +370,28 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
+     * Return the template context of all submissions from a user.
+     *
+     * @param int $userid
+     * @param \mod_adastra\local\data\submission $current The current submission. If set,
+     * one submission is marked as the current submission with an additional variable currentsubmission.
+     * @return \stdClass[]
+     */
+    public function get_submissions_template_context($userid, \mod_adastra\local\data\submission $current = null) {
+        // Latest submission first.
+        $submissions = $this->get_submissions_for_student($userid, false, 'submissiontime DESC', false, true);
+        // Assistant feedback is included in the submissions so that templates
+        // may mark which submissions in the list have assistant feedback.
+        $objects = array();
+        foreach ($submissions as $record) {
+            $objects[] = new \mod_adastra\local\data\submission($record);
+        }
+        $submissions->close();
+
+        return self::submissions_template_context($objects, $current);
+    }
+
+    /**
      * Return the template context objects for the given submissions.
      * The submissions should be submitted by the same user to the same exercise
      * and the array should be sorted by the submission time (latest submission first).
@@ -389,6 +472,57 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
+     * Return the URL used for loading the exercise page from the exercise service or for
+     * uploading a submission for grading (service URL with GET query parameters).
+     *
+     * @param string $submissionurl Value for the submission_url GET query argument.
+     * @param string|int $uid User ID, if many users form a group, the IDs should be given
+     * in the format "1-2-3" (i.e., separated by dash).
+     * @param int $submissionordinalnumber The ordinal number of the submission which is
+     * uploaded for grading or the submission for which the exercise description is downloaded.
+     * @param string $language Language of the content of the page, e.g. 'en' for English. Value of
+     * lang query parameter in the grader protocol.
+     * @return string
+     */
+    protected function build_service_url($submissionurl, $uid, $submissionordinalnumber, $language) {
+        if (defined('ADASTRA_OVERRIDE_SUBMISSION_HOST') && ADASTRA_OVERRIDE_SUBMISSION_HOST !== null) {
+            // Modify the host of submission URL.
+            $urlcomp = parse_url($submissionurl);
+            $submissionurl = ADASTRA_OVERRIDE_SUBMISSION_HOST .
+                    ($urlcomp['path'] ?? '/') .
+                    (isset($urlcomp['query']) ? ('?' . $urlcomp['query']) : '') .
+                    (isset($urlcomp['fragment']) ? ('#' . $urlcomp['fragment']) : '');
+        }
+        $querydata = array(
+                'submission_url' => $submissionurl,
+                'post_url' => \mod_adastra\local\urls\urls::new_submission_handler($this),
+                'max_points' => $this->get_max_points(),
+                'uid' => $uid,
+                'ordinal_number' => $submissionordinalnumber,
+                'lang' => $language,
+        );
+        return $this->get_service_url() . '?' . http_build_query($querydata, 'i_', '&');
+    }
+
+    /**
+     * Return the URL used for loading the exercise page from the exercise service or uploading
+     * a submission for grading (service URL with GET query parameters).
+     *
+     * @param string|int $userid
+     * @param int $submissionordinalnumber
+     * @param string $language
+     * @return string
+     */
+    public function get_load_url($userid, $submissionordinalnumber, $language) {
+        return $this->build_service_url(
+            \mod_adastra\local\urls\urls::async_new_submission($this, $userid),
+            $userid,
+            $submissionordinalnumber,
+            $language
+        );
+    }
+
+    /**
      * Return the number of maximum submissions for the student, including possible deviations.
      *
      * @param \stdClass $user
@@ -464,5 +598,20 @@ class exercise extends \mod_adastra\local\data\learning_object {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Generate a hash of this exercise for the user. The hash is based on a secret key.
+     *
+     * @param int $userid Moodle user ID of the user whom the hash is generated for.
+     * @return string
+     */
+    public function get_async_hash($userid) {
+        $secretkey = get_config(\mod_adastra\local\data\exercise_round::MODNAME, 'secretkey');
+        if (empty($secretkey)) {
+            throw new \moodle_exception('nosecretkeyset', mod_adastra\local\data\exercise_round::MODNAME);
+        }
+        $identifier = "{$userid}." . $this->get_id();
+        return \hash_hmac('sha256', $identifier, $secretkey);
     }
 }

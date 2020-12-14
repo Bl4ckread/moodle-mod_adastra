@@ -1,0 +1,165 @@
+{{!
+Base template for displaying one learning object or a submission.
+Derived from A+ (a-plus/exercise/templates/exercise/exercise_base.html)
+
+Context variables:
+* exercise (stdClass) with fields
+    - url (string), submissionlisturl, editurl
+    - infourl (string) AJAX URL for the exercise info box
+    - is_submittable (boolean) does the learning object accept submissions (ever at all)?
+      True for exercises, false for chapters.
+    - use_wide_column (boolean) if true, the info column is removed and the content has more space
+    - max_submissions_for_user (int) if submittable exercise and submissions are limited
+    - next and previous objects as required by _siblings.mustache
+* submissions (array of objects, the latest submission first), each object has keys
+    url (string), submission_time (int, timestamp), nth (int, ordinal number),
+    has_assistant_feedback (bool),
+    the variables required by _points_badge.mustache (set status if the submission is not graded)
+* summary (object) required by _exercise_info.mustache if the exerciseinfo block is used and
+  the exercise is submittable. The field summary.submission_count is used in this template.
+  In addition, the following fields:
+    - has_any_sbms_assist_feedback (bool) true if any submission has received assistant feedback
+* is_course_staff (bool)
+* is_editing_teacher (bool) can user edit exercises?
+* can_inspect (bool) can user inspect submission?
+* toDateStr callable Function that converts a Unix timestamp to a date string
+* submission (stdClass), set if viewing one specific submission, with fields
+    inspecturl (string)
+* the variables from _exercise_info.mustache, if the block exerciseinfo is not overridden
+* error (string) set if an error message should be shown before the content
+
+Blocks that child templates should override:
+* exercisecontent (exercise-specific content, e.g., instructions and submission form)
+* exerciseinfo (includes the exercise info panel, override if more panels are needed in the right-side of the page)
+* submissionsnavbar (includes the submissions navbar (not the same as Moodle page navbar),
+    override if the submissions navbar is not needed, e.g., on a chapter page)
+}}
+
+{{# exercise }}
+{{> mod_adastra/_siblings }}
+{{/ exercise }}
+
+<div class="row">
+<div class="{{# exercise.usewidecolumn }}col-lg-12{{/ exercise.usewidecolumn }}{{^ exercise.usewidecolumn }}col-lg-9{{/ exercise.usewidecolumn }} exercise-column">
+  {{$ submissionsnavbar }}
+  {{# exercise.issubmittable }}
+  <nav>
+  <ul class="nav nav-tabs">
+      <li class="nav-item menu-exercise">
+          <a class="nav-link" href="{{{ exercise.url }}}">
+              {{#str}} exercisedescription, mod_adastra {{/str}}
+          </a>
+      </li>
+      <li class="nav-item dropdown menu-submission">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+              aria-haspopup="true" aria-expanded="false">
+              {{#str}} mysubmissions, mod_adastra {{/str}}
+              <span class="badge badge-secondary">
+                {{# summary.hasanysbmsassistfeedback }}
+                  {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                {{/ summary.hasanysbmsassistfeedback }}
+                {{ summary.submissioncount }}
+                {{# exercise.maxsubmissionsforuser }}
+                  / {{ exercise.maxsubmissionsforuser }}
+                {{/ exercise.maxsubmissionsforuser }}
+              </span>
+          </a>
+          <div class="dropdown-menu">
+              {{# submissions }}
+                  <a class="dropdown-item" href="{{{ url }}}">
+                      {{ nth }}.
+                      {{# todatestr }}{{ submissiontime }}{{/ todatestr }}
+                      {{> mod_adastra/_points_badge }}
+                      {{# hasassistantfeedback }}
+                        {{#pix}}t/message, core, {{#str}} assistantfeedback, mod_adastra {{/str}}{{/pix}}
+                      {{/ hasassistantfeedback }}
+                  </a>
+              {{/ submissions }}
+              {{^ submissions }}
+                  <a class="dropdown-item" href="#">{{#str}} nosubmissionsyet, mod_adastra {{/str}}</a>
+              {{/ submissions }}
+          </div>
+      </li>
+      {{# iscoursestaff }}
+      <li class="nav-item">
+          <p>
+              {{# caninspect }}
+              {{# submission }}
+              <a href="{{{ submission.inspecturl }}}" class="btn btn-secondary btn-sm">
+                  {{#pix}}i/preview{{/pix}}
+                  {{#str}} inspectsubmission, mod_adastra {{/str}}
+              </a>
+              {{/ submission }}
+              {{/ caninspect }}
+              {{# iseditingteacher }}
+              <a href="{{{ exercise.editurl }}}" class="btn btn-secondary btn-sm">
+                  {{#pix}}t/editinline{{/pix}}
+                  {{#str}} editexercise, mod_adastra {{/str}}
+              </a>
+              {{/ iseditingteacher }}
+              {{# caninspect }}
+              <a href="{{{ exercise.submissionlisturl }}}" class="btn btn-secondary btn-sm">
+                  {{#pix}}a/view_list_active{{/pix}}
+                  {{#str}} viewallsubmissions, mod_adastra {{/str}}
+              </a>
+              {{/ caninspect }}
+          </p>
+      </li>
+      {{/ iscoursestaff }}
+  </ul>
+  </nav>
+  {{/ exercise.issubmittable }}
+  {{/ submissionsnavbar }}
+
+  {{# error }}
+    {{> mod_adastra/_error_alert }}
+  {{/ error }}
+
+  {{$ exercisecontent }}{{/ exercisecontent }}
+</div>
+
+{{^ exercise.usewidecolumn }}
+<div class="col-lg-3">
+
+    {{$ exerciseinfo }}
+    {{# exercise.issubmittable }}
+    <div id="exercise-info" data-url="{{ exercise.infourl }}">
+        {{> mod_adastra/_exercise_info }}
+    </div>
+    {{/ exercise.issubmittable }}
+    {{/ exerciseinfo }}
+
+</div>
+{{/ exercise.usewidecolumn }}
+</div>
+
+{{# exercise }}
+{{> mod_adastra/_siblings }}
+{{/ exercise }}
+
+{{> mod_adastra/_page_file_modals }}
+
+<!--
+{{#js}}
+require(['theme_boost/loader']); // this is needed to make Moodle Boostrap 4 AMD JS modules work; otherwise, jQuery could be undefined
+require(['jquery', 'theme_boost/tooltip', 'mod_astra/aplus_modal'], function($) {
+  $(function() {
+    /* enable Bootstrap tooltips */
+    $('[data-toggle="tooltip"]').tooltip();
+
+    /* Enable modal dialogs */
+    $('.page-modal').aplusModalLink();
+    $('.file-modal').aplusModalLink({file:true});
+
+    /* set active tab in the exercise page navbar */
+    var body_id = $('body').attr('id');
+    // e.g. page-mod-astra-exercise
+    if (body_id) {
+      var arr = body_id.split('-');
+      var page = arr[arr.length - 1];
+      $(".menu-" + page).children("a").first().addClass("active");
+    }
+  });
+});
+{{/js}}
+-->

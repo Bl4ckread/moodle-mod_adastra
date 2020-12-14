@@ -39,6 +39,12 @@ class edit_course_page implements \renderable, \templatable {
         }
     }
 
+    /**
+     * Export data to be used by the templating engine.
+     *
+     * @param \renderer_base $output
+     * @return \stdClass
+     */
     public function export_for_template(\renderer_base $output) {
         $ctx = new \stdClass();
         $ctx->autosetupurl = \mod_adastra\local\urls\urls::auto_setup($this->courseid);

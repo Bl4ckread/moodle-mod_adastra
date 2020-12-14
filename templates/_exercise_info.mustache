@@ -1,0 +1,98 @@
+{{!
+Derived from A+ (a-plus/exercise/templates/exercise/_exercise_info.html).
+
+Context variables:
+* summary (stdClass), summary of the user's status in the exercise, fields:
+    points, penaltyapplied (null if no late penalty applied), penaltyappliedpercent (0-100),
+    submission_count,
+    fields required by _points_progress.mustache
+* exercise (stdClass), with fields
+    max_points, max_submissions (0 if no limit),
+    max_submissions_for_user (submission limit with personal deviation, may be the same as max_submissions),
+    points_to_pass (0 if no limit), total_submitter_count,
+    submit_limit_deviation (int, number of extra submissions for the user),
+    deadline (int, Unix timestamp, normal round deadline or the extended deadline for the user),
+    dl_extended_minutes (int, number of minutes the deadline is extended for the user),
+    course_module (stdClass) with keys
+        - closingtime
+        - late_submissions_allowed (boolean)
+        - late_submission_deadline (int) timestamp
+        - show_late_submission_point_worth (boolean) true if late submissions receive penalty
+        - late_submission_penalty (int) percentage of points reduced
+    category (object) with fields
+        - name (string)
+        - status_hidden (boolean) true if hidden
+* toDateStr callable Function that converts a Unix timestamp to a date string
+}}
+
+<div class="card bg-light">
+  <div class="card-body">
+    <p class="card-title">{{#str}} earnedpoints, mod_adastra {{/str}}</p>
+    <p class="card-text"><strong class="h2 exercise-info-points">
+        {{ summary.points }}
+        <small>
+            / {{ exercise.maxpoints }}
+            {{# summary.penaltyapplied }}
+            <span class="badge badge-secondary">
+                {{#str}} late, mod_adastra {{/str}} -{{ summary.penaltyappliedpercent }} %
+            </span>
+            {{/ summary.penaltyapplied }}
+        </small>
+    </strong></p>
+    {{# summary }}
+      {{> mod_adastra/_points_progress }}
+    {{/ summary }}
+  </div>
+</div>
+
+<div class="card border-primary">
+    <h4 class="card-header bg-primary text-white">{{#str}} exerciseinfo, mod_adastra {{/str}}</h4>
+    <div class="card-body">
+        <dl>
+            {{^ exercise.category.statushidden }}
+                <dt>{{#str}} exercisecategory, mod_adastra {{/str}}</dt>
+                <dd class="exercise-info-category">
+                  {{ exercise.category.name }}
+                </dd>
+            {{/ exercise.category.statushidden }}
+            <dt>{{#str}} yoursubmissions, mod_adastra {{/str}}</dt>
+            <dd class="exercise-info-submissions">
+                {{ summary.submissioncount }}
+                {{# exercise.maxsubmissions }}
+                / {{ exercise.maxsubmissionsforuser }}
+                {{# exercise.submitlimitdeviation }}
+                  <small>{{#str}} youhaveextrasubmissions, mod_adastra, {{ exercise.submitlimitdeviation }} {{/str}}</small>
+                {{/ exercise.submitlimitdeviation }}
+                {{/ exercise.maxsubmissions }}
+            </dd>
+
+            {{# exercise.pointstopass }}
+            <dt>{{#str}} pointsrequired, mod_adastra {{/str}}</dt>
+            <dd class="exercise-info-required-points">{{ exercise.pointstopass }}</dd>
+            {{/ exercise.pointstopass }}
+
+            <dt>{{#str}} deadline, mod_adastra {{/str}}</dt>
+            <dd class="exercise-info-deadline">{{# todatestr }}{{ exercise.deadline }}{{/ todatestr }}
+            {{# exercise.dlextendedminutes }}
+              <small>{{#str}} withyourextension, mod_adastra {{/str}}</small>
+            {{/ exercise.dlextendedminutes }}
+            </dd>
+
+            {{^ exercise.dlextendedminutes }}
+            {{# exercise.coursemodule.latesubmissionsallowed }}
+            <dt>{{#str}} latesbmsdl, mod_adastra {{/str}}</dt>
+            <dd class="exercise-info-late-deadline">
+              {{# todatestr }}{{ exercise.coursemodule.latesubmissiondeadline }}{{/ todatestr }}
+              {{# exercise.coursemodule.showlatesubmissionpointworth }}
+                (-{{ exercise.coursemodule.latesubmissionpenalty }}%)
+              {{/ exercise.coursemodule.showlatesubmissionpointworth }}
+            </dd>
+            {{/ exercise.coursemodule.latesubmissionsallowed }}
+            {{/ exercise.dlextendedminutes }}
+
+            <dt>{{#str}} totalnumberofsubmitters, mod_adastra {{/str}}</dt>
+            <dd class="exercise-info-submitters">{{ exercise.totalsubmittercount }}</dd>
+
+        </dl>
+    </div>
+</div>

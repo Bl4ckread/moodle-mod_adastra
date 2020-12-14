@@ -103,6 +103,18 @@ class urls {
     }
 
     /**
+     * Form url for the submission handler page (same as the exercise page).
+     *
+     * @param \mod_adastra\local\data\exercise $ex
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function new_submission_handler(\mod_adastra\local\data\exercise $ex, $asmoodleurl = false) {
+        // Form POST target for new submissions.
+        return self::exercise($ex, $asmoodleurl); // POST to the exercise page.
+    }
+
+    /**
      * Form url to a learning object (exercise or chapter).
      *
      * @param \mod_adastra\local\data\learning_object $ex
@@ -159,6 +171,18 @@ class urls {
     public static function delete_exercise(\mod_adastra\local\data\learning_object $ex, $asmoodleurl = false) {
         $query = array('id' => $ex->get_id(), 'type' => 'exercise');
         return self::build_url('/teachers/delete.php', $query, $asmoodleurl);
+    }
+
+    /**
+     * Form url to the create chapter page.
+     *
+     * @param \mod_adastra\local\data\exercise_round $ex
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function create_chapter(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
+        $query = array('round' => $exround->get_id(), 'type' => 'chapter');
+        return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
     }
 
     /**
@@ -229,15 +253,20 @@ class urls {
     }
 
     /**
-     * Form url to the create chapter page.
+     * Form URL for asynchronously creating a new graded submission.
      *
-     * @param \mod_adastra\local\data\exercise_round $ex
+     * @param \mod_adastra\local\data\exercise $ex
+     * @param int $userid
      * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
      * @return \moodle_url|string
      */
-    public static function create_chapter(\mod_adastra\local\data\exercise_round $exround, $asmoodleurl = false) {
-        $query = array('round' => $exround->get_id(), 'type' => 'chapter');
-        return self::build_url('/teachers/edit_exercise.php', $query, $asmoodleurl);
+    public static function async_new_submission(\mod_adastra\local\data\exercise $ex, $userid, $asmoodleurl = false) {
+        $query = array(
+                'id' => $ex->get_id(),
+                'hash' => $ex->get_async_hash($userid),
+                'userid' => $userid,
+        );
+        return self::build_url('/async/new_submission.php', $query, $asmoodleurl, false);
     }
 
     /**

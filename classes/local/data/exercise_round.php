@@ -84,6 +84,26 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Check if the given language is configured for the course.
+     * Return the language code that should be used with the backend.
+     * The given language is used if it is available to the course.
+     *
+     * @param string $selectedlang The preferred language code.
+     * @return string The language to use.
+     */
+    public function check_course_lang(string $selectedlang) {
+        $courseconf = $this->get_course_config();
+        if (!$courseconf) {
+            return $selectedlang;
+        }
+        $courselanguages = $courseconf->get_languages();
+        if (in_array($selectedlang, $courselanguages)) {
+            return $selectedlang;
+        }
+        return $courselanguages[0];
+    }
+
+    /**
      * Return the name of this activity instance.
      *
      * @param string $lang

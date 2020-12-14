@@ -350,6 +350,44 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Return the service url in the preferred language, or if it is not available,
+     * default either into english (if available) or the first language available.
+     *
+     * @return string
+     */
+    public function get_service_url() {
+        $value = $this->record->serviceurl;
+        if (substr($value, 0, 1) === '|') {
+            // Multiple language versions.
+            // Example: |fi:http://grader.org/static/intro_fi.html|en:http://grader.org/static/intro_en.html|.
+            $currentlang = current_language();
+            $variants = array_filter(explode('|', $value));
+            // Filter empty strings.
+            $langs = array();
+            foreach ($variants as $variant) {
+                $parts = explode(':', $variant, 2);
+                // The first colon (:) separates the language code from the value.
+                // URLs usually have colons in the value too.
+                if (count($parts) !== 2) {
+                    continue;
+                }
+                list($lang, $val) = $parts;
+                $langs[$lang] = $val;
+
+                if ($lang === $currentlang) {
+                    return $val;
+                }
+            }
+            if (isset($langs['en'])) {
+                return $langs['en'];
+            } else if (!empty($langs)) {
+                return reset($langs);
+            }
+        }
+        return $value;
+    }
+
+    /**
      * Return true if this object uses a wide column.
      *
      * @return boolean
@@ -462,7 +500,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
         global $DB;
 
         $context = \context_module::instance($this->get_exercise_round()->get_course_module()->id);
-        $isteacher = has_capability('/moodle/course:manageactivities', $context);
+        $isteacher = has_capability('moodle/course:manageactivities', $context);
         $isassistant = has_capability('mod/adastra:viewallsubmissions', $context);
 
         $order = $this->get_order();
@@ -578,5 +616,108 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
         }
 
         return $ctx;
+    }
+
+    /**
+     * Return the remote load url for the learning object. This method can be overridden
+     * in child classes to change the URL in load_page method.
+     *
+     * @param int $userid
+     * @param int $submissionordinalnumber
+     * @param string $language
+     * @return string
+     */
+    public function get_load_url($userid, $submissionordinalnumber, $language) {
+        $querydata = array('lang' => $language);
+        return $this->get_service_url() . '?' . http_build_query($querydata, 'i_', '&');
+    }
+
+    /**
+     * Load the learning object/exercise page (from the cache if available, otherwise
+     * from the exercise service).
+     *
+     * @param int $userid User ID.
+     * @return \mod_adastra\local\protocol\exercise_page The exercise page.
+     */
+    public function load($userid) {
+        $page = new \mod_adastra\local\protocol\exercise_page($this);
+        $language = $this->get_exercise_round()->check_course_lang(current_language()); // For example 'en'.
+        $cache = new \mod_adastra\cache\exercise_cache($this, $language, $userid);
+
+        $page->content = $cache->get_content();
+        $page->injectedcssurls = $cache->get_injected_css_urls();
+        $page->injectedjsurlsandinline = $cache->get_injected_js_urls_and_inline();
+        $page->inlinejqueryscripts = $cache->get_inline_jquery_scripts();
+        $page->expires = $cache->get_expires();
+        $page->lastmodified = $cache->get_last_modified();
+        $page->isloaded = true;
+
+        return $page;
+    }
+
+    /**
+     * Load the exercise page from the exercise service.
+     *
+     * @param int $userid User ID.
+     * @param string $language The language of the content of the page, e.g. 'en' for English.
+     * Value of lang query parameter in the grader protocol.
+     * @param null|string $lastmodified The value for If-Modified-Since HTTP request header.
+     * @throws \mod_adastra\local\protocol\remote_page_exception If there are errors in connecting to the server.
+     * @throws \mod_adastra\local\protocol\remote_page_not_modified If $lastmodified is given and the remote
+     * page has not been modified.
+     * @return \mod_adastra\local\protocol\exercise_page The exercise page.
+     */
+    public function load_page($userid, $language = 'en', $lastmodified = null) {
+        global $DB;
+
+        $courseconfig = $this->get_exercise_round()->get_course_config();
+        $apikey = ($courseconfig ? $courseconfig->get_api_key() : null);
+        if (empty($apikey)) {
+            $apikey = null; // Method $courseconfig->get_api_key() gives an empty string if not set.
+        }
+
+        $submissioncount = $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+                'submitter' => $userid,
+                'exerciseid' => $this->get_id(),
+        ));
+        // Must increment $submissioncount since the exercise description must match the next new submission.
+        $serviceurl = $this->get_load_url($userid, $submissioncount + 1, $language);
+        try {
+            $remotepage = new \mod_adastra\local\protocol\remote_page(
+                    $serviceurl,
+                    false,
+                    null,
+                    null,
+                    $apikey,
+                    $lastmodified
+            );
+            $remotepage->set_learning_object($this);
+            return $remotepage->load_exercise_page($this);
+        } catch (\mod_adastra\local\protocol\service_connection_exception $e) {
+            // Error logging.
+            $event = \mod_adastra\event\service_connection_failed::create(array(
+                    'context' => \context_module::instance($this->get_exercise_round()->get_course_module()->id),
+                    'other' => array(
+                            'error' => $e->getMessage(),
+                            'url' => $serviceurl,
+                            'objtable' => self::TABLE,
+                            'objid' => $this->get_id(),
+                    )
+            ));
+            $event->trigger();
+            throw $e;
+        } catch (\mod_adastra\local\protocol\exercise_service_exception $e) {
+            $event = \mod_adastra\event\exercise_service_failed::create(array(
+                    'context' => context_module::instance($this->get_exercise_round()->get_course_module()->id),
+                    'other' => array(
+                            'error' => $e->getMessage(),
+                            'url' => $serviceurl,
+                            'objtable' => self::TABLE,
+                            'objid' => $this->get_id(),
+                    )
+            ));
+            $event->trigger();
+            throw $e;
+        }
     }
 }

@@ -30,6 +30,43 @@ class exercise_cache {
     protected $cache; // Moodle cache object.
 
     /**
+     * Create a new cache object.
+     *
+     * @param \mod_adastra\local\data\learning_object $laerningobject
+     * @param string $language
+     * @param int $userid
+     */
+    public function __construct(\mod_adastra\local\data\learning_object $learningobject, $language, $userid) {
+        $this->learningobject = $learningobject;
+        $this->language = $language;
+        $this->userid = $userid;
+
+        // Initialize Moodle cache API.
+        $this->cache = \cache::make(\mod_adastra\local\data\exercise_round::MODNAME, self::CACHE_API_AREA);
+
+        // Check if key is found in cache.
+        // Is the data stale?
+        $key = $this->get_key();
+        $this->data = $this->cache->get($key);
+        if ($this->needs_generation()) {
+            $this->generate_data();
+            // Set data to cache if it is cacheable.
+            if ($this->data['expires'] > time()) {
+                $this->cache->set($key, $this->data);
+            }
+        }
+    }
+
+    /**
+     * Return the key for this cache instance.
+     *
+     * @return string
+     */
+    protected function get_key() {
+        return self::key($this->learningobject->get_id(), $this->language);
+    }
+
+    /**
      * Return the key, formed by concatenating KEY_PREFIX, $learningobjectid and $language
      * separated with underscores.
      *
@@ -40,6 +77,104 @@ class exercise_cache {
     protected static function key($learningobjectid, $language) {
         // Concatenate KEY_PREFIX, exercise lobjectid and language.
         return self::KEY_PREFIX . '_' . $learningobjectid . '_' . $language;
+    }
+
+    /**
+     * Return true if there is no data or if the data has expired.
+     *
+     * @return bool
+     */
+    protected function needs_generation() {
+        return $this->data === false || $this->data['expires'] < time();
+    }
+
+    /**
+     * Generate data for this cache instance.
+     *
+     * @return void
+     */
+    protected function generate_data() {
+        try {
+            $lastmodified = !empty($this->data) ? $this->data['lastmodified'] : null;
+            $page = $this->learningobject->load_page($this->userid, $this->language, $lastmodified);
+            $this->data = array(
+                    'content' => $page->content,
+                    'expires' => $page->expires,
+                    'lastmodified' => $page->lastmodified,
+                    'injectedcssurls' => $page->injectedcssurls,
+                    'injectedjsurlsandinline' => $page->injectedjsurlsandinline,
+                    'inlinejqueryscripts' => $page->inlinejqueryscripts,
+            );
+        } catch (\mod_adastra\local\protocol\remote_page_not_modified $e) {
+            // Set new expires value.
+            $expires = $e->expires();
+            if ($expires) {
+                $this->data['expires'] = $expires;
+            }
+        }
+    }
+
+    /**
+     * Return the content of the data in this cache instance.
+     *
+     * @return string
+     */
+    public function get_content() {
+        return $this->data['content'];
+    }
+
+    /**
+     * Return the expire time of the data in this cache instane.
+     *
+     * @return int A Unix timestamp.
+     */
+    public function get_expires() {
+        return $this->data['expires'];
+    }
+
+    /**
+     * Return when the data in this cache instance was last modified.
+     *
+     * @return int A Unix timestamp.
+     */
+    public function get_last_modified() {
+        return $this->data['lastmodified'];
+    }
+
+    /**
+     * Return the injected css URLs in this cache instance.
+     *
+     * @return array
+     */
+    public function get_injected_css_urls() {
+        return $this->data['injectedcssurls'];
+    }
+
+    /**
+     * Return the injected js urls and inline code in this cache instance.
+     *
+     * @return array
+     */
+    public function get_injected_js_urls_and_inline() {
+        return $this->data['injectedjsurlsandinline'];
+    }
+
+    /**
+     * Return the inline jquery scripts in this cache instance.
+     *
+     * @return array
+     */
+    public function get_inline_jquery_scripts() {
+        return $this->data['inlinejqueryscripts'];
+    }
+
+    /**
+     * Invalidate this cache instance.
+     *
+     * @return bool
+     */
+    public function invalidate_instance() {
+        return $this->cache->delete($this->get_key());
     }
 
     /**

@@ -102,6 +102,16 @@ function adastra_navbar_add_one_exercise(navigation_node $previousnode, mod_adas
 }
 
 /**
+ * Return true if the current HTTP request was AJAX.
+ * Depends on the HTTP request header X-Requested-With.
+ *
+ * @return bool
+ */
+function adastra_is_ajax() {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+}
+
+/**
  * Picks the selected language's value from |lang:value|lang:value| format text.
  * Adapted from A+ (a-plus/lib/localization_syntax.py)
  *
