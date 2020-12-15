@@ -116,6 +116,34 @@ class exercise extends \mod_adastra\local\data\learning_object {
         return (bool) $this->record->allowastgrading;
     }
 
+    /**
+     * Check whether the uploaded files obey the maximum file size constraint for submissions.
+     *
+     * @param array $files Supply the $_FILES superglobal or an array that
+     * has the same structure and uncludes the file sizes.
+     * @return bool True if all files obey the limit, false otherwise.
+     */
+    public function check_submission_file_sizes(array $files) {
+        $maxsize = $this->get_submission_file_max_size();
+        if ($maxsize == 0) {
+            return true; // No limit.
+        }
+        foreach ($files as $name => $filearray) {
+            if ($filearray['size'] > $maxsize) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Delete this exercise instance from the database, and possible child
+     * learning objects. All submissions to this exercise are also deleted.
+     *
+     * @param boolean $updateroundmaxpoints If true, the max points of the
+     * exercise round are updated here.
+     * @return bool True.
+     */
     public function delete_instance($updateroundmaxpoints = true) {
         global $DB;
 
@@ -502,6 +530,77 @@ class exercise extends \mod_adastra\local\data\learning_object {
                 'lang' => $language,
         );
         return $this->get_service_url() . '?' . http_build_query($querydata, 'i_', '&');
+    }
+
+    public function upload_submission_to_service(
+            \mod_adastra\local\data\submission $submission,
+            $nopenalties = false,
+            array $files = null,
+            $deletefiles = false
+    ) {
+        $sbmsdata = $submission->get_submission_data();
+        if ($sbmsdata !== null) {
+            $sbmsdata = (array) $sbmsdata;
+        }
+
+        if (is_null($files)) {
+            $deletefiles = true;
+            $files = $submission->prepare_submission_files_for_upload();
+        }
+
+        $courseconfig = \mod_adastra\local\data\course_config::get_for_course_id(
+                $submission->get_exercise()->get_exercise_round()->get_course()->courseid
+        );
+        $apikey = ($courseconfig ? $courseconfig->get_api_key() : null);
+        if (empty($apikey)) {
+            $apikey = null; // Course config gives an empty string if not set.
+        }
+
+        $language = $this->get_exercise_round()->check_course_lang(current_language());
+        $serviceurl = $this->build_service_url(
+                \mod_adastra\local\urls\urls::async_grade_submission($submission),
+                $submission->get_record()->submitter,
+                $submission->get_counter(),
+                $language
+        );
+        try {
+            $remotepage = new \mod_adastra\local\protocol\remote_page($serviceurl, true, $sbmsdata, $files, $apikey);
+        } catch (\mod_adastra\local\protocol\remote_page_exception $e) {
+            if ($deletefiles) {
+                foreach ($files as $f) {
+                    @unlink($f->filepath);
+                }
+            }
+            // Error logging.
+            if ($e instanceof \mod_adastra\local\protocol\service_connection_exception) {
+                $event = \mod_adastra\event\service_connection_failed::create(array(
+                        'context' => \context_module::instance($this->get_exercise_round()->get_course_module()->id),
+                        'other' => array(
+                                'error' => $e->getMessage(),
+                                'url' => $serviceurl,
+                                'objtable' => \mod_adastra\local\data\submission::TABLE,
+                                'objid' => $submission->get_id(),
+                        )
+                ));
+                $event->trigger();
+            } else if ($e instanceof \mod_adastra\local\protocol\exercise_service_exception) {
+                $event = \mod_adastra\event\exercise_service_failed::create(array(
+                        'context' => \context_module::instance($this->get_exercise_round()->get_course_module()->id),
+                        'other' => array(
+                                'error' => $e->getMessage(),
+                                'url' => $serviceurl,
+                                'objtable' => \mod_adastra\local\data\submission::TABLE,
+                                'objid' => $submission->get_id(),
+                        )
+                ));
+                $event->trigger();
+            }
+            throw $e;
+        } // PHP 5.4 has no finally block.
+
+        $remotepage->set_learning_object($this);
+        $page = $remotepage->load_feedback_page($this, $submission, $nopenalties);
+        // TODO
     }
 
     /**

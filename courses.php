@@ -34,13 +34,12 @@ $PAGE->set_heading('Courses');
 
 // Get the information of the courses.
 $apikey = get_config('mod_adastra', 'apikey');
-$url = get_config('mod_adastra', 'url');
-$courses = mod_adastra_call_api(
-    $url . 'courses/',
-    $apikey,
-    ['format=json']
-);
+$url = 'https://tie-plus-test.rd.tuni.fi/grader/jyke-test/m01_introduction_06_languages_1';
+$page = new mod_adastra\local\protocol\remote_page($url);
 
+var_dump($page->get_dom_doc());
+
+/*
 echo('<b><h2>Plussa Courses:</h2></b>');
 foreach ($courses->results as $course) {
     echo('<b>' . $course->name . '</b><br>');

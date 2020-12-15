@@ -253,6 +253,21 @@ class urls {
     }
 
     /**
+     * The exercise service HTTP POSTs grading results asynchronously to this URL.
+     *
+     * @param \mod_adastra\local\data\submission $sbms
+     * @param boolean $asmoodleurl If true, return an instance moodle_url, string otherwise.
+     * @return \moodle_url|string
+     */
+    public static function async_grade_submission(\mod_adastra\local\data\submission $sbms, $asmoodleurl = false) {
+        $query = array(
+                'id' => $sbms->get_id(),
+                'hash' => $sbms->get_hash(),
+        );
+        return self::build_url('/async/grade_submission.php', $query, $asmoodleurl, false);
+    }
+
+    /**
      * Form URL for asynchronously creating a new graded submission.
      *
      * @param \mod_adastra\local\data\exercise $ex

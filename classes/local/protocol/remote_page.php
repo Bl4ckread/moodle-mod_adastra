@@ -298,6 +298,31 @@ class remote_page {
         return $page;
     }
 
+    public function load_feedback_page(
+            \mod_adastra\local\data\exercise $exercise,
+            \mod_adastra\local\data\submission $submission,
+            $nopenalties = false
+    ) {
+        $page = new \mod_adastra\local\protocol\exercise_page($exercise);
+        $this->parse_page_content($exercise, $page);
+        if ($page->isloaded) {
+            $feedback = $page->content;
+            if ($page->isaccepted) {
+                if ($page->isgraded) {
+                    $servicepoints = $page->points;
+                    if (isset($page->meta['max_points'])) {
+                        $servicemaxpoints = $page->meta['max_points'];
+                    } else {
+                        $servicemaxpoints = $exercise->get_max_points();
+                    }
+
+                    $submission->grade($servicepoints, $servicemaxpoints, $feedback, null, $nopenalties);
+                    // TODO
+                }
+            }
+        }
+    }
+
     /**
      * Parse the page content and insert the data to the $page.
      *

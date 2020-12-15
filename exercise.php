@@ -41,7 +41,62 @@ $sbms = null;
 $waitforasyncgrading = false; // If frontend JS should poll for the submission status.
 $errormsg = null;
 
-// TODO: handle submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $learningobject->is_submittable()) {
+    // New submission, can only submit to exercises.
+    require_capability('mod/adastra:submit', $context);
+
+    if (!$learningobject->is_submission_allowed($USER)) {
+        // Check if submission is allowed (deadline, submit limit).
+        $errormsg = get_string('youmaynotsubmit', mod_adastra\local\data\exercise_round::MODNAME);
+    } else if (!$learningobject->check_submission_file_sizes($_FILES)) {
+        $errormsg = get_string(
+                'toolargesbmsfile',
+                mod_adastra\local\data\exercise_round::MODNAME,
+                $learningobject->get_submission_file_max_size()
+        );
+    } else {
+        // User submitted a new solution, create a database record.
+        var_dump($_POST);
+        $sbmsid = mod_adastra\local\data\submission::create_new_submission($learningobject, $USER->id, $_POST);
+
+        if ($sbmsid == 0) {
+            // Error: the new submission was not stored in the database.
+            $errormsg = get_string('submissionfailed', mod_adastra\local\data\exercise_round::MODNAME);
+        }
+
+        $event = mod_adastra\event\solution_submitted::create(array(
+                'context' => $context,
+                'objectid' => $sbmsid,
+        ));
+        $event->trigger();
+
+        if ($sbmsid != 0) {
+            $sbms = mod_adastra\local\data\submission::create_from_id($sbmsid);
+            $tmpfiles = array();
+            // Add files.
+            try {
+                foreach ($_FILES as $name => $filearray) {
+                    if (isset($filearray['tmp_name'])) {
+                        // The user uploaded a file, i.e., the form input was not left blank.
+                        // Sanitize the original file name.
+                        $fobj = new stdClass();
+                        $fobj->filename = mod_adastra\local\data\submission::safe_file_name($filearray['name']);
+                        $fobj->filepath = $filearray['tmp_name'];
+                        $fobj->mimetype = $filearray['type'];
+
+                        $sbms->add_submitted_file($fobj->filename, $name, $fobj->filepath);
+
+                        $tmpfiles[$name] = $fobj;
+                    }
+                }
+
+                // Send the new submission to the exercise service.
+                $feedbackpage = $learningobject->upload_submission_to_service($sbms, false, $tmpfiles, false);
+                $waitforasyncgrading = $feedbackpage->iswait;
+            }
+        }
+    }
+}
 
 // Event for logging (viewing the page).
 $event = mod_adastra\event\exercise_viewed::create(array(

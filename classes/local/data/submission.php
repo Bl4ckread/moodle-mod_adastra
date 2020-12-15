@@ -87,6 +87,15 @@ class submission extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Return the hash for this submission.
+     *
+     * @return string
+     */
+    public function get_hash() {
+        return $this->record->hash;
+    }
+
+    /**
      * Return the exercise this submission is associated with.
      *
      * @return \mod_adastra\local\data\exercise
@@ -332,6 +341,127 @@ class submission extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Sanitize a file name to only include characters in SAFE_FILENAME_CHARS.
+     *
+     * @param string $filename
+     * @return string A sanitized version of $filename.
+     */
+    public static function safe_file_name($filename) {
+        $safechars = str_split(self::SAFE_FILENAME_CHARS);
+        $safename = '';
+        $len = strlen($filename);
+        if ($len > 80) {
+            $len = 80;
+        }
+        for ($i = 0; $i < $len; ++$i) {
+            if (in_array($filename[$i], $safechars)) {
+                $safename .= $filename[$i];
+            }
+        }
+        if (empty($safename)) {
+            return 'file';
+        }
+        if ($safename[0] == '-') { // Don't allow starting "-".
+            return '_' . (substr($safename, 1) ?: '');
+        }
+        return $safename;
+    }
+
+    /**
+     * Add a file (defined by $filepath, for example the file could first exist in /tmp/) to this
+     * submission, i.e. create a new file in the Moodle file storage (for permanent storage).
+     *
+     * @param string $filename Base name of the file without path (filename that the user should see).
+     * @param string $filekey Key to the file, e.g. the name attribute in HTML form input. The key should
+     * be unique within the files of this submission.
+     * @param string $filepath Full path to the file in the file system. This is the file that is added
+     * to the submission.
+     * @return void
+     */
+    public function add_submitted_file($filename, $filekey, $filepath) {
+        if (empty($filename) || empty($filekey)) {
+            return; // Sanity check, Moodle API checks that the file ($filepath) exists.
+        }
+        $fs = \get_file_storage();
+        // Prepare file record object.
+        $fileinfo = array(
+                'contextid' => \context_module::instance($this->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
+                'component' => \mod_adastra\local\data\exercise_round::MODNAME,
+                'filearea' => self::SUBMITTED_FILES_FILEAREA,
+                'itemid' => $this->get_id(),
+                'filepath' => "/{$filekey}/", // Any path beginning and ending in "/".
+                'filename' => $filename, // Base name without path.
+        );
+
+        // Create Moodle file from a file in the file system.
+        $fs->create_file_from_pathname($fileinfo, $filepath);
+    }
+
+    /**
+     * Return an array of the files in this submission.
+     *
+     * @return stored_file[] An array of stored_files indexed by path name hash.
+     */
+    public function get_submitted_files() {
+        $fs = \get_file_storage();
+        $files = $fs->get_area_files(
+                \context_module::instance($this->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
+                \mod_adastra\local\data\exercise_round::MODNAME,
+                self::SUBMITTED_FILES_FILEAREA,
+                $this->get_id(),
+                'filepath, filename',
+                false
+        );
+        return $files;
+    }
+
+    /**
+     * Copy the submitted files of this submission to a temporary directory and
+     * return the full file paths to those files with original file base names and mime types.
+     *
+     * @throws \Exception If there are errors in the file operations.
+     * @return \stdClass[] An array of objects, each of which has fields filename, filepath and mimetype.
+     */
+    public function prepare_submission_files_for_upload() {
+        $storedfiles = $this->get_submitted_files();
+        $files = array();
+        $error = null;
+        foreach ($storedfiles as $file) {
+            $obj = new \stdClass();
+            $obj->filename = $file->get_filename(); // Original name that the user sees.
+            $obj->mimetype = $file->get_mimetype();
+
+            // To obtain a full path to the file in the file system, the Moodle
+            // stored file has to be first copied to a temp directory.
+            $temppath = $file->copy_content_to_temp();
+            if (empty($temppath)) {
+                $error = 'Copying Moodle stored file to a temporary path failed.';
+                break;
+            }
+            $obj->filepath = $temppath;
+
+            $key = substr($file->get_filepath(), 1, -1); // Remove the slashes (/) from the start and end.
+            if (empty($key)) {
+                // This should not happen, since the path is always defined in the method add_submitted_file().
+                $error = 'No POST data key for file ' . $obj->filename;
+                break;
+            }
+
+            $files[$key] = $obj;
+        }
+
+        if (isset($error)) {
+            // Remove temp files created thus far.
+            foreach ($files as $f) {
+                @unlink($f->filepath);
+            }
+            throw new \Exception($error);
+        }
+
+        return $files;
+    }
+
+    /**
      * Return true if the submission has been graded.
      *
      * @return boolean
@@ -391,6 +521,66 @@ class submission extends \mod_adastra\local\data\database_object {
             $res .= substr($chars, mt_rand(0, $rmax), 1);
         }
         return $res;
+    }
+
+    /**
+     * Grade this submission (with machine-generated feedback).
+     *
+     * @param int $servicepoints Points from the exercise service.
+     * @param int $servicemaxpoints Max points used by the exercise service.
+     * @param string $feedback Feedback to the student in HTML.
+     * @param array $gradingdata An associative array of extra data about grading.
+     * @param boolean $nopenalties If ture, no deadline penalties are used.
+     * @return void
+     */
+    public function grade($servicepoints, $servicemaxpoints, $feedback, $gradingdata = null, $nopenalties = false) {
+        $this->record->status = self::STATUS_READY;
+        $this->record->feedback = $feedback;
+        $this->record->gradingtime = time();
+        $this->set_points($servicepoints, $servicemaxpoints);
+        if ($gradingdata === null) {
+            $this->record->gradingdata = null;
+        } else {
+            $this->record->gradingdata = self::submission_data_to_string($gradingdata);
+        }
+
+        $this->save();
+    }
+
+    public function set_points($points, $maxpoints, $nopenalties = false) {
+        $exercise = $this->get_exercise();
+        $this->record->servicepoints = $points;
+        $this->record->servicemaxpoints = $maxpoints;
+
+        // Scale the given points to the maximum points for the exercise.
+        if ($maxpoints > 0) {
+            $adjustedgrade = ($exercise->get_max_points() * $points / $maxpoints);
+        } else {
+            $adjustedgrade = 0.0;
+        }
+
+        // Check if this submission was done late. If it was, reduce the points with late
+        // submission penalty. No less than 0 points are given. This is not done if $nopenalties
+        // is true.
+        $latecode = $this->is_late();
+        if (!$nopenalties && $latecode > 0) {
+            if ($latecode === 1) {
+                // Late, use penalty.
+                $this->record->latepenaltyapplied = $this->get_exercise()->get_exercise_round()->get_late_submission_penalty();
+            } else {
+                // Too late (late submission deadline has passed), zero points.
+                $this->record->latepenaltyapplied = 1;
+            }
+            $adjustedgrade -= ($adjustedgrade * $this->record->latepenaltyapplied);
+        } else {
+            // In time or penalties are ignored.
+            $this->record->latepenaltyapplied = null;
+        }
+        // TODO
+    }
+
+    public function is_late() {
+        // TODO
     }
 
     /**
