@@ -796,7 +796,7 @@ class submission extends \mod_adastra\local\data\database_object {
      */
     public function write_to_gradebook($updateroundgrade = true) {
         global $CFG;
-        require_once($CFG->librid . '/gradelib.php');
+        require_once($CFG->libdir . '/gradelib.php');
 
         if ($this->get_exercise()->get_max_points() == 0) {
             // Skip if the max points are zero (no grading).

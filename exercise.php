@@ -103,6 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $learningobject->is_submittable()) {
 
             // Delete old submissions if the exercise allows unlimited submissions and there is a submission store limit.
             $learningobject->remove_submissions_exceeding_store_limit($USER->id);
+
+            if (empty($errormsg) && !adastra_is_ajax()) {
+                // Redirect the client to the submission page:
+                // there must be no output before this (echo HTML, whitespace outside php tags).
+                header('Location: ' . \mod_adastra\local\urls\urls::submission($sbms, false, $waitforasyncgrading, false));
+                exit(0);
+            }
         }
     }
 }
