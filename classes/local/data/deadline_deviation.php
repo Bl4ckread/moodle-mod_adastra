@@ -60,4 +60,18 @@ class deadline_deviation extends \mod_adastra\local\data\deviation_rule {
         $newtime = $time->add(new \DateInterval("PT{$minutes}M"));
         return $newtime->getTimestamp();
     }
+
+    /**
+     * Return true if late penalty should be applied in this deviation rule, false otherwise.
+     * If true, late penalty is applied when the student submits after the original deadline
+     * and before the extended deadline. Otherwise, the late penalty is not applied during the
+     * extension at all. Submitting after the extended deadline yields zero points, unless
+     * normal late submissions are still open and enabled, in which case the late penalty is
+     * applied normally.
+     *
+     * @return boolean
+     */
+    public function use_late_penalty() {
+        return !((bool) $this->record->withoutlatepenalty);
+    }
 }

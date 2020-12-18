@@ -750,6 +750,38 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Update the grade of this exercise round for one student in the gradebook.
+     * The new grade is the sum of the exercise grades stored in the gradebook.
+     *
+     * @param int $userid Moodle user ID of the student.
+     * @return int The return value of grade_update (one of GRADE_UPDATE_OK,
+     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED).
+     */
+    public function update_grade_for_one_student($userid) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        // The Moodle API returns the exercise round and exercise grades all at once
+        // since they use different item numbers with the same Moodle course module.
+        $grades = grade_get_grades(
+                $this->get_course()->courseid,
+                'mod',
+                self::TABLE,
+                $this->get_id(),
+                $userid
+        );
+        $sum = 0;
+        // Sum the exercise points that were stored in the gradebook. They should
+        // be the best points for each exercise.
+        foreach ($grades->items as $gradeitemnumber => $grade) {
+            if ($gradeitemnumber != 0 && isset($grade->grades[$userid]->grade)) {
+                $sum += $grade->grades[$userid]->grade;
+            }
+        }
+        $sum = (int) round($sum);
+        return $this->update_grades(array($userid => $sum));
+    }
+
+    /**
      * Synchronize exercise round grades in the gradebook by reading the exercise
      * grades from the gradebook and summing those together.
      *

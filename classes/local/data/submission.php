@@ -102,7 +102,7 @@ class submission extends \mod_adastra\local\data\database_object {
      */
     public function get_exercise() {
         if (is_null($this->exercise)) {
-            $this->execise = \mod_adastra\local\data\exercise::create_from_id($this->record->exerciseid);
+            $this->exercise = \mod_adastra\local\data\exercise::create_from_id($this->record->exerciseid);
         }
         return $this->exercise;
     }
@@ -180,7 +180,7 @@ class submission extends \mod_adastra\local\data\database_object {
      * @return string
      */
     public function get_assistant_feedback() {
-        return $this->record->assistantfeedback;
+        return $this->record->assistfeedback;
     }
 
     /**
@@ -301,6 +301,93 @@ class submission extends \mod_adastra\local\data\database_object {
      */
     public function get_grading_data() {
         return self::try_to_decode_json($this->record->gradingdata);
+    }
+
+    /**
+     * Return true if the submission has been graded.
+     *
+     * @return boolean
+     */
+    public function is_graded() {
+        return $this->get_status() === self::STATUS_READY;
+    }
+
+    /**
+     * Set the status of this submission as waiting.
+     *
+     * @return void
+     */
+    public function set_waiting() {
+        $this->record->status = self::STATUS_WAITING;
+    }
+
+    /**
+     * Set the status of this submission as ready.
+     *
+     * @return void
+     */
+    public function set_ready() {
+        $this->record->status = self::STATUS_READY;
+    }
+
+    /**
+     * Set the status of this submission as error.
+     *
+     * @return void
+     */
+    public function set_error() {
+        $this->record->status = self::STATUS_ERROR;
+    }
+
+    /**
+     * Set the status of this submission as rejected.
+     *
+     * @return void
+     */
+    public function set_rejected() {
+        $this->record->status = self::STATUS_REJECTED;
+    }
+
+    /**
+     * Set the feedback for this submission.
+     *
+     * @param string $newfeedback
+     * @return void
+     */
+    public function set_feedback($newfeedback) {
+        $this->record->feedback = $newfeedback;
+    }
+
+    /**
+     * Set the assistant given (manual) feedback for this submission.
+     *
+     * @param string $newfeedback
+     * @return void
+     */
+    public function set_assistant_feedback($newfeedback) {
+        $this->record->assistfeedback = $newfeedback;
+    }
+
+    /**
+     * Set the manual grader for this submission.
+     *
+     * @param \stdClass $user
+     * @return void
+     */
+    public function set_grader(\stdClass $user) {
+        $this->record->grader = $user->id;
+        $this->grader = $user;
+    }
+
+    /**
+     * Set points without setting any service points, scaling the value or
+     * checking deadline and submission limit.
+     *
+     * @param int $grade New grade for the submission.
+     * @return void
+     */
+    public function set_raw_grade($grade) {
+        $this->record->grade = $grade;
     }
 
     /**
@@ -462,33 +549,6 @@ class submission extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Return true if the submission has been graded.
-     *
-     * @return boolean
-     */
-    public function is_graded() {
-        return $this->get_status() === self::STATUS_READY;
-    }
-
-    /**
-     * Return an array of the files in this submission.
-     *
-     * @return \stored_file[] An array of stored_files indexed by the path name hash.
-     */
-    public function get_submitted_files() {
-        $fs = \get_file_storage();
-        $files = $fs->get_area_files(
-            \context_module::instance($this->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            self::SUBMITTED_FILES_AREA,
-            $this->get_id(),
-            'filepath, filename',
-            false
-        );
-        return $files;
-    }
-
-    /**
      * Encode a submissiondata array into a json string.
      *
      * @param array $submissiondata
@@ -524,6 +584,41 @@ class submission extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Remove this submission and its submitted files from the database.
+     *
+     * @param boolean $updategradebook If true, the points in the gradebook are updated
+     * (best points left in the exercise and the round).
+     * @return boolean True.
+     */
+    public function delete($updategradebook = true) {
+        global $DB;
+        // Delete submitted files from Moodle file API.
+        $fs = get_file_storage();
+        $fs->delete_area_files(
+                \context_module::instance($this->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
+                \mod_adastra\local\data\exercise_round::MODNAME,
+                self::SUBMITTED_FILES_FILEAREA,
+                $this->record->id
+        );
+        $DB->delete_records(self::TABLE, array('id' => $this->record->id));
+
+        if ($updategradebook) {
+            // The best points of the exercise may change when this submission is deleted.
+            $newbestsubmission = $this->get_exercise()->get_best_submission_for_student($this->record->submitter);
+            if ($newbestsubmission !== null) {
+                $newbestsubmission->write_to_gradebook(true);
+            } else {
+                // No submission, zero points.
+                $this->record->submissiontime = null;
+                $this->record->gradingtime = null;
+                $this->record->grade = null;
+                $this->write_to_gradebook(true);
+            }
+        }
+        return true;
+    }
+
+    /**
      * Grade this submission (with machine-generated feedback).
      *
      * @param int $servicepoints Points from the exercise service.
@@ -547,6 +642,18 @@ class submission extends \mod_adastra\local\data\database_object {
         $this->save();
     }
 
+    /**
+     * Set the points for this submission. If the given maximum points are different
+     * than the ones for the exercise this submission is for, the points will be scaled.
+     * The method also checks if the submission is late and it it is, by default
+     * applies the late_submission_penalty set for the exercise round. If $nopenalties
+     * is true, the penalty is not applied. The updated database record is not saved here.
+     *
+     * @param int $points
+     * @param int $maxpoints
+     * @param boolean $nopenalties
+     * @return void
+     */
     public function set_points($points, $maxpoints, $nopenalties = false) {
         $exercise = $this->get_exercise();
         $this->record->servicepoints = $points;
@@ -576,11 +683,140 @@ class submission extends \mod_adastra\local\data\database_object {
             // In time or penalties are ignored.
             $this->record->latepenaltyapplied = null;
         }
-        // TODO
+
+        $adjustedgrade = round($adjustedgrade);
+
+        // Check submit limit.
+        $submissions = $this->get_exercise()->get_submissions_for_student($this->record->submitter);
+        $count = 0;
+        $thisisbest = true;
+        $bestsubmission = null;
+        foreach ($submissions as $record) {
+            if ($record->id != $this->record->id) {
+                $sbms = new \mod_adastra\local\data\submission($record);
+                // Count the ordinal number for this submission ("how manieth submission").
+                if ($record->submissiontime <= $this->get_submission_time()) {
+                    $count += 1;
+                }
+                // Find the best submission from the other submissions besides this one.
+                if ($bestsubmission === null || $sbms->get_grade() > $bestsubmission->get_grade()) {
+                    $bestsubmission = $sbms;
+                }
+            }
+        }
+        $submissions->close();
+        $count += 1;
+        // Check if this submission is the best one.
+        if ($bestsubmission !== null && $bestsubmission->get_grade() >= $adjustedgrade) {
+            $thisisbest = false;
+        }
+        $maxsubmissions = $this->get_exercise()->get_max_submissions_for_student($this->get_submitter());
+        if ($maxsubmissions > 0 && $count > $maxsubmissions) {
+            // This submission exceeded the submission limit.
+            $this->record->grade = 0;
+            if ($count == 1) {
+                $thisisbest = true; // The only submission.
+            } else {
+                $thisisbest = false; // Earlier submissions must be better, at least they were submitted earlier.
+            }
+        } else {
+            $this->record->grade = $adjustedgrade;
+        }
+        // Write to gradebook if this is the best submission.
+        if ($thisisbest) {
+            $this->write_to_gradebook();
+        } else {
+            // If this submission used to be the best and its grade decreased in regrading,
+            // it might not be the best anymore -> check if gradebook should be updated.
+            $prevbestgrade = $exercise->get_grade_from_gradebook($this->record->submitter);
+            if ($bestsubmission->get_grade() < $prevbestgrade) {
+                $bestsubmission->write_to_gradebook();
+            }
+        }
     }
 
+    /**
+     * Check if this submission was submitted after the exercise round closing time.
+     * Deadline deviation is taken into account.
+     * Interpretation of return values:
+     * 0, if this submission was submitted in time.
+     * 1, if it was late and the late penalty should be applied.
+     * 2, if it was late and shall not be accepted (gains zero points).
+     *
+     * @return int
+     */
     public function is_late() {
-        // TODO
+        $exround = $this->get_exercise()->get_exercise_round();
+        if ($this->get_submission_time() <= $exround->get_closing_time()) {
+            return 0;
+        }
+        // Check deadline deviations/extensions for specific students.
+        $deviation = \mod_adastra\local\data\deadline_deviation::find_deviation(
+                $this->get_exercise()->get_id(),
+                $this->record->submitter
+        );
+        if ($deviation !== null && $this->get_submission_time() <= $deviation->get_new_deadline()) {
+            if ($deviation->use_late_penalty()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        if ($exround->is_late_submission_open($this->get_submission_time())) {
+            return 1;
+        }
+
+        return 2;
+    }
+
+    /**
+     * Return a Moodle gradebook compatible grade object describing the grade given
+     * to this submission.
+     *
+     * @return \stdClass A grade object.
+     */
+    public function get_grade_object() {
+        $grade = new \stdClass();
+        $grade->rawgrade = $this->get_grade();
+        $grade->userid = $this->record->submitter; // Student.
+        // User ID of the grader: use the student's ID if the submission was graded only automatically.
+        $grade->usermodified = empty($this->record->grader) ? $this->record->submitter : $this->record->grader;
+        $grade->dategraded = $this->get_grading_time(); // Timestamp.
+        $grade->datesubmitted = $this->get_submission_time(); // Timestamp.
+        return $grade;
+    }
+
+    /**
+     * Write the grade of this submission to the Moodle gradebook.
+     *
+     * @param boolean $updateroundgrade If true, the grade of the exercise round is updated too.
+     * @return int The return value of grade_update (one of GRADE_UPDATE_OK,
+     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED).
+     */
+    public function write_to_gradebook($updateroundgrade = true) {
+        global $CFG;
+        require_once($CFG->librid . '/gradelib.php');
+
+        if ($this->get_exercise()->get_max_points() == 0) {
+            // Skip if the max points are zero (no grading).
+            return GRADE_UPDATE_OK;
+        }
+        $ret = grade_update(
+                'mod/' . \mod_adastra\local\data\exercise_round::TABLE,
+                $this->get_exercise()->get_exercise_round()->get_course()->courseid,
+                'mod',
+                \mod_adastra\local\data\exercise_round::TABLE,
+                $this->get_exercise()->get_exercise_round()->get_id(),
+                $this->get_exercise()->get_gradebook_item_number(),
+                $this->get_grade_object(),
+                null
+        );
+        if ($updategroundgrade) {
+            $this->get_exercise()->get_exercise_round()->update_grade_for_one_student($this->record->submitter);
+        }
+
+        return $ret;
     }
 
     /**
@@ -592,9 +828,9 @@ class submission extends \mod_adastra\local\data\database_object {
      * @return \stdClass
      */
     public function get_template_context(
-        $includefeedbackandfiles = false,
-        $includesbmsandgradingdata = false,
-        $includemanualgrader = false
+            $includefeedbackandfiles = false,
+            $includesbmsandgradingdata = false,
+            $includemanualgrader = false
     ) {
         global $OUTPUT;
 
@@ -608,7 +844,7 @@ class submission extends \mod_adastra\local\data\database_object {
         $ctx->statuswait = ($this->get_status() === self::STATUS_WAITING);
         $grade = $this->get_grade();
         $ctx->submitted = true;
-        $ctx->fullscore = ($grade->$this->get_exercise()->get_max_points());
+        $ctx->fullscore = ($grade >= $this->get_exercise()->get_max_points());
         $ctx->passed = ($grade >= $this->get_exercise()->get_points_to_pass());
         $ctx->missingpoints = !$ctx->passed;
         $ctx->points = $grade;

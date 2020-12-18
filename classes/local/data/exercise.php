@@ -210,6 +210,34 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
+     * Return the best submission of the student to this exercise.
+     * Note: heavy text fields such as feedback anf submission data are not
+     * included in the returned submission object.
+     *
+     * @param int $userid The Moodle user ID of the student.
+     * @return \mod_adastra\local\data\submission The best submission, or null
+     * if there is no submission.
+     */
+    public function get_best_submission_for_student($userid) {
+        global $DB;
+
+        $submissions = $this->get_submissions_for_student($userid);
+        // Order by submissiontime, earlier first.
+        $bestsubmission = null;
+        foreach ($submissions as $s) {
+            $sbms = new \mod_adastra\local\data\submission($s);
+            // Assume that the grade of a submission is zero if it was not accepted
+            // due to submission limit or deadline.
+            if ($bestsubmission === null || $sbms->get_grade() > $bestsubmission->get_grade()) {
+                $bestsubmission = $sbms;
+            }
+        }
+        $submissions->close();
+
+        return $bestsubmission;
+    }
+
+    /**
      * Return the number of submissions the student has made in this exercise.
      *
      * @param int $userid
@@ -302,6 +330,42 @@ class exercise extends \mod_adastra\local\data\learning_object {
     }
 
     /**
+     * Check if the user has more submissions than what should be stored for the exercise.
+     * The excess submissions are then removed. This method does nothing when the exercise
+     * has limited the number of allowed submissions. This is intended for exercises that
+     * allow unlimited submissions, but do not store all of them.
+     *
+     * @param int $userid ID of the user whose submissions are checked.
+     * @return void
+     */
+    public function remove_submissions_exceeding_store_limit($userid) {
+        $storelimit = $this->get_submission_store_limit();
+        if ($storelimit <= 0) { // No store limit.
+            return;
+        }
+        // How many old submissions to remove?
+        $nremove = $this->get_submission_count_for_student($userid) - $storelimit;
+        if ($nremove > 0) {
+            $this->remove_n_oldest_submissions($nremove, $userid);
+        }
+    }
+
+    public function remove_n_oldest_submissions(int $numsubmissions, $userid) {
+        $submissions = $this->get_submissions_for_student($userid);
+        // The oldest submissions come first in the iterator.
+        foreach ($submissions as $record) {
+            if ($numsubmissions <= 0) {
+                break;
+            }
+            $sbms = new \mod_adastra\local\data\submission($record);
+            // Update gradebook in the last iteration when the submission is deleted.
+            $sbms->delete($numsubmissions <= 1);
+            --$numsubmissions;
+        }
+        $submissions->close();
+    }
+
+    /**
      * Create or update the Moodle gradebook item for this exercise.
      * In order to add grades for students, use the method update_grades.
      *
@@ -366,6 +430,31 @@ class exercise extends \mod_adastra\local\data\learning_object {
         }
 
         return $res;
+    }
+
+    /**
+     * Return the grade of this exercise for the given user from the Moodle gradebook.
+     *
+     * @param int $userid
+     * @return float The grade.
+     */
+    public function get_grade_from_gradebook($userid) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        // The moodle API returns the exercise round and exercise grades all at once
+        // since they use different item numbers with the same Moodle course module.
+        $grades = grade_get_grades(
+                $this->get_exercise_round()->get_course()->courseid,
+                'mod',
+                \mod_adastra\local\data\exercise_round::TABLE,
+                $this->get_exercise_round()->get_id(),
+                $userid
+        );
+        $itemnum = $this->get_gradebook_item_number();
+        if (isset($grades->items[$itemnum]->grades[$userid])) {
+            return (int) $grades->items[$itemnum]->grades[$userid]->grade;
+        }
+        return 0;
     }
 
     /**
@@ -532,6 +621,24 @@ class exercise extends \mod_adastra\local\data\learning_object {
         return $this->get_service_url() . '?' . http_build_query($querydata, 'i_', '&');
     }
 
+    /**
+     * Upload the submission to the exercise service for grading and store the results
+     * if the submission is graded synchronously.
+     *
+     * @param \mod_adastra\local\data\submission $submission
+     * @param boolean $nopenalties
+     * @param array $files Submitted files. An associative array of \stdClass objects that have
+     * fields filename (original base name), filepath (full file path in Moodle, e.g. under /tmp)
+     * and mimetype (e.g. "text/plain"). The array keys are the keys used in HTTP POST data. If
+     * $files is null, this method reads the submission files from the database and adds them to
+     * the upload automatically.
+     * @param boolean $deletefiles If true and $files is a non-empty array, the files are deleted
+     * here from the file system.
+     * @throws \mod_adastra\local\protocol\remote_page_exception If there are errors in connecting
+     * to the server.
+     * @throws \Exception If there are errors in handling the files.
+     * @return \mod_adastra\local\protocol\exercise_page The feedback page.
+     */
     public function upload_submission_to_service(
             \mod_adastra\local\data\submission $submission,
             $nopenalties = false,
@@ -600,7 +707,13 @@ class exercise extends \mod_adastra\local\data\learning_object {
 
         $remotepage->set_learning_object($this);
         $page = $remotepage->load_feedback_page($this, $submission, $nopenalties);
-        // TODO
+
+        if ($deletefiles) {
+            foreach ($files as $f) {
+                @unlink($f->filepath);
+            }
+        }
+        return $page;
     }
 
     /**

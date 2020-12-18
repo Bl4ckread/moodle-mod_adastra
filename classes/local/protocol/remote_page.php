@@ -298,6 +298,15 @@ class remote_page {
         return $page;
     }
 
+    /**
+     * Load the feedback page for a new submission and store the grading results
+     * if the submission was graded synchronously.
+     *
+     * @param \mod_adastra\local\data\exercise $exercise
+     * @param \mod_adastra\local\data\submission $submission
+     * @param boolean $nopenalties
+     * @return \mod_adastra\local\protocol\exercise_page The feedback page.
+     */
     public function load_feedback_page(
             \mod_adastra\local\data\exercise $exercise,
             \mod_adastra\local\data\submission $submission,
@@ -317,10 +326,22 @@ class remote_page {
                     }
 
                     $submission->grade($servicepoints, $servicemaxpoints, $feedback, null, $nopenalties);
-                    // TODO
+                } else {
+                    $submission->set_waiting();
+                    $submission->set_feedback($feedback);
+                    $submission->save();
                 }
+            } else if ($page->isrejected) {
+                $submission->set_rejected();
+                $submission->set_feedback($feedback);
+                $submission->save();
+            } else {
+                $submission->set_error();
+                $submission->set_feedback($feedback);
+                $submission->save();
             }
         }
+        return $page;
     }
 
     /**

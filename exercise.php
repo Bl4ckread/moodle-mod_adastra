@@ -56,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $learningobject->is_submittable()) {
         );
     } else {
         // User submitted a new solution, create a database record.
-        var_dump($_POST);
         $sbmsid = mod_adastra\local\data\submission::create_new_submission($learningobject, $USER->id, $_POST);
 
         if ($sbmsid == 0) {
@@ -93,7 +92,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $learningobject->is_submittable()) {
                 // Send the new submission to the exercise service.
                 $feedbackpage = $learningobject->upload_submission_to_service($sbms, false, $tmpfiles, false);
                 $waitforasyncgrading = $feedbackpage->iswait;
+            } catch (Exception $e) {
+                $errormsg = get_string('uploadtoservicefailed', \mod_adastra\local\data\exercise_round::MODNAME);
             }
+
+            // Delete temp files.
+            foreach ($tmpfiles as $f) {
+                unlink($f->filepath);
+            }
+
+            // Delete old submissions if the exercise allows unlimited submissions and there is a submission store limit.
+            $learningobject->remove_submissions_exceeding_store_limit($USER->id);
         }
     }
 }
