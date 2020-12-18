@@ -24,7 +24,7 @@
 
 require(__DIR__.'/../../config.php');
 
-require_once(__DIR__.'/lib.php');
+require_once(__DIR__.'/locallib.php');
 
 $id = required_param('id', PARAM_INT); // Course ID.
 
@@ -47,6 +47,9 @@ $PAGE->navbar->add($pluralname, $pageurl);
 $PAGE->set_title("$course->shortname: $pluralname");
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
+
+// Add CSS and JS.
+adastra_page_require($PAGE);
 
 // Render page content.
 $output = $PAGE->get_renderer(\mod_adastra\local\data\exercise_round::MODNAME);

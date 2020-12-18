@@ -63,6 +63,9 @@ $event->add_record_snapshot('course', $PAGE->course);
 $event->add_record_snapshot($PAGE->cm->modname, $adastra);
 $event->trigger();
 
+// Add CSS and JS.
+adastra_page_require($PAGE);
+
 $PAGE->set_url('/mod/' . mod_adastra\local\data\exercise_round::TABLE . '/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($exround->get_name()));
 $PAGE->set_heading(format_string($course->fullname));
