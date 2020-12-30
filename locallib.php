@@ -111,6 +111,24 @@ function adastra_navbar_add_one_exercise(navigation_node $previousnode, mod_adas
 }
 
 /**
+ * Add a submission node to the navbar.
+ *
+ * @param navigation_node $prevnode
+ * @param mod_adastra\local\data\submission $submission
+ * @return navigation_node
+ */
+function adastra_navbar_add_submission(navigation_node $prevnode, mod_adastra\local\data\submission $submission) {
+    $submissionnav = $prevnode->add(
+            get_string('submissionnumber', mod_adastra\local\data\exercise_round::MODNAME, $submission->get_counter()),
+            mod_adastra\local\urls\urls::submission($submission, true),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'sub' . $submission->get_id()
+    );
+    return $submissionnav;
+}
+
+/**
  * Return true if the current HTTP request was AJAX.
  * Depends on the HTTP request header X-Requested-With.
  *
