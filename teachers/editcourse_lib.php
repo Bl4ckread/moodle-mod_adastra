@@ -129,15 +129,9 @@ function adastra_sort_gradebook_items($courseid) {
     // Retrieve the rounds and exercises of the course in the sorted order.
     // Store them in a different format that helps with sorting the gradeitems.
     $rounds = mod_adastra\local\data\exercise_round::get_exercise_rounds_in_course($courseid, true);
-    $order = 1;
     $courseorder = array();
     foreach ($rounds as $round) {
-        $rounditems = array(0 => $order++);
-        // Round itself comes before the exercises, the round always has grade itemnumber zero.
-        foreach ($round->get_exercises(true, true) as $ex) {
-            $rounditems[$ex->get_gradebook_item_number()] = $order++;
-        }
-        $courseorder[$round->get_id()] = $rounditems;
+        $courseorder[$round->get_id()] = $round;
     }
 
     // Callback functions for sorting the $gradeitems array.
@@ -160,10 +154,10 @@ function adastra_sort_gradebook_items($courseid) {
         ) {
             // Both grade items are for Ad Astra.
             // Property $gradeitem->iteminstance is the round id and itemnumber is set by the plugin:
-            // zero for rounds and greater for exercises.
+            // zero for rounds and there are no grade items for exercises.
             return $compare(
-                    $courseorder[$a->iteminstance][$a->itemnumber],
-                    $courseorder[$b->iteminstance][$b->itemnumber]
+                    $courseorder[$a->iteminstance]->get_order(),
+                    $courseorder[$b->iteminstance]->get_order()
             );
         }
         // At least one grade item originates from outside Ad Astra:

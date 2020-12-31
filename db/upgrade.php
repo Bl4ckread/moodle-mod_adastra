@@ -413,6 +413,21 @@ function xmldb_adastra_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020120600, 'adastra');
     }
 
+    if ($oldversion < 2020123100) {
+
+        // Define field gradeitemnumber to be dropped from adastra_exercises.
+        $table = new xmldb_table('adastra_exercises');
+        $field = new xmldb_field('gradeitemnumber');
+
+        // Conditionally launch drop field gradeitemnumber.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Adastra savepoint reached.
+        upgrade_mod_savepoint(true, 2020123100, 'adastra');
+    }
+
     // For further information please read the Upgrade API documentation:
     // https://docs.moodle.org/dev/Upgrade_API
     //

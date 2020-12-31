@@ -821,18 +821,7 @@ class auto_setup {
                 // Update existing.
                 if (isset($o->max_submissions)) { // Exercise.
                     $learningobject = new \mod_adastra\local\data\exercise($lobjectrecord);
-                    if ($oldroundid == $lobjectrecord->roundid) { // Round not changed.
-                        $learningobject->save();
-                        // Updates the gradebook for the exercise.
-                    } else {
-                        // Round changed.
-                        $learningobject->delete_gradebook_item();
-                        // Gradeitemnumber must be unique in the new round.
-                        $newround = $learningobject->get_exercise_round();
-                        $lobjectrecord->gradeitemnumber = $newround->get_new_gradebook_item_number();
-                        $learningobject->save();
-                        // Updates the gradebook item (creates a new item).
-                    }
+                    $learningobject->save();
                 } else {
                     // Chapter.
                     $learningobject = new \mod_adastra\local\data\chapter($lobjectrecord);

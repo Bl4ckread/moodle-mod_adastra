@@ -603,17 +603,7 @@ class submission extends \mod_adastra\local\data\database_object {
         $DB->delete_records(self::TABLE, array('id' => $this->record->id));
 
         if ($updategradebook) {
-            // The best points of the exercise may change when this submission is deleted.
-            $newbestsubmission = $this->get_exercise()->get_best_submission_for_student($this->record->submitter);
-            if ($newbestsubmission !== null) {
-                $newbestsubmission->write_to_gradebook(true);
-            } else {
-                // No submission, zero points.
-                $this->record->submissiontime = null;
-                $this->record->gradingtime = null;
-                $this->record->grade = null;
-                $this->write_to_gradebook(true);
-            }
+            $this->get_exercise()->get_exercise_round()->write_all_grades_to_gradebook($this->record->submitter);
         }
         return true;
     }
@@ -640,6 +630,7 @@ class submission extends \mod_adastra\local\data\database_object {
         }
 
         $this->save();
+        $this->get_exercise()->get_exercise_round()->write_all_grades_to_gradebook($this->record->submitter);
     }
 
     /**
@@ -689,8 +680,6 @@ class submission extends \mod_adastra\local\data\database_object {
         // Check submit limit.
         $submissions = $this->get_exercise()->get_submissions_for_student($this->record->submitter);
         $count = 0;
-        $thisisbest = true;
-        $bestsubmission = null;
         foreach ($submissions as $record) {
             if ($record->id != $this->record->id) {
                 $sbms = new \mod_adastra\local\data\submission($record);
@@ -698,40 +687,16 @@ class submission extends \mod_adastra\local\data\database_object {
                 if ($record->submissiontime <= $this->get_submission_time()) {
                     $count += 1;
                 }
-                // Find the best submission from the other submissions besides this one.
-                if ($bestsubmission === null || $sbms->get_grade() > $bestsubmission->get_grade()) {
-                    $bestsubmission = $sbms;
-                }
             }
         }
         $submissions->close();
         $count += 1;
-        // Check if this submission is the best one.
-        if ($bestsubmission !== null && $bestsubmission->get_grade() >= $adjustedgrade) {
-            $thisisbest = false;
-        }
         $maxsubmissions = $this->get_exercise()->get_max_submissions_for_student($this->get_submitter());
         if ($maxsubmissions > 0 && $count > $maxsubmissions) {
             // This submission exceeded the submission limit.
             $this->record->grade = 0;
-            if ($count == 1) {
-                $thisisbest = true; // The only submission.
-            } else {
-                $thisisbest = false; // Earlier submissions must be better, at least they were submitted earlier.
-            }
         } else {
             $this->record->grade = $adjustedgrade;
-        }
-        // Write to gradebook if this is the best submission.
-        if ($thisisbest) {
-            $this->write_to_gradebook();
-        } else {
-            // If this submission used to be the best and its grade decreased in regrading,
-            // it might not be the best anymore -> check if gradebook should be updated.
-            $prevbestgrade = $exercise->get_grade_from_gradebook($this->record->submitter);
-            if ($bestsubmission->get_grade() < $prevbestgrade) {
-                $bestsubmission->write_to_gradebook();
-            }
         }
     }
 
@@ -785,38 +750,6 @@ class submission extends \mod_adastra\local\data\database_object {
         $grade->dategraded = $this->get_grading_time(); // Timestamp.
         $grade->datesubmitted = $this->get_submission_time(); // Timestamp.
         return $grade;
-    }
-
-    /**
-     * Write the grade of this submission to the Moodle gradebook.
-     *
-     * @param boolean $updateroundgrade If true, the grade of the exercise round is updated too.
-     * @return int The return value of grade_update (one of GRADE_UPDATE_OK,
-     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED).
-     */
-    public function write_to_gradebook($updateroundgrade = true) {
-        global $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
-
-        if ($this->get_exercise()->get_max_points() == 0) {
-            // Skip if the max points are zero (no grading).
-            return GRADE_UPDATE_OK;
-        }
-        $ret = grade_update(
-                'mod/' . \mod_adastra\local\data\exercise_round::TABLE,
-                $this->get_exercise()->get_exercise_round()->get_course()->courseid,
-                'mod',
-                \mod_adastra\local\data\exercise_round::TABLE,
-                $this->get_exercise()->get_exercise_round()->get_id(),
-                $this->get_exercise()->get_gradebook_item_number(),
-                $this->get_grade_object(),
-                null
-        );
-        if ($updategroundgrade) {
-            $this->get_exercise()->get_exercise_round()->update_grade_for_one_student($this->record->submitter);
-        }
-
-        return $ret;
     }
 
     /**

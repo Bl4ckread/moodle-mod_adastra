@@ -86,7 +86,7 @@ function adastra_navbar_add_exercise(moodle_page $page, $cmid, mod_adastra\local
 
     $previousnode = $roundnav;
     // Leaf child comes last in the navbar.
-    for ($i = count($parents) -1; $i >= 0; --$i) {
+    for ($i = count($parents) - 1; $i >= 0; --$i) {
         $previousnode = adastra_navbar_add_one_exercise($previousnode, $parents[$i]);
     }
 

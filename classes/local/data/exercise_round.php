@@ -488,7 +488,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Hide or delete learning objects in this round if they are not included in the giben array.
+     * Hide or delete learning objects in this round if they are not included in the given array.
      * The object is deleted if it and its children have no submissions. Otherwise, it is hidden.
      *
      * @param array $seen An array of \mod_adastra\local\data\learning_object instances that have been seen.
@@ -564,8 +564,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     /**
      * Create or update the Moodle gradebook item for this exercise round.
      * In order to add grades for students, use the method update_grades.
-     * This method does not create or update the grade items for the exercises
-     * of the round.
      *
      * @param boolean $reset If true, delete all grades in the grade item.
      * @return int One of the grade_update return values: GRADE_UPDATE_OK, GRADE_UPDATE_FAILED,
@@ -596,10 +594,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
             $item['reset'] = true;
         }
 
-        // Set course gradebook total grade aggregation method to "natural" (sum), because it is the only
-        // one that allows setting the exercise round coefficients to zero.
-        $this->set_gradebook_total_aggregation();
-
         // Create gradebook item.
         $res = grade_update(
                 'mod/' . self::TABLE,
@@ -622,29 +616,11 @@ class exercise_round extends \mod_adastra\local\data\database_object {
                 'courseid' => $this->record->course,
             );
             $gi = \grade_item::fetch($gradeparams);
-            if (
-                    $gi &&
-                    ($gi->gradepass != $this->get_points_to_pass() || $gi->aggregationcoef2 != 0.0 || $gi->weightoverride != 1)
-            ) {
+            if ($gi && $gi->gradepass != $this->get_points_to_pass()) {
                 // Set min points to pass.
                 $gi->gradepass = $this->get_points_to_pass();
-                // Set zero coefficient so that the course total is not affected by rounds.
-                // Round grades are only sums of the exercise grades in the round.
-                $gi->aggregationcoef2 = 0.0;
-                $gi->weightoverride = 1;
                 $gi->update('mod/' . self::TABLE);
             }
-
-            /*
-             * If some students already have grades for the round in the gradebook,
-             * the changed coefficient may not be taken into account unless the course
-             * final grades are computed again. The API function grade_regrade_final_grades($this->record->course)
-             * is very heavy and should not be called here since the call must not be
-             * repeated for each round when automatically updating course configuration
-             * (auto setup). For now, we assume that the grade_regrade_final_grades
-             * call is not needed since nobody has grades when the grade item is
-             * initially created and its coefficient is then set to zero.
-             */
         }
 
         return $res;
@@ -676,45 +652,8 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Set the course gradebook total grade aggregation method to "natural" (sum).
-     *
-     * @return void
-     */
-    public function set_gradebook_total_aggregation() {
-        global $CFG, $DB;
-        require_once($CFG->libdir . '/grade/constants.php');
-        require_once($CFG->libdir . '/grade/grade_category.php');
-
-        $gradecategory = \grade_category::fetch(array(
-                'courseid' => $this->record->course,
-                'parent' => null,
-        ));
-        /*
-         * The default course total category is automatically created by Moodle.
-         * If the teacher creates additional gradebook categories they become
-         * children to the root category.
-         */
-        if (
-                $gradecategory &&
-                ($gradecategory->aggregation != GRADE_AGGREGATE_SUM || $gradecategory->aggregateonlygraded != 0)
-        ) {
-            // Set course gradebook total grade aggregation method to "natural" i.e. sum.
-            $gradecategory->aggregation = GRADE_AGGREGATE_SUM;
-            // Include ungraded assignments in the aggregation. Course total does not show
-            // 100 % when only one exercise has been submitted with correct solution.
-            $gradecategory->aggregateonlygraded = 0;
-            $gradecategory->update('mod/' . self::TABLE);
-
-            $gradeitem = $gradecategory->load_grade_item();
-            $gradeitem->update('mod/' . self::TABLE);
-        }
-
-    }
-
-    /**
-     * Update the grades of students in the gradebook for this exercise round
-     * (only the round, not its exercises). The gradebook item must have been
-     * created earlier.
+     * Update the grades of students in the gradebook for this exercise round.
+     * The gradebook item must have been created earlier.
      *
      * @param array $grades Student grades of this exercise round, indexed by Moodle user IDs.
      * The grade is given either as an integer or as a \stdClass object with fields userid and
@@ -750,96 +689,17 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
-     * Update the grade of this exercise round for one student in the gradebook.
-     * The new grade is the sum of the exercise grades stored in the gradebook.
+     * Synchronize exercise round grades in the gradebook by fetching
+     * the best submissions from the Ad Astra submissions table and
+     * saving the up-to-date round grades in the gradebook.
      *
-     * @param int $userid Moodle user ID of the student.
-     * @return int The return value of grade_update (one of GRADE_UPDATE_OK,
-     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED).
-     */
-    public function update_grade_for_one_student($userid) {
-        global $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
-        // The Moodle API returns the exercise round and exercise grades all at once
-        // since they use different item numbers with the same Moodle course module.
-        $grades = grade_get_grades(
-                $this->get_course()->courseid,
-                'mod',
-                self::TABLE,
-                $this->get_id(),
-                $userid
-        );
-        $sum = 0;
-        // Sum the exercise points that were stored in the gradebook. They should
-        // be the best points for each exercise.
-        foreach ($grades->items as $gradeitemnumber => $grade) {
-            if ($gradeitemnumber != 0 && isset($grade->grades[$userid]->grade)) {
-                $sum += $grade->grades[$userid]->grade;
-            }
-        }
-        $sum = (int) round($sum);
-        return $this->update_grades(array($userid => $sum));
-    }
-
-    /**
-     * Synchronize exercise round grades in the gradebook by reading the exercise
-     * grades from the gradebook and summing those together.
+     * DEPRECATED: use write_all_grades_to_gradebook instead!
      *
-     * @param array|null $userids Array of user ids whose grades should be synchronized.
-     * If null, synchronize all users who have made submissions in the round.
      * @return int Return value of grade_update: one of GRADE_UPDATE_OK,
      * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED.
      */
-    public function synchronize_grades(array $userids = null) {
-        global $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
-        require_once($CFG->libdir . '/grade/constants.php');
-
-        if ($userids === null) {
-            /*
-             * Read the user ids of submitters from the gradebook. If an exercise
-             * has been deleted, the actual submission has been deleted too, but
-             * the exercise round still contains an old grade in the gradebook that
-             * must be synchronized.
-             */
-            $gi = $this->get_grade_item();
-            if (!$gi) {
-                // No grade item, hence no grades to sync.
-                return GRADE_UPDATE_OK;
-            }
-            $oldgrades = $gi->get_final();
-            $userids = array_keys($oldgrades);
-            unset($oldgrades);
-        }
-        $grades = grade_get_grades(
-                $this->get_course()->courseid,
-                'mod',
-                self::TABLE,
-                $this->get_id(),
-                $userids
-        );
-        // Sum exercise grades together and save the new exercise round grades in the gradebook.
-        $newgrades = array();
-        foreach ($grades->items as $gradeitemnumber => $item) {
-            if ($gradeitemnumber == 0 || $item->hidden) {
-                // Skip the old exercise round grade and hidden exercises.
-                continue;
-            }
-            foreach ($item->grades as $userid => $grade) {
-                if (isset($newgrades[$userid])) {
-                    if ($grade->grade !== null) {
-                        $newgrades[$userid]->rawgrade += $grade->grade;
-                    }
-                } else {
-                    $gradeobj = new \stdClass();
-                    $gradeobj->userid = $userid;
-                    $gradeobj->rawgrade = $grade->grade;
-                    $newgrades[$userid] = $gradeobj;
-                }
-            }
-        }
-
-        return $this->update_grades($newgrades);
+    public function synchronize_grades() {
+        return $this->write_all_grades_to_gradebook();
     }
 
     /**
@@ -876,6 +736,74 @@ class exercise_round extends \mod_adastra\local\data\database_object {
             $objects[$userid] = $obj;
         }
         return $objects;
+    }
+
+    /**
+     * Write grades of this exercise round to the Moodle gradebook.
+     * The grades are read from the database tables of the plugin.
+     *
+     * @param int $userid Update the grade of a specific user only, 0
+     * means all participants.
+     * @param bool $nullifone If a single user is specified, $nullifone
+     * is true and the user has no grade then a grade item with a null rawgrade
+     * should be inserted.
+     * @return int Return value of grade_update: one of GRADE_UPDATE_OK,
+     * GRADE_UPDATE_FAILED, GRADE_UPDATE_MULTIPLE or GRADE_UPDATE_ITEM_LOCKED.
+     */
+    public function write_all_grades_to_gradebook($userid = 0, $nullifone = false) {
+        global $DB;
+        if ($userid != 0) {
+            // One student.
+            $exercisegrades = $DB->get_records_sql(
+                    "SELECT exerciseid, MAX(grade) AS exercisegrade
+                    FROM {" . \mod_adastra\local\data\submission::TABLE . "}
+                    WHERE submitter = :submitter AND exerciseid IN (
+                        SELECT id
+                        FROM {" . \mod_adastra\local\data\learning_object::TABLE . "}
+                        WHERE roundid = :roundid
+                    )
+                    GROUP BY exerciseid",
+                    array(
+                            'submitter' => $userid,
+                            'roundid' => $this->get_id(),
+                    )
+            );
+            if (empty($exercisegrades) && $nullifnone) {
+                $g = new \stdClass();
+                $g->rawgrade = null;
+                $g->userid = $userid;
+                return $this->update_grades(array($userid => $g));
+            } else {
+                $totalpoints = 0;
+                foreach ($exercisegrades as $grade) {
+                    $totalpoints += $grade->exercisegrade;
+                }
+                return $this->update_grades(array($userid => $totalpoints));
+            }
+        } else {
+            // All users in the course.
+            $exercisegrades = $DB->get_recordset_sql(
+                    "SELECT submitter, exerciseid, MAX(grade) AS exercisegrade
+                    FROM {" . \mod_adastra\local\data\submission::TABLE . "}
+                    WHERE exerciseid IN (
+                        SELECT id
+                        FROM {" . \mod_adastra\local\data\learning_object::TABLE . "}
+                        WHERE roundid = ?
+                    )
+                    GROUP BY exerciseid, submitter",
+                    array($this->get_id())
+            );
+            $roundgrades = array();
+            foreach ($exercisegrades as $row) {
+                if (isset($roundgrades[$row->submitter])) {
+                    $roundgrades[$row->submitter] += (int) $row->exercisegrade;
+                } else {
+                    $roundgrades[$row->submitter] = (int) $row->exercisegrade;
+                }
+            }
+            $exercisegrades->close();
+            return $this->update_grades($roundgrades);
+        }
     }
 
     /**
@@ -932,7 +860,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
 
         $exercise->categoryid = $category->get_id();
         $exercise->roundid = $this->get_id();
-        $exercise->gradeitemnumber = $this->get_new_gradebook_item_number();
 
         $exercise->lobjectid = $DB->insert_record(\mod_adastra\local\data\learning_object::TABLE, $exercise);
         $ex = null;
@@ -946,9 +873,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
                 $DB->delete_records(\mod_adastra\local\data\learning_object::TABLE, array('id' => $exercise->lobjectid));
                 return null;
             }
-
-            // Create gradebook item.
-            $ex->update_gradebook_item();
 
             // Update the max points of the round.
             if ($updateroundmaxpoints) {
@@ -1051,23 +975,6 @@ class exercise_round extends \mod_adastra\local\data\database_object {
      */
     public function get_previous_sibling_context() {
         return $this->get_sibling_context(false);
-    }
-
-    /**
-     * Find an unused gradebook item number from the exercises of this round.
-     */
-    public function get_new_gradebook_item_number() {
-        $exs = $this->get_learning_objects(true);
-        $max = 0;
-        foreach ($exs as $ex) {
-            if ($ex->is_submittable()) {
-                $num = $ex->get_gradebook_item_number();
-                if ($num > $max) {
-                    $max = $num;
-                }
-            }
-        }
-        return $max + 1;
     }
 
     /**

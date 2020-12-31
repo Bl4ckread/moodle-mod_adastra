@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/adastra/db" VERSION="20201206" COMMENT="XMLDB file for Moodle mod_adastra"
+<XMLDB PATH="mod/adastra/db" VERSION="20201231" COMMENT="XMLDB file for Moodle mod_adastra"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -95,7 +95,6 @@
         <FIELD NAME="maxsubmissions" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="10" SEQUENCE="false" COMMENT="Max number of submissions allowed. Zero for no limit."/>
         <FIELD NAME="pointstopass" TYPE="int" LENGTH="7" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Min points to pass the exercise."/>
         <FIELD NAME="maxpoints" TYPE="int" LENGTH="7" NOTNULL="true" DEFAULT="100" SEQUENCE="false" COMMENT="Max points available in the exercise."/>
-        <FIELD NAME="gradeitemnumber" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle gradebook item number. 0 is reserved for the exercise round and each exercise needs a unique item number within the round."/>
         <FIELD NAME="maxsbmssize" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="1048576" SEQUENCE="false" COMMENT="Maximum submission file size in bytes for one submitted file. Zero for no limit."/>
         <FIELD NAME="allowastviewing" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Is an assistant (non-editing teacher) allowed to inspect submissions in this exercise? Yes = 1, No = 0."/>
         <FIELD NAME="allowastgrading" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Is an assistant (non-editing teacher) allowed to edit feedback and points for submissions in this exercise? Yes = 1, No = 0."/>
