@@ -1,51 +1,51 @@
 /* Derived from A+ (a-plus/assets/css/main.css)
 */
 /* common */
-.path-mod-astra #region-main iframe {
+.path-mod-adastra #region-main iframe {
     border: none;
 }
-.path-mod-astra #region-main .pre {
+.path-mod-adastra #region-main .pre {
     white-space: pre;
 }
 
-.path-mod-astra #region-main .card-title .float-right {
+.path-mod-adastra #region-main .card-title .float-right {
     margin-left: 0.5em;
 }
-.path-mod-astra #region-main .alert .float-left {
+.path-mod-adastra #region-main .alert .float-left {
     margin-right: 0.5em;
 }
 
-.path-mod-astra #region-main .hljs {
+.path-mod-adastra #region-main .hljs {
     padding: 0;
 }
-.path-mod-astra #region-main table.src tr td.num {
+.path-mod-adastra #region-main table.src tr td.num {
     color: #ccc;
     background: #fff;
     border-right: 1px solid #ccc;
     vertical-align: top;
     padding:0 0.4em;
 }
-.path-mod-astra #region-main table.src tr td.src {
+.path-mod-adastra #region-main table.src tr td.src {
     white-space: pre-wrap;
     padding:0 0.4em;
 }
-.path-mod-astra #region-main #exercise-page-content blockquote {
+.path-mod-adastra #region-main #exercise-page-content blockquote {
   font-size: 100%;
 }
 /* unselectable areas for, e.g., source code modal dialogs */
-.path-mod-astra #region-main .unselectable {
+.path-mod-adastra #region-main .unselectable {
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
 /* Bootstrap 4 does not add distinct gray colours to pre elements */
-.path-mod-astra #region-main pre.hljs {
+.path-mod-adastra #region-main pre.hljs {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-.path-mod-astra #region-main #exercise pre,
-.path-mod-astra #region-main #feedback pre {
+.path-mod-adastra #region-main #exercise pre,
+.path-mod-adastra #region-main #feedback pre {
     background-color: #f5f5f5;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -53,55 +53,55 @@
 }
 
 /* menus */
-.path-mod-astra #region-main .menu-exercise,
-.path-mod-astra #region-main .menu-submission {
+.path-mod-adastra #region-main .menu-exercise,
+.path-mod-adastra #region-main .menu-submission {
     max-width: 50%;
     text-overflow: ellipsis;
 }
-.path-mod-astra #region-main .toc li {
+.path-mod-adastra #region-main .toc li {
     list-style: none;
 }
 
-.path-mod-astra #region-main .siblings>.btn {
+.path-mod-adastra #region-main .siblings>.btn {
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 /* cards, exercise round box */
-.path-mod-astra #region-main .module-panel table {
+.path-mod-adastra #region-main .module-panel table {
     margin: 0;
 }
-.path-mod-astra #region-main .module-panel>.card-header>a>h3.card-title {
+.path-mod-adastra #region-main .module-panel>.card-header>a>h3.card-title {
     margin-bottom: 0; /* module/round panel titles have too much empty space below them */
 }
 
-.path-mod-astra #region-main .module-panel .dropdown-menu {
+.path-mod-adastra #region-main .module-panel .dropdown-menu {
     /* remove the margin set by Moodle */
     margin-top: 0;
 }
 
 /* point progress and badges */
-.path-mod-astra #region-main .progress {
+.path-mod-adastra #region-main .progress {
     position: relative;
 }
-.path-mod-astra #region-main .progress .required-points {
+.path-mod-adastra #region-main .progress .required-points {
     position: absolute;
     height: inherit;
     border-left: 1px solid black;
 }
 
-.path-mod-astra #region-main .bg-primary.card-header .badge-danger,
-.path-mod-astra #region-main .bg-primary.card-header .badge-warning,
-.path-mod-astra #region-main .bg-primary.card-header .badge-info,
-.path-mod-astra #region-main .bg-primary.card-header .badge-success {
+.path-mod-adastra #region-main .bg-primary.card-header .badge-danger,
+.path-mod-adastra #region-main .bg-primary.card-header .badge-warning,
+.path-mod-adastra #region-main .bg-primary.card-header .badge-info,
+.path-mod-adastra #region-main .bg-primary.card-header .badge-success {
     border: 1px solid #fff;
     padding: 0.2em 0.3em;
 }
-.path-mod-astra #region-main .bg-primary.card-header a {
+.path-mod-adastra #region-main .bg-primary.card-header a {
     color: #fff;
 }
 
-.path-mod-astra #region-main td.submissions-dropdown {
+.path-mod-adastra #region-main td.submissions-dropdown {
     text-align: center;
 }
 
@@ -112,7 +112,7 @@
 }*/
 
 /* exercises embedded in chapters */
-.path-mod-astra #region-main [data-aplus-exercise] {
+.path-mod-adastra #region-main [data-aplus-exercise] {
     border: 1px solid #bce8f1;/*grey #e3e3e3;*/
     border-radius: 4px;
     -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
@@ -120,21 +120,21 @@
     margin-bottom: 10px;
     min-height: 150px;
 }
-.path-mod-astra #region-main .exercise-summary {
+.path-mod-adastra #region-main .exercise-summary {
     background-color: #d9edf7 !important;/*primary #337ab7;*/
     /* Aalto theme overrides .navbar-light background color with
     !important rule, so use !important here as well. */
     border-color: #bce8f1;/*primary #2e6da4;*/
     border-radius: 0;
 }
-.path-mod-astra #region-main .exercise-summary .btn-secondary {
+.path-mod-adastra #region-main .exercise-summary .btn-secondary {
     /* Aalto theme sets custom styles to all navbar buttons, so disable them. */
     background-image: none;
     background-color: rgb(242, 242, 242);
     width: auto;
     height: auto;
 }
-.path-mod-astra #region-main .exercise-summary .btn-secondary:hover {
+.path-mod-adastra #region-main .exercise-summary .btn-secondary:hover {
     /* Aalto theme sets animations on mouse hover to all navbar buttons, so disable them. */
     -webkit-transform: none;
     -moz-transform: none;
@@ -142,70 +142,70 @@
     -o-transform: none;
     transform: none;
 }
-.path-mod-astra #region-main [data-aplus-exercise] .exercise-summary {
+.path-mod-adastra #region-main [data-aplus-exercise] .exercise-summary {
     border-top: none;
     border-left: none;
     border-right: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
 }
-.path-mod-astra #region-main .exercise-summary .navbar-nav {
+.path-mod-adastra #region-main .exercise-summary .navbar-nav {
     margin: 0;
 }
-.path-mod-astra #region-main .navbar-light .navbar-nav .nav-link {
+.path-mod-adastra #region-main .navbar-light .navbar-nav .nav-link {
     /* override rules from the Moodle theme Boost without the affecting the Moodle site navbar */
     font-size: unset;
     text-transform: none;
     letter-spacing: normal;
 }
-.path-mod-astra #region-main .exercise-summary .navbar-nav + .navbar-text {
+.path-mod-adastra #region-main .exercise-summary .navbar-nav + .navbar-text {
     margin-left: 1rem;
     margin-right: 1rem;
 }
-.path-mod-astra #region-main .exercise-summary .navbar-nav > li.nav-item > a.nav-link,
-.path-mod-astra #region-main .exercise-summary .navbar-nav + .navbar-text {
+.path-mod-adastra #region-main .exercise-summary .navbar-nav > li.nav-item > a.nav-link,
+.path-mod-adastra #region-main .exercise-summary .navbar-nav + .navbar-text {
     color: #31708f;
     background-color: transparent;
 }
-.path-mod-astra #region-main .exercise-summary .navbar-nav > li.nav-item > a.nav-link:hover {
+.path-mod-adastra #region-main .exercise-summary .navbar-nav > li.nav-item > a.nav-link:hover {
     color: #0000FF;
 }
-.path-mod-astra #region-main .navbar-nav>li>a.file-modal {
+.path-mod-adastra #region-main .navbar-nav>li>a.file-modal {
     display: inline;
     text-decoration: underline;
 }
-.path-mod-astra #region-main .exercise-response {
+.path-mod-adastra #region-main .exercise-response {
   padding: 0 1em;
 }
-.path-mod-astra #region-main [data-aplus-no-summary] .exercise-summary {
+.path-mod-adastra #region-main [data-aplus-no-summary] .exercise-summary {
     display: none;
 }
 /* Moodle sets rules with :target selector that cause visual issues in chapter pages
 when URLs with anchors are used (#id). The rules use !important. */
-.path-mod-astra #region-main :target {
+.path-mod-adastra #region-main :target {
     padding-top: 0 !important;
     margin-top: 0 !important;
 }
-.path-mod-astra #region-main .form-inline .form-group div {
+.path-mod-adastra #region-main .form-inline .form-group div {
     display: inline-block;
 }
-.path-mod-astra #region-main .correct-option {
+.path-mod-adastra #region-main .correct-option {
   /*margin-left: -38px;
   margin-right: 20px;*/
   color: green;
 }
-.path-mod-astra #region-main .btn-group button:first-child {
+.path-mod-adastra #region-main .btn-group button:first-child {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 /* submitted files list in the feedback modal (submission_plain.mustache) */
-.path-mod-astra #region-main table.submission-info .list-unstyled {
+.path-mod-adastra #region-main table.submission-info .list-unstyled {
     margin: 0;
 }
 /* The navbar of embedded exercises in chapter pages does not expand in height when the viewport
 becomes too narrow and Moodle has set a max height. While Moodle is using Bootstrap 4 alpha,
 it is too difficult to use responsive, collapsing navbars. */
-.path-mod-astra #region-main [data-aplus-exercise] > .exercise-content > nav.navbar {
+.path-mod-adastra #region-main [data-aplus-exercise] > .exercise-content > nav.navbar {
     max-height: none;
     /* Aalto MyCourses theme sets a constant height, padding-top and box shadow
     that do not work well for Astra */
@@ -217,26 +217,26 @@ it is too difficult to use responsive, collapsing navbars. */
 }
 
 /* results table */
-.path-mod-astra #region-main table.results-table .category-row {
+.path-mod-adastra #region-main table.results-table .category-row {
     font-weight: bold;
 }
 
 /* badge-danger background-color is never active in the Moodle default styles
 because the default badge selector somehow has a higher precedence. */
-.path-mod-astra #region-main .badge-danger {
+.path-mod-adastra #region-main .badge-danger {
     color: #fff !important;
     background-color: #d9534f !important;
 }
 
 /* Aalto MyCourses theme removes carets from dropdowns, enable them again */
-.path-mod-astra #region-main .dropdown-toggle::after {
+.path-mod-adastra #region-main .dropdown-toggle::after {
     display: inline-block !important;
 }
 /* Aalto MyCourses theme removes border radius from badges */
-.path-mod-astra #region-main .badge {
+.path-mod-adastra #region-main .badge {
     border-radius: 0.5rem;
 }
 /* Aalto MyCourses theme makes secondary badges black. */
-.path-mod-astra #region-main .badge-secondary {
+.path-mod-adastra #region-main .badge-secondary {
     background-color: #ced4da;
 }
