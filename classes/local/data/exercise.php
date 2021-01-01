@@ -223,7 +223,7 @@ class exercise extends \mod_adastra\local\data\learning_object {
                     array(
                             $this->get_id(),
                             $userid,
-                            \mod_adastra\local\data\submissio::STATUS_ERROR,
+                            \mod_adastra\local\data\submission::STATUS_ERROR,
                     ),
                     "COUNT('id')"
             );

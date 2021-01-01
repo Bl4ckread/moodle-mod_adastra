@@ -74,4 +74,21 @@ class deadline_deviation extends \mod_adastra\local\data\deviation_rule {
     public function use_late_penalty() {
         return !((bool) $this->record->withoutlatepenalty);
     }
+
+    public static function create_new($exerciseid, $userid, $extraminutes, $withoutlatepenalty) {
+        global $DB;
+
+        if (self::find_deviation($exerciseid, $userid) === null) {
+            // Does not exist yet.
+            $record = new \stdclass();
+            $record->submitter = $userid;
+            $record->exerciseid = $exerciseid;
+            $record->extraminutes = $extraminutes;
+            $record->withoutlatepenalty = (int) $withoutlatepenalty;
+            return $DB->insert_record(self::TABLE, $record);
+        } else {
+            // User already has a deviation in the exercise.
+            return null;
+        }
+    }
 }
