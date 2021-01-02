@@ -28,7 +28,10 @@ class mod_astra_exercise_testcase extends \advanced_testcase {
 
     use exercise_test_data;
 
+    protected $timenow;
+
     public function setUp() {
+        $this->timenow = time();
         $this->add_test_data();
     }
 
