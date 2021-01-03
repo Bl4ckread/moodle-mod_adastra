@@ -27,6 +27,9 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     const STATUS_MAINTENANCE = 2;
     const STATUS_UNLISTED    = 3;
 
+    // Calendar event types.
+    const EVENT_DL_TYPE = 'deadline';
+
     private $cm; // Moodle course module as cm_info instance.
     private $courseconfig;
 
@@ -371,6 +374,15 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         } else {
             return $oldname;
         }
+    }
+
+    /** Delete the calendar event(s) for this assignment. */
+    public function delete_calendar_event() {
+        global $DB;
+        $DB->delete_records('event', array(
+                'modulename' => self::TABLE,
+                'instance'   => $this->record->id,
+        ));
     }
 
     /**
@@ -804,6 +816,35 @@ class exercise_round extends \mod_adastra\local\data\database_object {
             $exercisegrades->close();
             return $this->update_grades($roundgrades);
         }
+    }
+
+    /**
+     * Remove this instance of the adastra (exercise round) from the database.
+     * @return boolean true on success, false on failure
+     */
+    public function delete_instance() {
+        global $DB;
+
+        // Delete all learning objects of the round, since their foreign key roundid would become invalid.
+        $learningobjects = $this->get_learning_objects(true);
+        foreach ($learningobjects as $lobj) {
+            // If some learning objects have child objects, deleting the parent should
+            // already delete the child. However, there is no harm in calling delete again
+            // here for the already deleted child objects.
+            if ($lobj->is_submittable()) { // Exercise.
+                $lobj->delete_instance(false);
+            } else {
+                $lobj->delete_instance();
+            }
+        }
+
+        // Delete calendar event for deadline.
+        $this->delete_calendar_event();
+
+        // Delete the exercise round.
+        $DB->delete_records(self::TABLE, array('id' => $this->record->id));
+
+        return true;
     }
 
     /**

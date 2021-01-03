@@ -24,7 +24,7 @@ require_once(dirname(__FILE__) .'/exercise_test_data.php');
  * Unit tests for exercise.
  * @group mod_astra
  */
-class mod_astra_exercise_testcase extends \advanced_testcase {
+class exercise_testcase extends \advanced_testcase {
 
     use exercise_test_data;
 
