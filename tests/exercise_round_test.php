@@ -145,11 +145,6 @@ class exercise_round_testcase extends \advanced_testcase {
         $exround = new \mod_adastra\local\data\exercise_round($roundrecord);
         $this->assertEquals($this->round1_data['name'], $exround->get_name());
 
-        // Test gradebook.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE, $roundid, null)->items;
-        // Gradebook has no grade item when the max points are zero.
-        $this->assertFalse(isset($gradeitems[0])); // Round should use itemnumber 0.
-
         // Test calendar event.
         $event = $DB->get_record('event', array(
                 'modulename' => \mod_adastra\local\data\exercise_round::TABLE,
@@ -221,21 +216,6 @@ class exercise_round_testcase extends \advanced_testcase {
         $exround = \mod_adastra\local\data\exercise_round::create_from_id($roundid);
         $this->assertEquals(10, $exround->get_max_points());
 
-        // Test gradebook.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE, $roundid, null)->items;
-        // Only the exercise round has a grade item in the gradebook.
-        // Item number 0 is reserved for round.
-        $this->assertTrue(isset($gradeitems[0]));
-        $this->assertEquals(1, count($gradeitems));
-        $this->assertEquals(10, $gradeitems[0]->grademax);
-        $this->assertEquals(0, $gradeitems[0]->grademin);
-        $this->assertFalse($gradeitems[0]->hidden);
-
-        // Test round gradebook.
-        $this->assertEquals(0, $gradeitems[0]->itemnumber);
-        $this->assertEquals($roundid, $gradeitems[0]->iteminstance);
-        $this->assertEquals($this->round1_data['name'], $gradeitems[0]->name);
-
         // Round max points should have increased.
         $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'grade',
                 array('id' => $roundid), MUST_EXIST));
@@ -303,13 +283,6 @@ class exercise_round_testcase extends \advanced_testcase {
         $this->assertEquals(5, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'ordernum', array('id' => $record->id)));
         $this->assertEquals(\mod_adastra\local\data\exercise_round::STATUS_READY, // not changed
                 $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'status', array('id' => $record->id)));
-
-        // Test gradebook.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE, $record->id, null)->items;
-        // Gradebook has no grade item when the max points are zero.
-        $this->assertFalse(isset($gradeitems[0])); // Round should use itemnumber 0
-        // $this->assertTrue(isset($gradeitems[0])); // Round should use itemnumber 0.
-        // $this->assertEquals('PHP round', $gradeitems[0]->name);
 
         // Test event.
         $event = $DB->get_record('event', array(
@@ -491,10 +464,6 @@ class exercise_round_testcase extends \advanced_testcase {
         $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\exercise::TABLE));
         $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('roundid' => $record->id)));
         $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\chapter::TABLE));
-
-        // Gradebook and events.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE, $record->id, null)->items;
-        // $this->assertFalse(isset($gradeitems[0])); // Fails.
 
         $this->assertEquals(0, $DB->count_records('event', array(
                 'modulename' => \mod_adastra\local\data\exercise_round::TABLE,
