@@ -374,6 +374,177 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Set points to pass.
+     *
+     * @param int $points
+     * @return void
+     */
+    public function set_points_to_pass($points) {
+        $this->record->pointstopass = $points;
+    }
+
+    /**
+     * Set intro text.
+     *
+     * @param string $intro
+     * @return void
+     */
+    public function set_intro($intro) {
+        $this->record->intro = $intro;
+        $this->record->introformat = FORMAT_HTML;
+    }
+
+    /**
+     * Set status.
+     *
+     * @param int $status
+     * @return void
+     */
+    public function set_status($status) {
+        global $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        $cm = $this->get_course_module();
+        if ($status === self::STATUS_HIDDEN && $cm->visible) {
+            // Hide the Moodle course module.
+            set_coursemodule_visible($cm->id, 0);
+        } else if ($status !== self::STATUS_HIDDEN && !$cm->visible) {
+            // Show the Moodle course module.
+            set_coursemodule_visible($cm->id, 1);
+        }
+        $this->record->status = $status;
+    }
+
+    /**
+     * Set opening time.
+     *
+     * @param int $open A Unix timestamp.
+     * @return void
+     */
+    public function set_opening_time($open) {
+        $this->record->openingtime = $open;
+    }
+
+    /**
+     * Set closing time.
+     *
+     * @param int $close A Unix timestamp.
+     * @return void
+     */
+    public function set_closing_time($close) {
+        $this->record->closingtime = $close;
+    }
+
+    /**
+     * Set late submission deadline.
+     *
+     * @param int $dl A Unix timestamp.
+     * @return void
+     */
+    public function set_late_submission_deadline($dl) {
+        $this->record->latesbmsdl = $dl;
+    }
+
+    /**
+     * Set if late submission is allowed.
+     *
+     * @param bool $isallowed
+     * @return void
+     */
+    public function set_late_submission_allowed($isallowed) {
+        $this->record->latesbmsallowed = (int) $isallowed;
+    }
+
+    /**
+     * Set the penalty applied for submitting late.
+     *
+     * @param float $penalty
+     * @return void
+     */
+    public function set_late_submission_penalty($penalty) {
+        $this->record->latesbmspenalty = (float) $penalty;
+    }
+
+    /**
+     * Create or update the course calendar event for the deadline (closing time) of this exercise round.
+     *
+     * @return void
+     */
+    public function update_calendar() {
+        // Deadline event.
+        $dl = $this->get_closing_time(); // Zero if no dl.
+        $title = get_string('deadline', self::MODNAME) . ': ' . $this->get_name();
+        $visible = $this->get_status() === self::STATUS_HIDDEN ? 0 : 1;
+
+        $this->update_event(self::EVENT_DL_TYPE, $dl, $title, $visible);
+    }
+
+    /**
+     * Helper method for creating/updating a calendar event.
+     *
+     * @param string $type One of the EVENT_*_TYPE constants in this class.
+     * @param int $dl The time of the event (deadline), a Unix timestamp. If zero,
+     * no new event is created, and an existing event is removed.
+     * @param string $title The title for the event.
+     * @param int $visible 0 for not visible, 1 for visible.
+     * @return void
+     */
+    protected function update_event($type, $dl, $title, $visible) {
+        // See moodle/mod/assign/locallib.php for hints.
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/calendar/lib.php');
+
+        $event = new \stdClass();
+        $event->id = $DB->get_field('event', 'id', array(
+                'modulename' => self::TABLE,
+                'instance' => $this->record->id,
+                'eventtype' => $type,
+        )); // If the event already exists, there should be one hit.
+
+        $event->name = $title;
+        $event->timestart = $dl; // A Unix timestamp.
+        $event->visible = $visible;
+        $event->priority = null;
+        $event->type = CALENDAR_EVENT_TYPE_ACTION;
+        $event->timesort = $dl; // Sorting of the events in the dashboard (block_myoverview);
+
+        if ($event->id) {
+            // Update existing.
+            $calendarevent = \calendar_event::load($event->id);
+            if ($dl) {
+                $calendarevent->update($event);
+            } else {
+                // Deadline removed, delete event.
+                $calendarevent->delete();
+            }
+        } else if ($dl) {
+            // Create new, unless no deadline is set for the assigment.
+            unset($event->id);
+            if (is_null($this->cm)) {
+                $event->description = array(
+                        'text' => '', // No description in calendar.
+                        'format' => $this->record->introformat,
+                );
+            } else {
+                // The function format_module_intro uses the Moodle description from mod_form.
+                $event->description = format_module_intro(self::TABLE, $this->record, $this->cm->id);
+            }
+            $event->courseid = $this->record->course;
+            $event->groupid = 0;
+            $event->userid = 0; // Course event, no user.
+            $event->modulename = self::TABLE;
+            $event->instance = $this->record->id;
+            $event->eventtype = $type;
+            // Event type: for events of an activity module, this can be used to set the alternative text
+            // of the event icon. Set it to 'pluginname' unless you have a better string.
+
+            $event->timeduration = 0; // Duration in seconds.
+
+            \calendar_event::create($event);
+        }
+    }
+
+    /**
      * Return an array of the learning objects in this round (as
      * \mod_adastra\local\data\learning_object instances).
      *
@@ -803,6 +974,51 @@ class exercise_round extends \mod_adastra\local\data\database_object {
             }
             $exercisegrades->close();
             return $this->update_grades($roundgrades);
+        }
+    }
+
+    /**
+     * Update an instance of Ad Astra (exercise round) in the database.
+     *
+     * @param \stdClass $adastra A record with id field and updated values for any other field.
+     * @return bool True on success, false on failure.
+     */
+    public static function update_instance(\stdClass $adastra) {
+        global $DB;
+        // Do not modify the Moodle course module here, since this function is called
+        // from lib.php as a part of standard Moodle course module creation/modification.
+
+        $adastra->timemodified = time();
+        $result = $DB->update_record(self::TABLE, $adastra);
+
+        if ($result) {
+            if (!isset($adastra->grade)) {
+                // Variable $adastra does not have grade field set since it comes from the Moodle mod_form.
+                $adastra->grade = $DB->get_field(self::TABLE, 'grade', array(
+                        'id' => $adastra->id,
+                ), MUST_EXIST);
+            }
+
+            $exround = new self($adastra);
+            $exround->update_gradebook_item(); // Uses visibility of the Moodle course module.
+            $exround->update_calendar();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Save changes to the exercise round to DB.
+     *
+     * @param boolean $skipgradebookandcalendar
+     * @return bool True on success, false on failure.
+     */
+    public function save($skipgradebookandcalendar = false) {
+        if ($skipgradebookandcalendar) {
+            $this->record->timemodified = time();
+            return parent::save();
+        } else {
+            return self::update_instance($this->record);
         }
     }
 
