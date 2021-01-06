@@ -3,7 +3,7 @@ Show one exercise round.
 
 Context variables:
 * variables required by exercise_round.mustache
-    - course_module requires additional fields used in _siblings.mustache
+    - coursemodule requires additional fields used in _siblings.mustache
 * toc (object) table of contents context for the round, has fields as required by
         _round_toc.mustache
 }}
@@ -51,10 +51,9 @@ Context variables:
 
 {{> mod_adastra/_page_file_modals }}
 
-<!--
 {{#js}}
 require(['theme_boost/loader']);
-require(['jquery', 'theme_boost/tooltip', 'mod_astra/aplus_modal'], function($) {
+require(['jquery', 'theme_boost/tooltip', 'mod_adastra/aplus_modal'], function($) {
   /* enable Bootstrap tooltips */
   $(function() {
     $('[data-toggle="tooltip"]').tooltip();
@@ -65,4 +64,3 @@ require(['jquery', 'theme_boost/tooltip', 'mod_astra/aplus_modal'], function($) 
   });
 });
 {{/js}}
--->

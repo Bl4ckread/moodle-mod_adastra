@@ -21,14 +21,14 @@ defined('MOODLE_INTERNAL') || die();
  * Event class that represents an error in the external exercise service server.
  *
  * An event is created like this:
- * $event = \mod_astra\event\service_service_failed::create(array(
+ * $event = \mod_adastra\event\exercise_service_failed::create(array(
  *     'context' => context_module::instance($cm->id),
  *     'relateduserid' => $user->id, // optional user that is related to the action,
  *     // may be different than the user taking the action
  *     'other' => array(
  *         'error' => '...',
  *         'url' => 'https://service-url',
- *         'objtable' => 'adastra', // or 'astra_submissions', used if relevant
+ *         'objtable' => 'adastra', // or 'adastra_submissions', used if relevant
  *         'objid' => 1, // id of the module instance (DB row), zero means none
  *     )
  * ));

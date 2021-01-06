@@ -4,15 +4,15 @@ child objects.
 Derived from A+ (a-plus/course/templates/course/_module_toc.html).
 
 Context variables:
-* has_started (bool) true if the round has been opened
-* is_empty (bool) true if the learning object is empty (no service URL)
+* hasstarted (bool) true if the round has been opened
+* isempty (bool) true if the learning object is empty (no service URL)
 * name (string) name of the learning object (with ordinal number)
 * url (string) URL to the learning object
-* has_children (bool) true if the learning object has child objects
+* haschildren (bool) true if the learning object has child objects
 * children (array of objects), child objects, each object has fields
-    - is_empty (bool), name (string), url (string), has_children (bool), children (array)
+    - isempty (bool), name (string), url (string), haschildren (bool), children (array)
         as defined above
-* is_course_staff (bool) true if the user can see hidden/inactive content
+* iscoursestaff (bool) true if the user can see hidden/inactive content
 }}
 
 <li>

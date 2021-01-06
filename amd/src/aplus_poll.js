@@ -13,7 +13,7 @@
  * Source: A+ (a-plus/exercise/static/exercise/poll.js)
  * License: GNU GPL v3
  *
- * @module mod_astra/aplus_poll
+ * @module mod_adastra/aplus_poll
  */
 define(['jquery'], function(jQuery) {
 

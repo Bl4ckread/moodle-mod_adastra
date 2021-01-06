@@ -34,8 +34,8 @@ abstract class database_object {
         return new static($rec);
         /*
          * Class to instantiate is the class given in the static call:
-         * \mod_astra\local\submission::create_from_id() returns instance of
-         * \mod_astra\local\submission.
+         * \mod_adastra\local\submission::create_from_id() returns instance of
+         * \mod_adastra\local\submission.
          */
     }
 

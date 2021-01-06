@@ -3,14 +3,14 @@ Table of contents of Astra content in a course (all rounds).
 Derived from A+ (a-plus/course/templates/course/toc.html).
 
 Context variables:
-* exercise_rounds (array of objects), each object has round-specific fields
+* exerciserounds (array of objects), each object has round-specific fields
     that are required by _round_toc.mustache, and
     - url (string) URL to the round
     - name (string) name of the round with ordinal number
     - openingtime (int) Unix timestamp
     - closingtime (int) Unix timestamp
-* is_course_staff (bool) true if the user can see hidden/inactive content
-* toDateStr callable Function that converts a Unix timestamp to a date string
+* iscoursestaff (bool) true if the user can see hidden/inactive content
+* todatestr a callable function that converts a Unix timestamp to a date string
 }}
 
 <h3>{{#str}} toc, mod_adastra {{/str}}</h3>

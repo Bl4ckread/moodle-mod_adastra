@@ -4,25 +4,25 @@ Derived from A+ (a-plus/exercise/templates/exercise/_exercise_info.html).
 Context variables:
 * summary (stdClass), summary of the user's status in the exercise, fields:
     points, penaltyapplied (null if no late penalty applied), penaltyappliedpercent (0-100),
-    submission_count,
+    submissioncount,
     fields required by _points_progress.mustache
 * exercise (stdClass), with fields
-    max_points, max_submissions (0 if no limit),
-    max_submissions_for_user (submission limit with personal deviation, may be the same as max_submissions),
-    points_to_pass (0 if no limit), total_submitter_count,
-    submit_limit_deviation (int, number of extra submissions for the user),
+    maxpoints, maxsubmissions (0 if no limit),
+    maxsubmissionsforuser (submission limit with personal deviation, may be the same as maxsubmissions),
+    pointstopass (0 if no limit), totalsubmittercount,
+    submitlimitdeviation (int, number of extra submissions for the user),
     deadline (int, Unix timestamp, normal round deadline or the extended deadline for the user),
-    dl_extended_minutes (int, number of minutes the deadline is extended for the user),
-    course_module (stdClass) with keys
+    dlextendedminutes (int, number of minutes the deadline is extended for the user),
+    coursemodule (stdClass) with keys
         - closingtime
-        - late_submissions_allowed (boolean)
-        - late_submission_deadline (int) timestamp
-        - show_late_submission_point_worth (boolean) true if late submissions receive penalty
-        - late_submission_penalty (int) percentage of points reduced
+        - latesubmissionsallowed (boolean)
+        - latesubmissiondeadline (int) timestamp
+        - showlatesubmissionpointworth (boolean) true if late submissions receive penalty
+        - latesubmissionpenalty (int) percentage of points reduced
     category (object) with fields
         - name (string)
-        - status_hidden (boolean) true if hidden
-* toDateStr callable Function that converts a Unix timestamp to a date string
+        - statushidden (boolean) true if hidden
+* todatestr a callable function that converts a Unix timestamp to a date string
 }}
 
 <div class="card bg-light">

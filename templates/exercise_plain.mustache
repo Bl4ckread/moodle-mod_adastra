@@ -4,33 +4,33 @@ Derived from A+ (a-plus/exercise/templates/exercise/exercise_plain.html).
 
 Context variables:
 * exercise (object) with fields
-    - is_submittable (bool) true if the learning object can receive submissions (is an exercise, not chapter)
-    - max_submissions_for_user (int) max number of submissions the user may submit
-    - points_to_pass (int)
+    - issubmittable (bool) true if the learning object can receive submissions (is an exercise, not chapter)
+    - maxsubmissionsforuser (int) max number of submissions the user may submit
+    - pointstopass (int)
     - submissionlisturl (string) URL to the list of all submissions
-    - can_view_submissions (bool) true if the user can see the submission list
+    - canviewsubmissions (bool) true if the user can see the submission list
 * summary (object) exercise summary with fields
     - fields required by _points_badge.mustache
-    - best_submission_url (string) URL to view the best submission
-    - submission_count (int) number of submissions from the user
-    - has_any_sbms_assist_feedback (bool) true if any submission has received assistant feedback
+    - bestsubmissionurl (string) URL to view the best submission
+    - submissioncount (int) number of submissions from the user
+    - hasanysbmsassistfeedback (bool) true if any submission has received assistant feedback
 * submissions (array of objects, the latest submission first), each object has keys
-    url (string), submission_time (int, timestamp), nth (int, ordinal number),
-    has_assistant_feedback (bool),
+    url (string), submissiontime (int, timestamp), nth (int, ordinal number),
+    hasassistantfeedback (bool),
     the variables required by _points_badge.mustache (set status if the submission is not graded)
 * module (object) exercise round, with fields
     - closingtime (int) Unix timestamp of the round closing time
-    - is_late_submission_open (boolean) true if late submissions are accepted now
+    - islatesubmissionopen (boolean) true if late submissions are accepted now
       (deadline passed but the late deadline has not)
-    - late_submission_deadline (int) timestamp
-    - show_late_submission_point_worth (boolean) true if late submissions receive a penalty
-    - late_submission_penalty (int) percentage that is reduced from the points
-* is_course_staff (bool) true if the user can view all submissions
-* toDateStr callable Function that converts a Unix timestamp to a date string
+    - latesubmissiondeadline (int) timestamp
+    - showlatesubmissionpointworth (boolean) true if late submissions receive a penalty
+    - latesubmissionpenalty (int) percentage that is reduced from the points
+* iscoursestaff (bool) true if the user can view all submissions
+* todatestr a callable function that converts a Unix timestamp to a date string
 * error (string) set if an error message should be displayed
 * page (stdClass) with fields
     content (html string)
-    is_wait (boolean) true if JS should poll for the status of the new submission to see when it is ready
+    iswait (boolean) true if JS should poll for the status of the new submission to see when it is ready
 * submission (object) a new submission for _exercise_wait.mustache
 }}
 

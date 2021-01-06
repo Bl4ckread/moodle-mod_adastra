@@ -21,7 +21,7 @@ namespace mod_adastra\local;
 
 /**
  * Unit tests for category.
- * @group mod_astra
+ * @group mod_adastra
  */
 class category_testcase extends \advanced_testcase {
 

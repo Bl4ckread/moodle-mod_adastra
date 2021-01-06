@@ -9,7 +9,7 @@
  * Source: A+ (a-plus/exercise/static/exercise/chapter.js)
  * License: GNU GPL v3
  *
- * @module mod_astra/aplus_chapter
+ * @module mod_adastra/aplus_chapter
  */
 define(['jquery', 'core/event', 'mod_adastra/aplus_poll', 'theme_boost/dropdown', 'mod_adastra/aplus_modal'], function(jQuery, moodleEvent) {
 

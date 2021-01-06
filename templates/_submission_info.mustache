@@ -3,20 +3,20 @@ Derived from A+ (a-plus/exercise/templates/exercise/_submission_info.html)
 
 Context variables:
 * submission (stdClass) with fields
-    - submission_time (int, Unix timestamp)
-    - is_graded (bool)
+    - submissiontime (int, Unix timestamp)
+    - isgraded (bool)
     - state (string) status of the submission (not called status to avoid
         variable name collision with _points_badge.mustache)
     - points (int)
-    - service_points (int)
-    - service_max_points (int)
-    - late_penalty_applied (float, 0-1), null if no late penalty
-    - late_penalty_applied_percent (int, 0-100)
-    - submitter_name (string) in the format "fullname (student id)"
+    - servicepoints (int)
+    - servicemaxpoints (int)
+    - latepenaltyapplied (float, 0-1), null if no late penalty
+    - latepenaltyappliedpercent (int, 0-100)
+    - submittername (string) in the format "fullname (student id)"
 * exercise (stdClass) with fields
-    max_points
-* toDateStr callable Function that converts a Unix timestamp to a date string
-* is_course_staff (bool)
+    maxpoints
+* todatestr a callable function that converts a Unix timestamp to a date string
+* iscoursestaff (bool)
 }}
 
 <div class="card border-primary">

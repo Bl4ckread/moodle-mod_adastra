@@ -4,25 +4,25 @@ Derived from A+ (a-plus/exercise/templates/exercise/submission_plain.html).
 
 Context variables:
 * submission (object) with fields
-    - is_graded (bool) true if graded
-    - has_files (bool)
+    - isgraded (bool) true if graded
+    - hasfiles (bool)
     - files (array of stdClass objects), each object has fields
         that are required by _file_link.mustache
-    - submission_time (int, Unix timestamp)
-    - late_penalty_applied (float)
-    - late_penalty_applied_percent (int, 0-100)
-    - assistant_feedback (string)
+    - submissiontime (int, Unix timestamp)
+    - latepenaltyapplied (float)
+    - latepenaltyappliedpercent (int, 0-100)
+    - assistantfeedback (string)
     - feedback (string)
-    - status_wait (bool) true if the submission is waiting for assessment
+    - statuswait (bool) true if the submission is waiting for assessment
     - fields required by _points_badge.mustache
 * exercise (object) with fields
-    - allow_assistant_grading (bool)
+    - allowassistantgrading (bool)
     - name (string)
 * summary (object) exercise summary (best submission) with fields
     - fields required by _points_badge.mustache
-* is_course_staff (bool) true if the user can inspect submissions
-* toDateStr callable Function that converts a Unix timestamp to a date string
-* fileSizeFormatter (callable) function to convert bytes (int) to a human-readable string (e.g. "10.2 KB")
+* iscoursestaff (bool) true if the user can inspect submissions
+* todatestr a callable function that converts a Unix timestamp to a date string
+* filesizeformatter a (callable) function to convert bytes (int) to a human-readable string (e.g. "10.2 KB")
 }}
 
 <p class="submission-title">

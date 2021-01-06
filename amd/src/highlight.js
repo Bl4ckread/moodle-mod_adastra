@@ -1,5 +1,6 @@
-/* highlight.js as an AMD module for Moodle.
- * @module mod_astra/highlight
+/**
+ * highlight.js as an AMD module for Moodle.
+ * @module mod_adastra/highlight
  */
 define([], function() {
 

@@ -23,7 +23,7 @@ defined('MOODLE_INTERNAL') || die();
  * service server, for example, when curl cannot connect to the server.
  *
  * An event is created like this:
- * $event = \mod_astra\event\service_connection_failed::create(array(
+ * $event = \mod_adastra\event\service_connection_failed::create(array(
  *     'context' => context_module::instance($cm->id),
  *     'relateduserid' => $user->id, // optional user that is related to the action,
  *     // may be different than the user taking the action

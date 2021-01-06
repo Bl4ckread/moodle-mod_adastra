@@ -6,23 +6,23 @@ Context variables:
 * exercise (stdClass) with fields
     - url (string), submissionlisturl, editurl
     - infourl (string) AJAX URL for the exercise info box
-    - is_submittable (boolean) does the learning object accept submissions (ever at all)?
+    - issubmittable (boolean) does the learning object accept submissions (ever at all)?
       True for exercises, false for chapters.
-    - use_wide_column (boolean) if true, the info column is removed and the content has more space
-    - max_submissions_for_user (int) if submittable exercise and submissions are limited
+    - usewidecolumn (boolean) if true, the info column is removed and the content has more space
+    - maxsubmissionsforuser (int) if submittable exercise and submissions are limited
     - next and previous objects as required by _siblings.mustache
 * submissions (array of objects, the latest submission first), each object has keys
-    url (string), submission_time (int, timestamp), nth (int, ordinal number),
-    has_assistant_feedback (bool),
+    url (string), submissiontime (int, timestamp), nth (int, ordinal number),
+    hasassistantfeedback (bool),
     the variables required by _points_badge.mustache (set status if the submission is not graded)
 * summary (object) required by _exercise_info.mustache if the exerciseinfo block is used and
-  the exercise is submittable. The field summary.submission_count is used in this template.
+  the exercise is submittable. The field summary.submissioncount is used in this template.
   In addition, the following fields:
-    - has_any_sbms_assist_feedback (bool) true if any submission has received assistant feedback
-* is_course_staff (bool)
-* is_editing_teacher (bool) can user edit exercises?
-* can_inspect (bool) can user inspect submission?
-* toDateStr callable Function that converts a Unix timestamp to a date string
+    - hasanysbmsassistfeedback (bool) true if any submission has received assistant feedback
+* iscoursestaff (bool)
+* iseditingteacher (bool) can user edit exercises?
+* caninspect (bool) can user inspect submission?
+* todatestr a callable function that converts a Unix timestamp to a date string
 * submission (stdClass), set if viewing one specific submission, with fields
     inspecturl (string)
 * the variables from _exercise_info.mustache, if the block exerciseinfo is not overridden

@@ -34,7 +34,7 @@ abstract class learning_object extends \mod_adastra\local\data\database_object {
     // SQL fragment for joining a learning object base class table with a subtype table.
     // The self::TABLE constant cannot be used in this definition since old PHP versions
     // only support literal constants.
-    // Usage of this constant: sprintf(mod_astra_learning_object::SQL_SUBTYPE_JOIN, fields, SUBTYPE_TABLE).
+    // Usage of this constant: sprintf(\mod_adastra\local\data\learning_object::SQL_SUBTYPE_JOIN, fields, SUBTYPE_TABLE).
     const SQL_SUBTYPE_JOIN = 'SELECT %s FROM {adastra_lobjects} lob JOIN {%s} ex ON lob.id = ex.lobjectid';
     // SQL fragment for selecting all fields in the subtype join query: this avoids the conflict of
     // id columns in both the base table and the subtype table. Id is taken from the subtype and

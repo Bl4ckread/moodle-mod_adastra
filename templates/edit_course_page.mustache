@@ -7,33 +7,33 @@ Context variables:
     - name (string)
     - editurl (string) URL to category edit page
     - removeurl (string) URL for deleting the category
-    - status_ready (bool) true if ready
-    - status_str (string) human-readable status
-* create_category_url (string) URL for creating a new category
-* course_modules (array of objects), each object has fields
+    - statusready (bool) true if ready
+    - statusstr (string) human-readable status
+* createcategoryurl (string) URL for creating a new category
+* coursemodules (array of objects), each object has fields
     - name (string) with ordinal number
-    - status_ready (bool) true if ready
-    - status_str (string) status as human-readable string
+    - statusready (bool) true if ready
+    - statusstr (string) status as human-readable string
     - editurl (string) URL for editing the round
     - removeurl (string) URL for deleting the round
     - url (string) URL for viewing the round
     - addnewexerciseurl (string) URL for adding a new exercise to the round
     - addnewchapterurl (string) URL for adding a new chapter to the round
-    - all_exercises (array of objects) all learning objects (exercises/chapters) of the round,
+    - allexercises (array of objects) all learning objects (exercises/chapters) of the round,
             includes also hidden objects, each object has fields
         * name (string) with ordinal number
-        * status_ready (bool) true if status is ready
-        * status_str (string) status as human-readable string
+        * statusready (bool) true if status is ready
+        * statusstr (string) status as human-readable string
         * editurl (string) URL for editing the exercise
         * removeurl (string) URL for deleting the exercise
         * displayurl (string) URL for viewing the exercise (if the exercise is embedded
           to a chapter, then the link opens the chapter)
         * submissionlisturl (string) URL to the all submissions list
-* create_module_url (string) URL for creating a new exercise round
-* renumber_action_url (string) URL for form action that renumbers exercises
-* module_numbering_options (callable), returns the HTML <option> elements for module numbering
+* createmoduleurl (string) URL for creating a new exercise round
+* renumberactionurl (string) URL for form action that renumbers exercises
+* modulenumberingoptions (callable), returns the HTML <option> elements for module numbering
         (in <select> element of the form).
-* content_numbering_options (callable), returns the HTML <option> elements for content numbering
+* contentnumberingoptions (callable), returns the HTML <option> elements for content numbering
         (in <select> element of the form).
 }}
 

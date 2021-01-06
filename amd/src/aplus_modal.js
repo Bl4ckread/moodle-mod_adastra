@@ -4,7 +4,7 @@
  * Source: A+ (a-plus/assets/js/aplus.js)
  * License: GNU GPL v3
  *
- * @module mod_astra/aplus_modal
+ * @module mod_adastra/aplus_modal
  */
 define(['jquery', 'core/event', 'mod_adastra/aplus_highlightcode', 'theme_boost/dropdown', 'theme_boost/modal'], function(jQuery, moodleEvent) {
 

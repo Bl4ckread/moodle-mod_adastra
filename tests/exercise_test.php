@@ -22,7 +22,7 @@ require_once(dirname(__FILE__) .'/exercise_test_data.php');
 
 /**
  * Unit tests for exercise.
- * @group mod_astra
+ * @group mod_adastra
  */
 class exercise_testcase extends \advanced_testcase {
 

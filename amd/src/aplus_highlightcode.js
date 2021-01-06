@@ -10,7 +10,7 @@
  * Source: A+ (a-plus/assets/js/aplus.js)
  * License: GNU GPL v3
  *
- * @module mod_astra/aplus_highlightcode
+ * @module mod_adastra/aplus_highlightcode
  */
 define(['jquery', 'mod_adastra/highlight'], function($, hljs) {
 

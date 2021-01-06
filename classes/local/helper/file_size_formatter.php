@@ -26,11 +26,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Example
  * Preparing context variables before rendering:
- * $context->fileSizeFormatter = new \mod_astra\output\file_size_formatter();
+ * $context->filesizeformatter = new \mod_adastra\local\helper\file_size_formatter();
  * $context->filesize = 1024;
  *
  * In the Mustache template:
- * {{# fileSizeFormatter }}{{ filesize }}{{/ fileSizeFormatter }}
+ * {{# filesizeformatter }}{{ filesize }}{{/ filesizeformatter }}
  */
 class file_size_formatter {
 
