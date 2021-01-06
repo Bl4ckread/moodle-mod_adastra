@@ -100,18 +100,20 @@ Context variables:
                     {{/ exercise.dlextendedminutes }}
                 </small>
             </span>
+            <!--
           {{# exercise.canviewsubmissions }}
             <a class="btn btn-secondary btn-sm" href="{{{ exercise.submissionlisturl }}}">
                 {{#pix}}a/view_list_active{{/pix}}
                 {{#str}} viewallsubmissions, mod_adastra {{/str}}
             </a>
           {{/ exercise.canviewsubmissions }}
+          -->
         </nav>
     {{/ exercise.issubmittable }}
 
     <div class="exercise-response">
         {{# error }}
-          {{> mod_astra/_error_alert }}
+          {{> mod_adastra/_error_alert }}
         {{/ error }}
         <div>
             {{{ page.content }}}
@@ -120,6 +122,6 @@ Context variables:
         and exercise service tells us to wait a short time,
         poll for the grading status of the new submission
         (then the aplus_poll AMD JS module should also be included in this page) }}
-        {{> mod_astra/_exercise_wait }}
+        {{> mod_adastra/_exercise_wait }}
     </div>
 </div>

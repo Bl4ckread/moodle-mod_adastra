@@ -518,7 +518,7 @@ class exercise_round extends \mod_adastra\local\data\database_object {
         $event->visible = $visible;
         $event->priority = null;
         $event->type = CALENDAR_EVENT_TYPE_ACTION;
-        $event->timesort = $dl; // Sorting of the events in the dashboard (block_myoverview);
+        $event->timesort = $dl; // Sorting of the events in the dashboard (block_myoverview).
 
         if ($event->id) {
             // Update existing.

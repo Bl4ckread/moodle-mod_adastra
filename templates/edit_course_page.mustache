@@ -41,7 +41,9 @@ Context variables:
   <div class="card-body">
   <form method="post" class="form-inline" action="{{{ renumberactionurl }}}">
     <a href="{{{ autosetupurl }}}" class="btn btn-secondary mr-2">{{#str}} autosetup, mod_adastra {{/str}}</a>
+    <!--
     <button class="btn btn-secondary" type="submit" name="cache">{{#str}} clearcontentcache, mod_adastra {{/str}}</button>
+    -->
   </form>
   </div>
 </div>
@@ -58,6 +60,7 @@ Context variables:
                       <span class="badge badge-secondary">{{ statusstr }}</span>
                     {{/ statusready }}
                 </td>
+                <!--
                 <td>
                     <a class="btn btn-secondary btn-sm" href="{{{ editurl }}}">
                         {{#pix}}t/editinline{{/pix}}
@@ -67,8 +70,10 @@ Context variables:
                         {{#pix}}t/delete{{/pix}} {{#str}} remove, mod_adastra {{/str}}
                     </a>
                 </td>
+                -->
             </tr>
             {{/ categories }}
+            <!--
             <tr>
                 <td colspan="2">
                     <a class="btn btn-primary btn-sm" href="{{{ createcategoryurl }}}">
@@ -77,6 +82,7 @@ Context variables:
                     </a>
                 </td>
             </tr>
+            -->
         </tbody>
     </table>
 </div>
@@ -95,12 +101,14 @@ Context variables:
                   {{/ statusready }}
                 </th>
                 <td>
+                <!--
                     <a class="btn btn-secondary btn-sm" href="{{{ editurl }}}">
                         {{#pix}}t/editinline{{/pix}} {{#str}} editmodule, mod_adastra {{/str}}
                     </a>
                     <a class="btn btn-secondary btn-sm" href="{{{ removeurl }}}">
                         {{#pix}}t/delete{{/pix}} {{#str}} remove, mod_adastra {{/str}}
                     </a>
+                    -->
                     <a class="btn btn-link btn-sm" href="{{{ url }}}">
                         {{#str}} openround, mod_adastra {{/str}}
                     </a>
@@ -115,23 +123,28 @@ Context variables:
                     {{/ statusready }}
                 </td>
                 <td>
+                <!--
                     <a class="btn btn-secondary btn-sm" href="{{{ editurl }}}">
                         {{#pix}}t/editinline{{/pix}} {{#str}} editexercise, mod_adastra {{/str}}
                     </a>
                     <a class="btn btn-secondary btn-sm" href="{{{ removeurl }}}">
                         {{#pix}}t/delete{{/pix}} {{#str}} remove, mod_adastra {{/str}}
                     </a>
+                    -->
                     <a class="btn btn-link btn-sm" href="{{{ displayurl }}}">
                         {{#str}} openexercise, mod_adastra {{/str}}
                     </a>
+                    <!--
                     {{# submissionlisturl }}
                     <a class="btn btn-link btn-sm" href="{{{ submissionlisturl }}}">
                         {{#str}} viewsubmissions, mod_adastra {{/str}}
                     </a>
                     {{/ submissionlisturl }}
+                    -->
                 </td>
             </tr>
             {{/ allexercises }}
+            <!--
             <tr>
                 <td colspan="2">
                     <a class="btn btn-success btn-sm" href="{{{ addnewexerciseurl }}}">
@@ -144,7 +157,9 @@ Context variables:
                     </a>
                 </td>
             </tr>
+            -->
             {{/ coursemodules }}
+            <!--
             <tr>
                 <td colspan="2">
                     <a class="btn btn-primary btn-sm" href="{{{ createmoduleurl }}}">
@@ -153,10 +168,12 @@ Context variables:
                     </a>
                 </td>
             </tr>
+            -->
         </tbody>
     </table>
 </div>
 
+<!--
 <div class="card bg-light">
 <div class="card-body">
 <form method="post" action="{{{ renumberactionurl }}}">
@@ -179,3 +196,4 @@ Context variables:
 </form>
 </div>
 </div>
+-->
