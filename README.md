@@ -20,6 +20,7 @@ Course student answers to the task and the answer is sent to Plussa grading syst
 The following list explains how the plugin code is structured and divided:
 ### classes
 Contains class definitions, supports Moodle class auto-loading
+* cache: contains classes that define caches in the plugin
 * event: contains classes that log events in the log
 * form: contains forming classes that use Moodle form API
 * local: contains classes that work in a local Moodle environment, including auto setup and forming of data
@@ -28,6 +29,7 @@ Contains class definitions, supports Moodle class auto-loading
 ### db
 Defines parts of the plugin required by Moodle
 * access.php: contains plugin capabilities, uses access API
+* caches.php: contains area defining for the caches for the Moodle API
 * install.php: contains code run at plugin installation process
 * install.xml: contains the database schema of the plugin
 * uninstall.php: contains the code run at plugin uninstallation
@@ -53,10 +55,9 @@ Contains PHPunit tests, that are using Moodle test API
 * view.php: contains the view configuration of the plugin
 
 ## Using the plugin
-The plugin is set to the Moodle page by using the block plugin part of Ad Astra. The plugin settings are now set, by adding the course url from Plussa etc. Ad astra then runs the calls for the course tasks and runs the auto setup to set the module to Moodle. After the auto setup course data can now be completed in the Moodle platform.
+The plugin is set to the Moodle page by using the block plugin part of Ad Astra. The plugin settings are now set, by adding the course url from Plussa etc. Ad astra then runs the calls for the course tasks and runs the auto setup to set the module to Moodle. After the auto setup course data can now be completed in the Moodle platform. The looks of the imported module will match the one seen in Plussa environment, and makes the completion of these tasks similar. Each task includes every aspect of the Plussa completion, for example the points and the number of submissions left.
 ## Grading
 The completed tasks will be sent to the grading system of Plussa, which works independently from Moodle. Working this way Moodle only works as an interface for the call and send functions of the plugin, and requires minimal amount of modification to Moodle itself.
-
 ## License ##
 
 2020 Your Name <you@example.com>
