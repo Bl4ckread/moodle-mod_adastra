@@ -290,9 +290,9 @@ class exercise_round_testcase extends \advanced_testcase {
                 'instance' => $record->id,
                 'eventtype' => \mod_adastra\local\data\exercise_round::EVENT_DL_TYPE,
         ));
-        // $this->assertTrue($event !== false); // Fails.
-        // $this->assertEquals(1, $event->visible);
-        // $this->assertEquals('Deadline: PHP round', $event->name);
+        $this->assertTrue($event !== false);
+        $this->assertEquals(1, $event->visible);
+        $this->assertEquals('Deadline: PHP round', $event->name);
     }
 
     public function test_get_learning_objects() {
