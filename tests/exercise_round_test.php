@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -43,7 +43,7 @@ class exercise_round_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
@@ -57,7 +57,7 @@ class exercise_round_testcase extends \advanced_testcase {
 
         $this->add_course();
         $roundrecord1 = $this->add_round1();
-        $exround = new \mod_adastra\local\data\exercise_round($roundrecord1);
+        $exround = new exercise_round($roundrecord1);
 
         $this->assertEquals($roundrecord1->cmid, $exround->get_course_module()->id);
         $this->assertEquals($this->course->id, $exround->get_course()->courseid);
@@ -68,7 +68,7 @@ class exercise_round_testcase extends \advanced_testcase {
 
         $this->add_course();
         $roundrecord1 = $this->add_round1();
-        $exround = new \mod_adastra\local\data\exercise_round($roundrecord1);
+        $exround = new exercise_round($roundrecord1);
 
         $this->assertEquals($this->round1_data['name'], $exround->get_name());
         $this->assertEquals($this->round1_data['status'], $exround->get_status());
@@ -102,17 +102,17 @@ class exercise_round_testcase extends \advanced_testcase {
 
     public function test_update_name_with_order() {
         $this->assertEquals('1. Hello world',
-                \mod_adastra\local\data\exercise_round::update_name_with_order('2. Hello world', 1, \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC));
+                exercise_round::update_name_with_order('2. Hello world', 1, course_config::MODULE_NUMBERING_ARABIC));
         $this->assertEquals('1. Hello world',
-                \mod_adastra\local\data\exercise_round::update_name_with_order('Hello world', 1, \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC));
+                exercise_round::update_name_with_order('Hello world', 1, course_config::MODULE_NUMBERING_ARABIC));
         $this->assertEquals('10. Hello world',
-                \mod_adastra\local\data\exercise_round::update_name_with_order('III Hello world', 10, \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC));
+                exercise_round::update_name_with_order('III Hello world', 10, course_config::MODULE_NUMBERING_ARABIC));
         $this->assertEquals('II Hello world',
-                \mod_adastra\local\data\exercise_round::update_name_with_order('2. Hello world', 2, \mod_adastra\local\data\course_config::MODULE_NUMBERING_ROMAN));
+                exercise_round::update_name_with_order('2. Hello world', 2, course_config::MODULE_NUMBERING_ROMAN));
         $this->assertEquals('Hello world',
-                \mod_adastra\local\data\exercise_round::update_name_with_order('2. Hello world', 3, \mod_adastra\local\data\course_config::MODULE_NUMBERING_HIDDEN_ARABIC));
+                exercise_round::update_name_with_order('2. Hello world', 3, course_config::MODULE_NUMBERING_HIDDEN_ARABIC));
         $this->assertEquals('12. VXYii XXX', // name contains characters that are used in roman numbers
-                \mod_adastra\local\data\exercise_round::update_name_with_order('X VXYii XXX', 12, \mod_adastra\local\data\course_config::MODULE_NUMBERING_ARABIC));
+                exercise_round::update_name_with_order('X VXYii XXX', 12, course_config::MODULE_NUMBERING_ARABIC));
     }
 
     public function test_create_round() {
@@ -129,7 +129,7 @@ class exercise_round_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
@@ -140,16 +140,16 @@ class exercise_round_testcase extends \advanced_testcase {
         $roundid = $record->id;
 
         $this->assertNotEquals(0, $roundid);
-        $roundrecord = $DB->get_record(\mod_adastra\local\data\exercise_round::TABLE, array('id' => $roundid));
+        $roundrecord = $DB->get_record(exercise_round::TABLE, array('id' => $roundid));
         $this->assertTrue($roundrecord !== false);
-        $exround = new \mod_adastra\local\data\exercise_round($roundrecord);
+        $exround = new exercise_round($roundrecord);
         $this->assertEquals($this->round1_data['name'], $exround->get_name());
 
         // Test calendar event.
         $event = $DB->get_record('event', array(
-                'modulename' => \mod_adastra\local\data\exercise_round::TABLE,
+                'modulename' => exercise_round::TABLE,
                 'instance' => $roundid,
-                'eventtype' => \mod_adastra\local\data\exercise_round::EVENT_DL_TYPE,
+                'eventtype' => exercise_round::EVENT_DL_TYPE,
         ));
         // $this->assertTrue($event !== false); // Fails.
         // $this->assertEquals(1, $event->visible);
@@ -172,7 +172,7 @@ class exercise_round_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
@@ -181,20 +181,20 @@ class exercise_round_testcase extends \advanced_testcase {
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_adastra');
         $record = $generator->create_instance($this->round1_data);
         $roundid = $record->id;
-        $roundrecord = $DB->get_record(\mod_adastra\local\data\exercise_round::TABLE, array('id' => $roundid));
+        $roundrecord = $DB->get_record(exercise_round::TABLE, array('id' => $roundid));
         $this->assertTrue($roundrecord !== false);
-        $exround = new \mod_adastra\local\data\exercise_round($roundrecord);
+        $exround = new exercise_round($roundrecord);
 
         // Create category and exercise.
         $categoryrecord = (object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         );
-        $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new($categoryrecord));
+        $category = category::create_from_id(category::create_new($categoryrecord));
         $exerciserecord = (object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 1,
                 'remotekey' => 'testexercise',
@@ -208,21 +208,21 @@ class exercise_round_testcase extends \advanced_testcase {
 
         // Test that exercise was created.
         $this->assertTrue($exercise !== null);
-        $fetchedlobjrecord = $DB->get_record(\mod_adastra\local\data\learning_object::TABLE, array('id' => $exercise->get_id()));
+        $fetchedlobjrecord = $DB->get_record(learning_object::TABLE, array('id' => $exercise->get_id()));
         $this->assertTrue($fetchedlobjrecord !== false);
-        $fetchedexrecord = $DB->get_record(\mod_adastra\local\data\exercise::TABLE, array('id' => $exercise->get_subtype_id()));
+        $fetchedexrecord = $DB->get_record(exercise::TABLE, array('id' => $exercise->get_subtype_id()));
         $this->assertTrue($fetchedexrecord !== false);
 
-        $exround = \mod_adastra\local\data\exercise_round::create_from_id($roundid);
+        $exround = exercise_round::create_from_id($roundid);
         $this->assertEquals(10, $exround->get_max_points());
 
         // Round max points should have increased.
-        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'grade',
+        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(exercise_round::TABLE, 'grade',
                 array('id' => $roundid), MUST_EXIST));
 
         // Create a chapter.
         $chapterrecord = (object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 2,
                 'remotekey' => 'testchapter',
@@ -234,18 +234,18 @@ class exercise_round_testcase extends \advanced_testcase {
 
         // Test that exercise was created.
         $this->assertTrue($chapter !== null);
-        $fetchedlobjrecord = $DB->get_record(\mod_adastra\local\data\learning_object::TABLE, array('id' => $chapter->get_id()));
+        $fetchedlobjrecord = $DB->get_record(learning_object::TABLE, array('id' => $chapter->get_id()));
         $this->assertTrue($fetchedlobjrecord !== false);
-        $fetchedchrecord = $DB->get_record(\mod_adastra\local\data\chapter::TABLE, array('id' => $chapter->get_subtype_id()));
+        $fetchedchrecord = $DB->get_record(chapter::TABLE, array('id' => $chapter->get_subtype_id()));
         $this->assertTrue($fetchedchrecord !== false);
 
         // Round max points should not have changed.
-        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'grade',
+        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(exercise_round::TABLE, 'grade',
                 array('id' => $roundid), MUST_EXIST));
 
         // Create a hidden exercise.
         $exerciserecord2 = (object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_HIDDEN,
+                'status' => learning_object::STATUS_HIDDEN,
                 'parentid' => null,
                 'ordernum' => 3,
                 'remotekey' => 'testexercise2',
@@ -257,7 +257,7 @@ class exercise_round_testcase extends \advanced_testcase {
         );
         $exercise2 = $exround->create_new_exercise($exerciserecord2, $category);
         // Round max points should not have changed.
-        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'grade',
+        $this->assertEquals($exerciserecord->maxpoints, $DB->get_field(exercise_round::TABLE, 'grade',
                 array('id' => $roundid), MUST_EXIST));
     }
 
@@ -270,7 +270,7 @@ class exercise_round_testcase extends \advanced_testcase {
         // Create a course and a round.
         $this->add_course();
         $record = $this->add_round1();
-        $exround = \mod_adastra\local\data\exercise_round::create_from_id($record->id);
+        $exround = exercise_round::create_from_id($record->id);
 
         // Change some values and save.
         $exround->set_name('PHP round');
@@ -279,16 +279,16 @@ class exercise_round_testcase extends \advanced_testcase {
         $exround->save();
 
         // Test that database row was updated.
-        $this->assertEquals('PHP round', $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'name', array('id' => $record->id)));
-        $this->assertEquals(5, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'ordernum', array('id' => $record->id)));
-        $this->assertEquals(\mod_adastra\local\data\exercise_round::STATUS_READY, // not changed
-                $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'status', array('id' => $record->id)));
+        $this->assertEquals('PHP round', $DB->get_field(exercise_round::TABLE, 'name', array('id' => $record->id)));
+        $this->assertEquals(5, $DB->get_field(exercise_round::TABLE, 'ordernum', array('id' => $record->id)));
+        $this->assertEquals(exercise_round::STATUS_READY, // not changed
+                $DB->get_field(exercise_round::TABLE, 'status', array('id' => $record->id)));
 
         // Test event.
         $event = $DB->get_record('event', array(
-                'modulename' => \mod_adastra\local\data\exercise_round::TABLE,
+                'modulename' => exercise_round::TABLE,
                 'instance' => $record->id,
-                'eventtype' => \mod_adastra\local\data\exercise_round::EVENT_DL_TYPE,
+                'eventtype' => exercise_round::EVENT_DL_TYPE,
         ));
         $this->assertTrue($event !== false);
         $this->assertEquals(1, $event->visible);
@@ -301,17 +301,17 @@ class exercise_round_testcase extends \advanced_testcase {
         // Create a course and a round.
         $this->add_course();
         $record = $this->add_round1();
-        $exround = \mod_adastra\local\data\exercise_round::create_from_id($record->id);
+        $exround = exercise_round::create_from_id($record->id);
 
         // Create learning objects.
-        $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         )));
         $exercise1 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 1,
                 'remotekey' => 'testexercise',
@@ -323,7 +323,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $chapter2 = $exround->create_new_chapter((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 2,
                 'remotekey' => 'testchapter',
@@ -333,7 +333,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise21 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise21',
@@ -345,7 +345,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise211 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => $exercise21->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise211',
@@ -357,7 +357,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise22 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 2,
                 'remotekey' => 'testexercise22',
@@ -386,17 +386,17 @@ class exercise_round_testcase extends \advanced_testcase {
         // Create a course and a round.
         $this->add_course();
         $record = $this->add_round1();
-        $exround = \mod_adastra\local\data\exercise_round::create_from_id($record->id);
+        $exround = exercise_round::create_from_id($record->id);
 
         // Create learning objects.
-        $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         )));
         $exercise1 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 1,
                 'remotekey' => 'testexercise',
@@ -408,7 +408,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $chapter2 = $exround->create_new_chapter((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 2,
                 'remotekey' => 'testchapter',
@@ -418,7 +418,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise21 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise21',
@@ -430,7 +430,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise211 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => $exercise21->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise211',
@@ -442,7 +442,7 @@ class exercise_round_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise22 = $exround->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 2,
                 'remotekey' => 'testexercise22',
@@ -460,15 +460,15 @@ class exercise_round_testcase extends \advanced_testcase {
         $exround->delete_instance();
 
         // Test that round and exercises have been deleted.
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\exercise_round::TABLE, array('id' => $exround->get_id())));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\exercise::TABLE));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('roundid' => $record->id)));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\chapter::TABLE));
+        $this->assertFalse($DB->get_record(exercise_round::TABLE, array('id' => $exround->get_id())));
+        $this->assertEquals(0, $DB->count_records(exercise::TABLE));
+        $this->assertEquals(0, $DB->count_records(learning_object::TABLE, array('roundid' => $record->id)));
+        $this->assertEquals(0, $DB->count_records(chapter::TABLE));
 
         $this->assertEquals(0, $DB->count_records('event', array(
-                'modulename' => \mod_adastra\local\data\exercise_round::TABLE,
+                'modulename' => exercise_round::TABLE,
                 'instance' => $record->id,
-                'eventtype' => \mod_adastra\local\data\exercise_round::EVENT_DL_TYPE,
+                'eventtype' => exercise_round::EVENT_DL_TYPE,
         )));
     }
 
@@ -485,11 +485,11 @@ class exercise_round_testcase extends \advanced_testcase {
         $rounds = array();
         for ($i = 1; $i <= $numrounds; ++$i) {
             if ($i == 3) {
-                $status = \mod_adastra\local\data\exercise_round::STATUS_HIDDEN;
+                $status = exercise_round::STATUS_HIDDEN;
             } else if ($i == 4) {
-                $status = \mod_adastra\local\data\exercise_round::STATUS_MAINTENANCE;
+                $status = exercise_round::STATUS_MAINTENANCE;
             } else {
-                $status = \mod_adastra\local\data\exercise_round::STATUS_READY;
+                $status = exercise_round::STATUS_READY;
             }
             $round = array(
                 'course' => $this->course->id,
@@ -515,7 +515,7 @@ class exercise_round_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_MAINTENANCE,
+                'status' => exercise_round::STATUS_MAINTENANCE,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
@@ -524,18 +524,18 @@ class exercise_round_testcase extends \advanced_testcase {
         $rounds[] = $generator->create_instance($round); // std_class record
 
         // Test.
-        $course1rounds = \mod_adastra\local\data\exercise_round::get_exercise_rounds_in_course($this->course->id, false);
+        $course1rounds = exercise_round::get_exercise_rounds_in_course($this->course->id, false);
         $this->assertEquals($numrounds - 1, count($course1rounds)); // one round is hidden
         $this->assertEquals($rounds[0]->id, $course1rounds[0]->get_id());
         $this->assertEquals($rounds[1]->id, $course1rounds[1]->get_id());
         $this->assertEquals($rounds[3]->id, $course1rounds[2]->get_id());
         $this->assertEquals($rounds[4]->id, $course1rounds[3]->get_id());
 
-        $course1roundswithhidden = \mod_adastra\local\data\exercise_round::get_exercise_rounds_in_course($this->course->id, true);
+        $course1roundswithhidden = exercise_round::get_exercise_rounds_in_course($this->course->id, true);
         $this->assertEquals($numrounds, count($course1roundswithhidden));
         $this->assertEquals($rounds[2]->id, $course1roundswithhidden[2]->get_id());
 
-        $course2roundswithhidden = \mod_adastra\local\data\exercise_round::get_exercise_rounds_in_course($anothercourse->id, true);
+        $course2roundswithhidden = exercise_round::get_exercise_rounds_in_course($anothercourse->id, true);
         $this->assertEquals(1, count($course2roundswithhidden));
         $this->assertEquals($rounds[count($rounds) - 1]->id, $course2roundswithhidden[0]->get_id());
     }
