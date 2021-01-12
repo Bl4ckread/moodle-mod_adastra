@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -41,22 +41,22 @@ class submission_testcase extends \advanced_testcase {
 
         $this->resetAfterTest(true);
 
-        $sid1 = \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student->id);
-        $sid2 = \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student2->id, array(
+        $sid1 = submission::create_new_submission($this->exercises[1], $this->student->id);
+        $sid2 = submission::create_new_submission($this->exercises[1], $this->student2->id, array(
                 'somekey' => 17,
         ));
 
         $this->assertNotEquals(0, $sid1);
         $this->assertNotEquals(0, $sid2);
-        $sbms1 = $DB->get_record(\mod_adastra\local\data\submission::TABLE, array('id' => $sid1));
-        $sbms2 = $DB->get_record(\mod_adastra\local\data\submission::TABLE, array('id' => $sid2));
+        $sbms1 = $DB->get_record(submission::TABLE, array('id' => $sid1));
+        $sbms2 = $DB->get_record(submission::TABLE, array('id' => $sid2));
         $this->assertTrue($sbms1 !== false);
         $this->assertTrue($sbms2 !== false);
 
-        $sbms1 = new \mod_adastra\local\data\submission($sbms1);
-        $sbms2 = new \mod_adastra\local\data\submission($sbms2);
-        $this->assertEquals(\mod_adastra\local\data\submission::STATUS_INITIALIZED, $sbms1->get_status());
-        $this->assertEquals(\mod_adastra\local\data\submission::STATUS_INITIALIZED, $sbms2->get_status());
+        $sbms1 = new submission($sbms1);
+        $sbms2 = new submission($sbms2);
+        $this->assertEquals(submission::STATUS_INITIALIZED, $sbms1->get_status());
+        $this->assertEquals(submission::STATUS_INITIALIZED, $sbms2->get_status());
         $this->assertNotEquals($sbms1->get_hash(), $sbms2->get_hash());
         $this->assertEquals($this->exercises[1]->get_id(), $sbms1->get_exercise()->get_id());
         $this->assertEquals($this->exercises[1]->get_id(), $sbms2->get_exercise()->get_id());
@@ -76,21 +76,21 @@ class submission_testcase extends \advanced_testcase {
     public function test_safe_file_name() {
         $this->resetAfterTest(true);
 
-        $this->assertEquals('myfile.txt', \mod_adastra\local\data\submission::safe_file_name('myfile.txt'));
-        $this->assertEquals('myfile.txt', \mod_adastra\local\data\submission::safe_file_name('ÄÄÄööömyfile.txt'));
-        $this->assertEquals('_myfile.txt', \mod_adastra\local\data\submission::safe_file_name('-myfile.txt'));
-        $this->assertEquals('myfile.txt.', \mod_adastra\local\data\submission::safe_file_name('myfile.txt.ååå'));
-        $this->assertEquals('myfile4567.txt', \mod_adastra\local\data\submission::safe_file_name('myfile4567.txt'));
-        $this->assertEquals('file', \mod_adastra\local\data\submission::safe_file_name('ääööö'));
-        $this->assertEquals('_myfile.txt', \mod_adastra\local\data\submission::safe_file_name('äää-myfile.txt'));
-        $this->assertEquals('my_file.txt', \mod_adastra\local\data\submission::safe_file_name('my_file.txt'));
-        $this->assertEquals('myfile.txt', \mod_adastra\local\data\submission::safe_file_name('ääämyfileöööö.txt'));
+        $this->assertEquals('myfile.txt', submission::safe_file_name('myfile.txt'));
+        $this->assertEquals('myfile.txt', submission::safe_file_name('ÄÄÄööömyfile.txt'));
+        $this->assertEquals('_myfile.txt', submission::safe_file_name('-myfile.txt'));
+        $this->assertEquals('myfile.txt.', submission::safe_file_name('myfile.txt.ååå'));
+        $this->assertEquals('myfile4567.txt', submission::safe_file_name('myfile4567.txt'));
+        $this->assertEquals('file', submission::safe_file_name('ääööö'));
+        $this->assertEquals('_myfile.txt', submission::safe_file_name('äää-myfile.txt'));
+        $this->assertEquals('my_file.txt', submission::safe_file_name('my_file.txt'));
+        $this->assertEquals('myfile.txt', submission::safe_file_name('ääämyfileöööö.txt'));
     }
 
     public function test_add_submitted_file() {
         $this->resetAfterTest(true);
 
-        $this->tmp_files = array(); // create temp files in the filesystem, they must be removed later
+        $this->tmp_files = array(); // Create temp files in the filesystem, they must be removed later.
         for ($i = 1; $i <= 3; ++$i) {
             $tmpfilepath = tempnam(sys_get_temp_dir(), 'tmp');
             file_put_contents($tmpfilepath, 'Some submission file content '. $i);
@@ -101,7 +101,7 @@ class submission_testcase extends \advanced_testcase {
 
         $fs = get_file_storage();
         $files = $fs->get_area_files(\context_module::instance($this->submissions[0]->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
-                \mod_adastra\local\data\exercise_round::MODNAME, \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                exercise_round::MODNAME, submission::SUBMITTED_FILES_FILEAREA,
                 $this->submissions[0]->get_id(),
                 'itemid, filepath, filename', false);
 
@@ -132,7 +132,7 @@ class submission_testcase extends \advanced_testcase {
     public function test_get_submitted_files() {
         $this->resetAfterTest(true);
 
-        $this->tmp_files = array(); // create temp files in the filesystem, they must be removed later
+        $this->tmp_files = array(); // Create temp files in the filesystem, they must be removed later.
         for ($i = 1; $i <= 3; ++$i) {
             $tmpfilepath = tempnam(sys_get_temp_dir(), 'tmp');
             file_put_contents($tmpfilepath, 'Some submission file content '. $i);
@@ -168,7 +168,7 @@ class submission_testcase extends \advanced_testcase {
         $this->resetAfterTest(true);
 
         $this->submissions[0]->grade(80, 100, 'Good feedback', array('extra' => 8));
-        $sbms = \mod_adastra\local\data\submission::create_from_id($this->submissions[0]->get_id());
+        $sbms = submission::create_from_id($this->submissions[0]->get_id());
         // $this->assertEquals(8, $sbms->get_grade()); // in helper method.
         // $this->assertEquals('Good feedback', $sbms->get_feedback());.
         $this->assertNotEmpty($sbms->get_grading_data());
@@ -180,17 +180,17 @@ class submission_testcase extends \advanced_testcase {
         $this->grade_test_helper($sbms, 8, 8, 8, 'Good feedback');
 
         // New third submission.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[0], $this->student->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[0]->get_exercise_round()->get_closing_time() - 3600 * 24));
         $sbms->grade(15, 15, 'Some feedback');
         $this->grade_test_helper($sbms, 10, 10, 10, 'Some feedback');
 
         // New fourth submission, exceeds submission limit.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[0], $this->student->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[0]->get_exercise_round()->get_closing_time() - 3600 * 12));
         $sbms->grade(17, 17, 'Some other feedback');
         $this->grade_test_helper($sbms, 0, 10, 10, 'Some other feedback');
@@ -200,36 +200,36 @@ class submission_testcase extends \advanced_testcase {
         $this->grade_test_helper($sbms, 0, 10, 10, 'Some feedback');
 
         // Add submission limit deviation.
-        \mod_adastra\local\data\submission_limit_deviation::create_new($sbms->get_exercise()->get_id(), $this->student->id, 1);
+        submission_limit_deviation::create_new($sbms->get_exercise()->get_id(), $this->student->id, 1);
         $sbms->grade(17, 17, 'Some feedback 2');
         $this->grade_test_helper($sbms, 10, 10, 10, 'Some feedback 2');
 
-        // New submission, different exercise.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
-                        $this->exercises[1]->get_exercise_round()->get_late_submission_deadline() + 3600)); // Late from late deadline.
+        // New (overdue) submission, different exercise.
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[1], $this->student->id, null,
+                        submission::STATUS_INITIALIZED,
+                        $this->exercises[1]->get_exercise_round()->get_late_submission_deadline() + 3600));
         $sbms->grade(10, 10, 'Some feedback 3');
         $this->grade_test_helper($sbms, 0, 0, 10, 'Some feedback 3');
 
         // Different student, late.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student2->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[0], $this->student2->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[0]->get_exercise_round()->get_closing_time() + 3600)); // Late.
         $sbms->grade(10, 10, 'Some feedback');
         $this->grade_test_helper($sbms, 6, 6, 6, 'Some feedback');
 
         // Another exercise, check round total grade.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student2->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[1], $this->student2->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[0]->get_exercise_round()->get_closing_time() - 3600 * 24));
         $sbms->grade(20, 20, 'Some new feedback');
         $this->grade_test_helper($sbms, 10, 10, 16, 'Some new feedback');
     }
 
-    protected function grade_test_helper(\mod_adastra\local\data\submission $sbms, $expectedgrade,
+    protected function grade_test_helper(submission $sbms, $expectedgrade,
             $expectedbestgrade, $expectedroundgrade, $expectedfeedback) {
 
         $this->assertEquals($expectedgrade, $sbms->get_grade());
@@ -239,7 +239,7 @@ class submission_testcase extends \advanced_testcase {
             $sbms->get_exercise()->get_best_submission_for_student($sbms->get_submitter()->id)->get_grade()
         );
         // Gradebook.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE,
+        $gradeitems = grade_get_grades($this->course->id, 'mod', exercise_round::TABLE,
                 $sbms->get_exercise()->get_exercise_round()->get_id(), $sbms->get_submitter()->id)->items;
         $this->assertEquals($expectedroundgrade,
                 $gradeitems[0]->grades[$sbms->get_submitter()->id]->grade); // Round total.
@@ -252,9 +252,9 @@ class submission_testcase extends \advanced_testcase {
         $this->resetAfterTest(true);
 
         // Create new (the only) submission for an exercise.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[1], $this->student->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[1]->get_exercise_round()->get_closing_time() - 3600 * 24));
         $this->tmp_files = array(); // Create temp files in the filesystem, they must be removed later.
         for ($i = 1; $i <= 3; ++$i) {
@@ -268,16 +268,16 @@ class submission_testcase extends \advanced_testcase {
         $sbms->grade(50, 100, 'Great feedback');
         $sbms->delete();
 
-        $fetchedsbms = $DB->get_record(\mod_adastra\local\data\submission::TABLE, array('id' => $sbms->get_id()));
+        $fetchedsbms = $DB->get_record(submission::TABLE, array('id' => $sbms->get_id()));
         $this->assertFalse($fetchedsbms);
         $fs = get_file_storage();
         $files = $fs->get_area_files(\context_module::instance($sbms->get_exercise()->get_exercise_round()->get_course_module()->id)->id,
-                \mod_adastra\local\data\exercise_round::MODNAME, \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                exercise_round::MODNAME, submission::SUBMITTED_FILES_FILEAREA,
                 $sbms->get_id(),
                 'itemid, filepath, filename', false);
         $this->assertEmpty($files);
         // Gradebook.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE,
+        $gradeitems = grade_get_grades($this->course->id, 'mod', exercise_round::TABLE,
                 $sbms->get_exercise()->get_exercise_round()->get_id(), $sbms->get_submitter()->id)->items;
         $this->assertEquals(0,
                 $gradeitems[0]->grades[$sbms->get_submitter()->id]->grade);
@@ -299,22 +299,22 @@ class submission_testcase extends \advanced_testcase {
         // Grade a submission.
         $this->submissions[0]->grade(50, 100, 'First feedback');
         // Create new submission and grade it better.
-        $sbms = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id, null,
-                        \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sbms = submission::create_from_id(
+                submission::create_new_submission($this->exercises[0], $this->student->id, null,
+                        submission::STATUS_INITIALIZED,
                         $this->exercises[0]->get_exercise_round()->get_closing_time() - 3600 * 24));
         $sbms->grade(90, 100, 'Best feedback');
         // Gradebook should show these points as the best.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE,
+        $gradeitems = grade_get_grades($this->course->id, 'mod', exercise_round::TABLE,
                 $sbms->get_exercise()->get_exercise_round()->get_id(), $sbms->get_submitter()->id)->items;
         $this->assertEquals(9, $gradeitems[0]->grades[$sbms->get_submitter()->id]->grade);
         // Delete the best submission.
         $sbms->delete();
 
-        $fetchedsbms = $DB->get_record(\mod_adastra\local\data\submission::TABLE, array('id' => $sbms->get_id()));
+        $fetchedsbms = $DB->get_record(submission::TABLE, array('id' => $sbms->get_id()));
         $this->assertFalse($fetchedsbms);
         // Gradebook should show the first points as the best.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE,
+        $gradeitems = grade_get_grades($this->course->id, 'mod', exercise_round::TABLE,
                 $sbms->get_exercise()->get_exercise_round()->get_id(), $sbms->get_submitter()->id)->items;
         $this->assertEquals(5, $gradeitems[0]->grades[$sbms->get_submitter()->id]->grade);
     }
@@ -325,9 +325,9 @@ class submission_testcase extends \advanced_testcase {
 
         $this->resetAfterTest(true);
 
-        $category2 = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category2 = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Another category',
                 'pointstopass' => 0,
         )));
@@ -345,10 +345,10 @@ class submission_testcase extends \advanced_testcase {
         $submissionids = array();
 
         // Create more submissions.
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 1,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -357,10 +357,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 7,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 2,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -369,10 +369,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 8,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 3,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -383,10 +383,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 7, student2 8.
         // $this->exercises[1].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 4,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -395,10 +395,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 0,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 5,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -407,10 +407,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 10,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 6,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -419,10 +419,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 9,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 7,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -431,10 +431,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 6,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 8,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -445,10 +445,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 17, student2 14.
         // $this->exercises[3].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 9,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[3]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -457,10 +457,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 2,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 10,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[3]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -469,10 +469,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 3,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 11,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $this->exercises[3]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -483,10 +483,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 20, student2 18.
         // $exercisesround2[0].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 12,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[0]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -495,10 +495,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 11,
             'servicemaxpoints' => 15,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 13,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[0]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -507,10 +507,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 10,
             'servicemaxpoints' => 15,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 14,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[0]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -521,10 +521,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 11, student2 3.
         // $exercisesround2[1].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 15,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[1]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => 'test feedback',
@@ -535,10 +535,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 18, student2 3.
         // $exercisesround2[2].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 16,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[2]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -549,10 +549,10 @@ class submission_testcase extends \advanced_testcase {
         ));
         // Student 18, student2 3.
         // $exercisesround2[3].
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 17,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[3]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -561,10 +561,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 6,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_READY,
             'submissiontime' => $now + 18,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[3]->get_id(),
             'submitter' => $this->student2->id,
             'feedback' => 'test feedback',
@@ -573,10 +573,10 @@ class submission_testcase extends \advanced_testcase {
             'servicepoints' => 4,
             'servicemaxpoints' => 10,
         ));
-        $submissionids[] = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) array(
-            'status' => \mod_adastra\local\data\submission::STATUS_WAITING,
+        $submissionids[] = $DB->insert_record(submission::TABLE, (object) array(
+            'status' => submission::STATUS_WAITING,
             'submissiontime' => $now + 19,
-            'hash' => \mod_adastra\local\data\submission::get_random_string(),
+            'hash' => submission::get_random_string(),
             'exerciseid' => $exercisesround2[3]->get_id(),
             'submitter' => $this->student->id,
             'feedback' => null,
@@ -597,7 +597,7 @@ class submission_testcase extends \advanced_testcase {
         $gradinginfo1 = grade_get_grades(
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round1->get_id(),
             array(
                 $this->student->id,
@@ -607,7 +607,7 @@ class submission_testcase extends \advanced_testcase {
         $gradinginfo2 = grade_get_grades(
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round2->get_id(),
             array(
                 $this->student->id,
@@ -620,28 +620,28 @@ class submission_testcase extends \advanced_testcase {
         $this->assertEquals(1, count($items2));
         $this->assertEquals(20, $items1[0]->grades[$this->student->id]->grade);
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[0]), // Student.
+            submission::create_from_id($submissionids[0]), // Student.
             7, // Expected submission grade.
             7, // Expected best exercise grade.
             20, // Expected exercise round grade.
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[2]), // Student2.
+            submission::create_from_id($submissionids[2]), // Student2.
             1,
             8,
             18,
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[11]),
+            submission::create_from_id($submissionids[11]),
             11,
             11,
             18,
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[17]), // Student2.
+            submission::create_from_id($submissionids[17]), // Student2.
             4,
             6,
             9,
@@ -650,20 +650,20 @@ class submission_testcase extends \advanced_testcase {
 
         // Delete grades from the gradebook and write grades again for everyone.
         grade_update(
-            'mod/'. \mod_adastra\local\data\exercise_round::TABLE,
+            'mod/'. exercise_round::TABLE,
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round1->get_id(),
             0,
             null,
             array('reset' => true)
         );
         grade_update(
-            'mod/'. \mod_adastra\local\data\exercise_round::TABLE,
+            'mod/'. exercise_round::TABLE,
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round2->get_id(),
             0,
             null,
@@ -674,7 +674,7 @@ class submission_testcase extends \advanced_testcase {
         $gradinginfo1 = grade_get_grades(
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round1->get_id(),
             array(
                 $this->student->id,
@@ -684,7 +684,7 @@ class submission_testcase extends \advanced_testcase {
         $gradinginfo2 = grade_get_grades(
             $this->course->id,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $this->round2->get_id(),
             array(
                 $this->student->id,
@@ -697,28 +697,28 @@ class submission_testcase extends \advanced_testcase {
         $this->assertEquals(1, count($items2));
         $this->assertEquals(20, $items1[0]->grades[$this->student->id]->grade);
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[0]), // Student.
+            submission::create_from_id($submissionids[0]), // Student.
             7, // Expected submission grade.
             7, // Expected best exercise grade.
             20, // Expected exercise round grade.
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[2]), // Student2.
+            submission::create_from_id($submissionids[2]), // Student2.
             1,
             8,
             18,
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[11]),
+            submission::create_from_id($submissionids[11]),
             11,
             11,
             18,
             'test feedback'
         );
         $this->grade_test_helper(
-            \mod_adastra\local\data\submission::create_from_id($submissionids[17]), // Student2.
+            submission::create_from_id($submissionids[17]), // Student2.
             4,
             6,
             9,
