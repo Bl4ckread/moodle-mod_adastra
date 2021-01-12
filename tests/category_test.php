@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -41,14 +41,14 @@ class category_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($round1data); // stdClass record.
-        $this->round1 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round1 = new exercise_round($record);
     }
 
     public function test_create_new() {
@@ -58,21 +58,21 @@ class category_testcase extends \advanced_testcase {
 
         $catdata = array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         );
-        $catid = \mod_adastra\local\data\category::create_new((object) $catdata);
+        $catid = category::create_new((object) $catdata);
 
         $this->assertNotEquals(0, $catid);
-        $category = \mod_adastra\local\data\category::create_from_id($catid);
+        $category = category::create_from_id($catid);
 
         $this->assertEquals($catdata['pointstopass'], $category->get_points_to_pass());
         $this->assertEquals($catdata['name'], $category->get_name());
         $this->assertEquals($catdata['status'], $category->get_status());
 
         // There should be only one category at this stage.
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\category::TABLE, array('course' => $this->course->id)));
+        $this->assertEquals(1, $DB->count_records(category::TABLE, array('course' => $this->course->id)));
     }
 
     public function test_get_categories_in_course() {
@@ -83,22 +83,22 @@ class category_testcase extends \advanced_testcase {
         for ($i = 1; $i <= $numcats; ++$i) {
             $catdata = array(
                     'course' => $this->course->id,
-                    'status' => ($i == 3 ? \mod_adastra\local\data\category::STATUS_HIDDEN : \mod_adastra\local\data\category::STATUS_READY),
+                    'status' => ($i == 3 ? category::STATUS_HIDDEN : category::STATUS_READY),
                     'name' => "Test category $i",
                     'pointstopass' => 0,
             );
-            $catids[] = \mod_adastra\local\data\category::create_new((object) $catdata);
+            $catids[] = category::create_new((object) $catdata);
         }
 
         $anothercourse = $this->getDataGenerator()->create_course();
-        $catids[] = \mod_adastra\local\data\category::create_new((object) array(
+        $catids[] = category::create_new((object) array(
                     'course' => $anothercourse->id,
-                    'status' => \mod_adastra\local\data\category::STATUS_READY,
+                    'status' => category::STATUS_READY,
                     'name' => "Another test category 1",
                     'pointstopass' => 0,
         ));
 
-        $fetchedcats = \mod_adastra\local\data\category::get_categories_in_course($this->course->id, false);
+        $fetchedcats = category::get_categories_in_course($this->course->id, false);
         $this->assertEquals($numcats - 1, count($fetchedcats)); // one cat is hidden
         for ($i = 1; $i <= $numcats; ++$i) {
             if ($i != 3) {
@@ -107,14 +107,14 @@ class category_testcase extends \advanced_testcase {
             }
         }
 
-        $fetchedcatshidden = \mod_adastra\local\data\category::get_categories_in_course($this->course->id, true);
+        $fetchedcatshidden = category::get_categories_in_course($this->course->id, true);
         $this->assertEquals($numcats, count($fetchedcatshidden));
         for ($i = 1; $i <= $numcats; ++$i) {
             $this->assertArrayHasKey($catids[$i - 1], $fetchedcatshidden);
             $this->assertEquals($catids[$i - 1], $fetchedcatshidden[$catids[$i - 1]]->get_id());
         }
 
-        $fetchedcatshidden = \mod_adastra\local\data\category::get_categories_in_course($anothercourse->id, true);
+        $fetchedcatshidden = category::get_categories_in_course($anothercourse->id, true);
         $this->assertEquals(1, count($fetchedcatshidden));
         $this->assertArrayHasKey($catids[count($catids) - 1], $fetchedcatshidden);
     }
@@ -122,15 +122,15 @@ class category_testcase extends \advanced_testcase {
     public function test_get_learning_objects() {
         $this->resetAfterTest(true);
 
-        $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         )));
 
         $exercise1 = $this->round1->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 1,
                 'remotekey' => 'testexercise',
@@ -142,7 +142,7 @@ class category_testcase extends \advanced_testcase {
         ), $category);
 
         $chapter2 = $this->round1->create_new_chapter((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 2,
                 'remotekey' => 'testchapter',
@@ -152,7 +152,7 @@ class category_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise21 = $this->round1->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise21',
@@ -164,7 +164,7 @@ class category_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise211 = $this->round1->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_HIDDEN,
+                'status' => learning_object::STATUS_HIDDEN,
                 'parentid' => $exercise21->get_id(),
                 'ordernum' => 1,
                 'remotekey' => 'testexercise211',
@@ -176,7 +176,7 @@ class category_testcase extends \advanced_testcase {
         ), $category);
 
         $exercise22 = $this->round1->create_new_exercise((object) array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_UNLISTED,
+                'status' => learning_object::STATUS_UNLISTED,
                 'parentid' => $chapter2->get_id(),
                 'ordernum' => 2,
                 'remotekey' => 'testexercise22',
@@ -215,25 +215,25 @@ class category_testcase extends \advanced_testcase {
         $catdata = array(
                 'course' => $this->course->id,
                 'name' => 'Some category',
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'pointstopass' => 5,
         );
-        $newcatid = \mod_adastra\local\data\category::update_or_create((object) $catdata); // Should create new category.
+        $newcatid = category::update_or_create((object) $catdata); // Should create new category.
 
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\category::TABLE, array('course' => $this->course->id)));
-        $cat = \mod_adastra\local\data\category::create_from_id($newcatid);
+        $this->assertEquals(1, $DB->count_records(category::TABLE, array('course' => $this->course->id)));
+        $cat = category::create_from_id($newcatid);
         $this->assertEquals('Some category', $cat->get_name());
-        $this->assertEquals(\mod_adastra\local\data\category::STATUS_READY, $cat->get_status());
+        $this->assertEquals(category::STATUS_READY, $cat->get_status());
 
         // Update the category.
-        $catdata['status'] = \mod_adastra\local\data\category::STATUS_HIDDEN;
+        $catdata['status'] = category::STATUS_HIDDEN;
         $catdata['pointstopass'] = 17;
-        $catid = \mod_adastra\local\data\category::update_or_create((object) $catdata);
+        $catid = category::update_or_create((object) $catdata);
 
         $this->assertEquals($newcatid, $catid);
-        $cat = \mod_adastra\local\data\category::create_from_id($catid);
+        $cat = category::create_from_id($catid);
         $this->assertEquals('Some category', $cat->get_name());
-        $this->assertEquals(\mod_adastra\local\data\category::STATUS_HIDDEN, $cat->get_status());
+        $this->assertEquals(category::STATUS_HIDDEN, $cat->get_status());
         $this->assertEquals(17, $cat->get_points_to_pass());
         $this->assertEquals($catid, $cat->get_id());
     }
@@ -244,15 +244,15 @@ class category_testcase extends \advanced_testcase {
         $this->resetAfterTest(true);
 
         // Create categorories, rounds, and exercises.
-        $category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category',
                 'pointstopass' => 0,
         )));
-        $category2 = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $category2 = category::create_from_id(category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => category::STATUS_READY,
                 'name' => 'Test category 2',
                 'pointstopass' => 0,
         )));
@@ -265,21 +265,21 @@ class category_testcase extends \advanced_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 2,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($round2data); // Std_class record.
-        $round2 = new \mod_adastra\local\data\exercise_round($record);
+        $round2 = new exercise_round($record);
 
         for ($i = 0; $i < 5; ++$i) {
             $round = ($i % 2 == 0 ? $this->round1 : $round2);
             $cat = ($i % 2 == 0 ? $category : $category2);
 
             $round->create_new_exercise((object) array(
-                    'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                    'status' => learning_object::STATUS_READY,
                     'parentid' => null,
                     'ordernum' => $i + 1,
                     'remotekey' => "testexercise$i",
@@ -293,11 +293,11 @@ class category_testcase extends \advanced_testcase {
 
         // Test delete.
         $category->delete();
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\category::TABLE, array('course' => $this->course->id)));
-        $cats = \mod_adastra\local\data\category::get_categories_in_course($this->course->id);
+        $this->assertEquals(1, $DB->count_records(category::TABLE, array('course' => $this->course->id)));
+        $cats = category::get_categories_in_course($this->course->id);
         $this->assertEquals($category2->get_id(), current($cats)->get_id());
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('categoryid' => $category->get_id())));
+        $this->assertEquals(0, $DB->count_records(learning_object::TABLE, array('categoryid' => $category->get_id())));
         // The other category should remain unchanged.
-        $this->assertEquals(2, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('categoryid' => $category2->get_id())));
+        $this->assertEquals(2, $DB->count_records(learning_object::TABLE, array('categoryid' => $category2->get_id())));
     }
 }
