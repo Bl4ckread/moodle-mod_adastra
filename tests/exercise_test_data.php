@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -46,14 +46,14 @@ trait exercise_test_data {
             'openingtime' => $this->timenow,
             'closingtime' => $this->timenow + 3600 * 24 * 7,
             'ordernum' => 1,
-            'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+            'status' => exercise_round::STATUS_READY,
             'pointstopass' => 0,
             'latesbmsallowed' => 1,
             'latesbmsdl' => $this->timenow + 3600 * 24 * 14,
             'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($rounddata); // std_class record
-        $this->round1 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round1 = new exercise_round($record);
         $rounddata = array(
             'course' => $this->course->id,
             'name' => '2. Test round 2',
@@ -61,19 +61,19 @@ trait exercise_test_data {
             'openingtime' => $this->timenow,
             'closingtime' => $this->timenow + 3600 * 24 * 7,
             'ordernum' => 2,
-            'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+            'status' => exercise_round::STATUS_READY,
             'pointstopass' => 0,
             'latesbmsallowed' => 1,
             'latesbmsdl' => $this->timenow + 3600 * 24 * 14,
             'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($rounddata); // std_class record
-        $this->round2 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round2 = new exercise_round($record);
 
         // Create category.
-        $this->category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $this->category = category::create_from_id(category::create_new((object) array(
             'course' => $this->course->id,
-            'status' => \mod_adastra\local\data\category::STATUS_READY,
+            'status' => category::STATUS_READY,
             'name' => 'Testing exercises',
             'pointstopass' => 0,
         )));
@@ -89,20 +89,20 @@ trait exercise_test_data {
 
         // Create submissions.
         $this->submissions = array();
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-            \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id));
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-            \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id,
-                    null, \mod_adastra\local\data\submission::STATUS_ERROR));
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-            \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student2->id));
+        $this->submissions[] = submission::create_from_id(
+            submission::create_new_submission($this->exercises[0], $this->student->id));
+        $this->submissions[] = submission::create_from_id(
+            submission::create_new_submission($this->exercises[0], $this->student->id,
+                    null, submission::STATUS_ERROR));
+        $this->submissions[] = submission::create_from_id(
+            submission::create_new_submission($this->exercises[0], $this->student2->id));
     }
 
-    protected function add_exercise(array $data, \mod_adastra\local\data\exercise_round $round, \mod_adastra\local\data\category $category) {
+    protected function add_exercise(array $data, exercise_round $round, category $category) {
         static $counter = 0;
         ++$counter;
         $defaults = array(
-            'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+            'status' => learning_object::STATUS_READY,
             'parentid' => null,
             'ordernum' => $counter,
             'remotekey' => "testexercise$counter",
@@ -138,9 +138,9 @@ trait exercise_test_data {
         }
 
         $defaults = array(
-        'status' => \mod_adastra\local\data\submission::STATUS_READY,
+        'status' => submission::STATUS_READY,
         'submissiontime' => $this->timenow + $counter,
-        'hash' => \mod_adastra\local\data\submission::get_random_string(),
+        'hash' => submission::get_random_string(),
         'exerciseid' => $exerciseorid,
         'submitter' => $submitterorid,
         'feedback' => 'test feedback',
@@ -154,8 +154,8 @@ trait exercise_test_data {
                 $data[$key] = $val;
             }
         }
-        $id = $DB->insert_record(\mod_adastra\local\data\submission::TABLE, (object) $data);
-        return \mod_adastra\local\data\submission::create_from_id($id);
+        $id = $DB->insert_record(submission::TABLE, (object) $data);
+        return submission::create_from_id($id);
     }
 }
 

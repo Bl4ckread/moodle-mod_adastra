@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_adastra\local;
+namespace mod_adastra\local\data;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -46,13 +46,13 @@ class exercise_testcase extends \advanced_testcase {
 
         $this->assertTrue($this->exercises[0]->student_has_submissions_left($this->student));
 
-        $thirdsbms = \mod_adastra\local\data\submission::create_from_id(
-            \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id));
+        $thirdsbms = submission::create_from_id(
+            submission::create_new_submission($this->exercises[0], $this->student->id));
 
         $this->assertFalse($this->exercises[0]->student_has_submissions_left($this->student));
 
         // Add submit limit deviation.
-        \mod_adastra\local\data\submission_limit_deviation::create_new($this->exercises[0]->get_id(), $this->student->id, 1);
+        submission_limit_deviation::create_new($this->exercises[0]->get_id(), $this->student->id, 1);
 
         $this->assertTrue($this->exercises[0]->student_has_submissions_left($this->student));
     }
@@ -67,7 +67,7 @@ class exercise_testcase extends \advanced_testcase {
         $this->assertTrue($this->exercises[0]->student_has_access($this->student, $this->round1->get_late_submission_deadline() - 3600));
 
         // Add deadline deviation.
-        \mod_adastra\local\data\deadline_deviation::create_new($this->exercises[0]->get_id(), $this->student->id, 60 * 24 * 8, true);
+        deadline_deviation::create_new($this->exercises[0]->get_id(), $this->student->id, 60 * 24 * 8, true);
         // 8-day extension exceeds the original late submission deadline too since it was 7 days from the closing time.
 
         $this->assertFalse($this->exercises[0]->student_has_access($this->student, $this->round1->get_opening_time() - 3600));
@@ -89,7 +89,7 @@ class exercise_testcase extends \advanced_testcase {
         $this->resetAfterTest(true);
 
         $tosbms = function($record) {
-            return new \mod_adastra\local\data\submission($record);
+            return new submission($record);
         };
 
         $submissions = $this->exercises[0]->get_submissions_for_student($this->student->id, false, 'submissiontime ASC, status ASC');
@@ -154,17 +154,17 @@ class exercise_testcase extends \advanced_testcase {
 
         $ex = $this->exercises[0];
         $rec = $ex->get_record();
-        $rec->status = \mod_adastra\local\data\learning_object::STATUS_MAINTENANCE;
+        $rec->status = learning_object::STATUS_MAINTENANCE;
         $rec->ordernum = 9;
         $rec->name = 'New exercise';
         $rec->maxpoints = 88;
 
         $ex->save();
-        $ex = \mod_adastra\local\data\learning_object::create_from_id($ex->get_id());
+        $ex = learning_object::create_from_id($ex->get_id());
 
         $this->assertEquals('1.9 New exercise', $ex->get_name());
         $this->assertEquals(9, $ex->get_order());
-        $this->assertEquals(\mod_adastra\local\data\learning_object::STATUS_MAINTENANCE, $ex->get_status());
+        $this->assertEquals(learning_object::STATUS_MAINTENANCE, $ex->get_status());
         $this->assertEquals(88, $ex->get_max_points());
     }
 
@@ -177,33 +177,33 @@ class exercise_testcase extends \advanced_testcase {
         $this->exercises[0]->delete_instance();
 
         // Exercises (learning objects), child objects.
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\learning_object::TABLE, array('id' => $this->exercises[0]->get_id())));
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\exercise::TABLE, array('id' => $this->exercises[0]->get_subtype_id())));
+        $this->assertFalse($DB->get_record(learning_object::TABLE, array('id' => $this->exercises[0]->get_id())));
+        $this->assertFalse($DB->get_record(exercise::TABLE, array('id' => $this->exercises[0]->get_subtype_id())));
 
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('parentid' => $this->exercises[0]->get_id())));
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\exercise::TABLE, array('id' => $this->exercises[1]->get_subtype_id())));
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\exercise::TABLE, array('id' => $this->exercises[2]->get_subtype_id())));
-        $this->assertFalse($DB->get_record(\mod_adastra\local\data\exercise::TABLE, array('id' => $this->exercises[3]->get_subtype_id())));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\learning_object::TABLE, array('parentid' => $this->exercises[2]->get_id())));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\chapter::TABLE)); // no chapters created in set_up
+        $this->assertEquals(0, $DB->count_records(learning_object::TABLE, array('parentid' => $this->exercises[0]->get_id())));
+        $this->assertFalse($DB->get_record(exercise::TABLE, array('id' => $this->exercises[1]->get_subtype_id())));
+        $this->assertFalse($DB->get_record(exercise::TABLE, array('id' => $this->exercises[2]->get_subtype_id())));
+        $this->assertFalse($DB->get_record(exercise::TABLE, array('id' => $this->exercises[3]->get_subtype_id())));
+        $this->assertEquals(0, $DB->count_records(learning_object::TABLE, array('parentid' => $this->exercises[2]->get_id())));
+        $this->assertEquals(0, $DB->count_records(chapter::TABLE)); // no chapters created in set_up
 
         // Submisssions, submitted files.
         $exerciseids = implode(',', array($this->exercises[0]->get_id(), $this->exercises[1]->get_id(),
                 $this->exercises[2]->get_id(), $this->exercises[3]->get_id()));
-        $this->assertEquals(0, $DB->count_records_select(\mod_adastra\local\data\submission::TABLE, "exerciseid IN ($exerciseids)"));
+        $this->assertEquals(0, $DB->count_records_select(submission::TABLE, "exerciseid IN ($exerciseids)"));
         $fs = get_file_storage();
         $this->assertTrue($fs->is_area_empty(\context_module::instance($this->round1->get_course_module()->id)->id,
-                \mod_adastra\local\data\exercise_round::MODNAME, \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                exercise_round::MODNAME, submission::SUBMITTED_FILES_FILEAREA,
                 false, false));
 
         // Gradebook items.
-        $gradeitems = grade_get_grades($this->course->id, 'mod', \mod_adastra\local\data\exercise_round::TABLE,
+        $gradeitems = grade_get_grades($this->course->id, 'mod', exercise_round::TABLE,
                 $this->round1->get_id(), null)->items;
         $this->assertEquals(20, $gradeitems[0]->grademax); // round max points in gradebook
         $this->assertEquals(1, count($gradeitems));
 
         // Round max points.
-        $this->assertEquals(20, $DB->get_field(\mod_adastra\local\data\exercise_round::TABLE, 'grade', array('id' => $this->round1->get_id())));
+        $this->assertEquals(20, $DB->get_field(exercise_round::TABLE, 'grade', array('id' => $this->round1->get_id())));
     }
 
     public function test_remove_n_oldest_submissions() {
@@ -212,7 +212,7 @@ class exercise_testcase extends \advanced_testcase {
         // Create a new exercise.
         $exercise = $this->round1->create_new_exercise((object) array(
                 'name' => '',
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 7,
                 'remotekey' => "testexercise7",
@@ -223,20 +223,20 @@ class exercise_testcase extends \advanced_testcase {
         ), $this->category);
 
         // Create submissions.
-        \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 60);
-        \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 61);
-        \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 62);
-        \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 63);
-        \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 64);
         $this->assertEquals(5, $exercise->get_submission_count_for_student($this->student->id));
 
@@ -259,7 +259,7 @@ class exercise_testcase extends \advanced_testcase {
         // Create a new exercise.
         $exercise = $this->round1->create_new_exercise((object) array(
                 'name' => '',
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => 7,
                 'remotekey' => "testexercise7",
@@ -270,30 +270,30 @@ class exercise_testcase extends \advanced_testcase {
         ), $this->category);
 
         // Create submissions.
-        $sid = \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sid = submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 60);
-        $submission = \mod_adastra\local\data\submission::create_from_id($sid);
+        $submission = submission::create_from_id($sid);
         $submission->grade(5, 10, 'feedback');
-        $sid = \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sid = submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 61);
-        $submission = \mod_adastra\local\data\submission::create_from_id($sid);
+        $submission = submission::create_from_id($sid);
         $submission->grade(6, 10, 'feedback');
-        $sid = \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sid = submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 62);
-        $submission = \mod_adastra\local\data\submission::create_from_id($sid);
+        $submission = submission::create_from_id($sid);
         $submission->grade(7, 10, 'feedback');
-        $sid = \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sid = submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 63);
-        $submission = \mod_adastra\local\data\submission::create_from_id($sid);
+        $submission = submission::create_from_id($sid);
         $submission->grade(6, 10, 'feedback');
-        $sid = \mod_adastra\local\data\submission::create_new_submission($exercise, $this->student->id,
-                null, \mod_adastra\local\data\submission::STATUS_INITIALIZED,
+        $sid = submission::create_new_submission($exercise, $this->student->id,
+                null, submission::STATUS_INITIALIZED,
                 $this->round1->get_opening_time() + 64);
-        $submission = \mod_adastra\local\data\submission::create_from_id($sid);
+        $submission = submission::create_from_id($sid);
         $submission->grade(4, 10, 'feedback');
         $this->assertEquals(5, $exercise->get_submission_count_for_student($this->student->id));
         $this->check_gradebook_grade(7, $exercise, $this->student);
@@ -323,14 +323,14 @@ class exercise_testcase extends \advanced_testcase {
         $this->check_gradebook_grade(6, $exercise, $this->student);
     }
 
-    protected function check_gradebook_grade(int $expectedgrade, \mod_adastra\local\data\exercise $exercise, \stdClass $user) {
+    protected function check_gradebook_grade(int $expectedgrade, exercise $exercise, \stdClass $user) {
         global $CFG;
         require_once($CFG->libdir .'/gradelib.php');
 
         $gradeitems = grade_get_grades(
             $exercise->get_exercise_round()->get_course()->courseid,
             'mod',
-            \mod_adastra\local\data\exercise_round::TABLE,
+            exercise_round::TABLE,
             $exercise->get_exercise_round()->get_id(),
             $user->id
         )->items;
