@@ -151,7 +151,7 @@ class provider implements
             return;
         }
 
-        $params array(
+        $params = array(
                 'instanceid' => $context->instanceid,
         );
         $sql = "SELECT sbms.submitter
