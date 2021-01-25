@@ -784,7 +784,7 @@ class submission extends \mod_adastra\local\data\database_object {
         $ctx->max = $this->get_exercise()->get_max_points();
         $ctx->pointstopass = $this->get_exercise()->get_points_to_pass();
         $ctx->servicepoints = $this->get_service_points();
-        $ctx->getservicemaxpoints = $this->get_service_max_points();
+        $ctx->servicemaxpoints = $this->get_service_max_points();
         $ctx->latepenaltyapplied = $this->get_late_penalty_applied();
         if ($ctx->latepenaltyapplied !== null) {
             $ctx->latepenaltyappliedpercent = (int) round($ctx->latepenaltyapplied * 100);
