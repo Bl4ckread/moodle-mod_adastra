@@ -42,39 +42,50 @@ class mod_adastra_mod_form extends moodleform_mod {
         global $CFG;
 
         $mform = $this->_form;
+        $mod = mod_adastra\local\data\exercise_round::MODNAME; // For get_string().
+        // All the addRule validation rules must match the limits in the DB schema:
+        // table adastra in the file adastra/db/install.xml.
 
         // Adding the "general" fieldset, where all the common settings are shown.
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('adastraname', 'mod_adastra'), array('size' => '64'));
+        // Warning to the user that this form should not be used.
+        $mform->addElement(
+                'static',
+                'adastradonotuse',
+                get_string('note', $mod),
+                get_string('donotusemodform', $mod)
+        );
 
-        if (!empty($CFG->formatstringstriptags)) {
-            $mform->setType('name', PARAM_TEXT);
-        } else {
-            $mform->setType('name', PARAM_CLEANHTML);
-        }
-
-        $mform->addRule('name', null, 'required', null, 'client');
-        $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-        $mform->addHelpButton('name', 'adastraname', 'mod_adastra');
+        mod_adastra\form\edit_round_form::add_fields_before_intro($mform);
 
         // Adding the standard "intro" and "introformat" fields.
-        if ($CFG->branch >= 29) {
-            $this->standard_intro_elements();
-        } else {
-            $this->add_intro_editor();
-        }
+        $this->standard_intro_elements();
 
-        // Adding the rest of mod_adastra settings, spreading all them into this fieldset
-        // ... or adding more fieldsets ('header' elements) if needed for better logic.
-        $mform->addElement('static', 'label1', 'adastrasettings', get_string('adastrasettings', 'mod_adastra'));
-        $mform->addElement('header', 'adastrafieldset', get_string('adastrafieldset', 'mod_adastra'));
+        mod_adastra\form\edit_round_form::add_fields_after_intro($mform);
 
-        // Add standard elements.
+        // Add standard elements, common to all modules.
         $this->standard_coursemodule_elements();
 
-        // Add standard buttons.
+        // Add standard buttons, common to all modules.
         $this->add_action_buttons();
+    }
+
+    public function validation($data, $files) {
+        global $COURSE;
+
+        $errors = parent::validation($data, $files);
+
+        $editroundid = 0;
+        if (!empty($this->_instance)) {
+            $editroundid = $this->_instance;
+        }
+
+        $errors = array_merge(
+                $errors,
+                mod_adastra\form\edit_round_form::common_validation($data, $files, $COURSE->id, $editroundid)
+        );
+
+        return $errors;
     }
 }
