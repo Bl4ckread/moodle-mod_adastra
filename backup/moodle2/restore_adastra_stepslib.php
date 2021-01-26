@@ -31,7 +31,7 @@ class restore_adastra_activity_structure_step extends restore_activity_structure
         $userinfo = $this->get_setting_value('userinfo');
 
         $paths[] = new restore_path_element('adastra', '/activity/adastra');
-        $paths[] = new restore_path_element('category', '/activty/adastra/categories/category');
+        $paths[] = new restore_path_element('category', '/activity/adastra/categories/category');
         $paths[] = new restore_path_element(
                 'learningobject',
                 '/activity/adastra/categories/category/learningobjects/learningobject'
