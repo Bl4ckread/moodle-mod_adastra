@@ -990,6 +990,35 @@ class exercise_round extends \mod_adastra\local\data\database_object {
     }
 
     /**
+     * Save a new instance (a new empty exercise round) of Ad Astra into the database.
+     *
+     * @param \stdClass $adastra
+     * @return int The id of the newly inserted record, 0 if failed.
+     */
+    public static function add_instance(\stdClass $adastra) {
+        global $DB;
+
+        $adastra->timecreated = time();
+        // Round max points depend on the max points of the exercises. A new round has
+        // no exercises yet. The auto setup should compute the max points since
+        // it knows the exercises that will be added to the round.
+        if (!isset($adastra->grade)) {
+            $adastra->grade = 0;
+        }
+
+        $adastra->id = $DB->insert_record(self::TABLE, $adastra);
+
+        if ($adastra->id) {
+            $exround = new self($adastra);
+            $exround->update_gradebook_item();
+            // NOTE: the course module does not usually yet exist in the DB at this stage.
+            $exround->update_calendar();
+        }
+
+        return $adastra->id;
+    }
+
+    /**
      * Update an instance of Ad Astra (exercise round) in the database.
      *
      * @param \stdClass $adastra A record with id field and updated values for any other field.
