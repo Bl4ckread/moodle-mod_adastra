@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__ . '/restore_adastra_stepslib.php');
 
 class restore_adastra_activity_task extends restore_activity_task {
 
@@ -64,7 +65,7 @@ class restore_adastra_activity_task extends restore_activity_task {
                 '/mod/' . mod_adastra\local\data\exercise_round::TABLE . '/index.php?id=$1',
                 'course'
         );
-        $rules[] = new restore_decore_rule(
+        $rules[] = new restore_decode_rule(
                 'ADASTRAVIEWBYID',
                 '/mod/' . mod_adastra\local\data\exercise_round::TABLE . '/view.php?id=$1',
                 'course_module'

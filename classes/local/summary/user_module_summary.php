@@ -301,7 +301,9 @@ class user_module_summary {
                     false
                 );
                 if (!$requireassistantviewingforsubmissions || $lobject->is_assistant_viewing_allowed()) {
-                    $data->submissions = \mod_adastra\local\data\exercise::submissions_template_context($exercisesummary->get_submissions());
+                    $data->submissions = \mod_adastra\local\data\exercise::submissions_template_context(
+                            $exercisesummary->get_submissions()
+                    );
                 } else {
                     $data->sbmsrequireastview = true;
                 }

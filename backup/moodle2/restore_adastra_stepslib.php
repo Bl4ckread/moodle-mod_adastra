@@ -101,7 +101,7 @@ class restore_adastra_activity_structure_step extends restore_activity_structure
         ) {
             $this->get_logger()->process(
                     'The course probably was not empty before restoring and now there ' .
-                            'are multiple exercise rounds with the same remote key. '
+                            'are multiple exercise rounds with the same remote key. ' .
                             'You should check and update them manually. The same applies to learning objects (exercises/chapters).',
                     backup::LOG_INFO
             );

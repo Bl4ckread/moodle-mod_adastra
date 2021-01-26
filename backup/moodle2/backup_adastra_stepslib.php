@@ -40,13 +40,10 @@ class backup_adastra_activity_structure_step extends backup_activity_structure_s
                 )
         );
         $categories = new backup_nested_element('categories');
-        $category = new backup_nested_element(
-                'category',
-                array('id'),
+        $category = new backup_nested_element('category', array('id'),
                 array(
                         'status', 'name', 'pointstopass',
-                )
-        );
+                ));
         $learningobjects = new backup_nested_element('learningobjects');
         $learningobject = new backup_nested_element(
                 'learningobject',
@@ -129,10 +126,9 @@ class backup_adastra_activity_structure_step extends backup_activity_structure_s
         // Define sources.
         $adastra->set_source_table(mod_adastra\local\data\exercise_round::TABLE, array('id' => backup::VAR_ACTIVITYID));
         $category->set_source_table(mod_adastra\local\data\category::TABLE, array('course' => backup::VAR_COURSEID));
-        $learningobject->set_source_table(mod_adastra\local\data\learning_object::TABLE, array(
-                'roundid' => backup::VAR_ACTIVITYID,
-                'categoryid' => backup::VAR_PARENTID,
-        ), '(CASE WHEN parentid IS NULL THEN 1 ELSE 2 END), id ASC');
+        $learningobject->set_source_table(mod_adastra\local\data\learning_object::TABLE,
+                array('roundid' => backup::VAR_ACTIVITYID, 'categoryid' => backup::VAR_PARENTID),
+                '(CASE WHEN parentid IS NULL THEN 1 ELSE 2 END), id ASC');
         // Sort top-level learning objects first (parentid null).
         $exercise->set_source_table(mod_adastra\local\data\exercise::TABLE, array('lobjectid' => backup::VAR_PARENTID));
         $chapter->set_source_table(mod_adastra\local\data\chapter::TABLE, array('lobjectid' => backup::VAR_PARENTID));
@@ -164,6 +160,6 @@ class backup_adastra_activity_structure_step extends backup_activity_structure_s
         );
 
         // Return the root element (adastra), wrapped into a standard activity structure.
-        return $this->prepate_activity_structure($adastra);
+        return $this->prepare_activity_structure($adastra);
     }
 }
