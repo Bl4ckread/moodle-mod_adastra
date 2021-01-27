@@ -55,7 +55,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->student2 = $this->getDataGenerator()->create_user();
 
         // Create 2 exercise rounds.
-        $generator = $this->getDataGenerator()->get_plugin_generator(\mod_adastra\local\data\exercise_round::MODNAME);
+        $generator = $this->getDataGenerator()->get_plugin_generator(data\exercise_round::MODNAME);
         $rounddata = array(
                 'course' => $this->course->id,
                 'name' => '1. Test round 1',
@@ -63,14 +63,14 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => data\exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($rounddata); // Std_class record.
-        $this->round1 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round1 = new data\exercise_round($record);
         $rounddata = array(
                 'course' => $this->course->id,
                 'name' => '2. Test round 2',
@@ -78,14 +78,14 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 2,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => data\exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($rounddata); // Std_class record.
-        $this->round2 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round2 = new data\exercise_round($record);
         // Two rounds in another course.
         $rounddata = array(
                 'course' => $this->course2->id,
@@ -94,14 +94,14 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 1,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => data\exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.4,
         );
         $record = $generator->create_instance($rounddata); // Std_class record.
-        $this->round3 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round3 = new data\exercise_round($record);
         $rounddata = array(
                 'course' => $this->course2->id,
                 'name' => '2. Unused round in another course',
@@ -109,25 +109,25 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
                 'openingtime' => time(),
                 'closingtime' => time() + 3600 * 24 * 7,
                 'ordernum' => 2,
-                'status' => \mod_adastra\local\data\exercise_round::STATUS_READY,
+                'status' => data\exercise_round::STATUS_READY,
                 'pointstopass' => 0,
                 'latesbmsallowed' => 1,
                 'latesbmsdl' => time() + 3600 * 24 * 14,
                 'latesbmspenalty' => 0.6,
         );
         $record = $generator->create_instance($rounddata); // Std_class record.
-        $this->round4 = new \mod_adastra\local\data\exercise_round($record);
+        $this->round4 = new data\exercise_round($record);
 
         // Create category.
-        $this->category = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $this->category = data\category::create_from_id(data\category::create_new((object) array(
                 'course' => $this->course->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => data\category::STATUS_READY,
                 'name' => 'Testing exercises',
                 'pointstopass' => 0,
         )));
-        $this->category2 = \mod_adastra\local\data\category::create_from_id(\mod_adastra\local\data\category::create_new((object) array(
+        $this->category2 = data\category::create_from_id(data\category::create_new((object) array(
                 'course' => $this->course2->id,
-                'status' => \mod_adastra\local\data\category::STATUS_READY,
+                'status' => data\category::STATUS_READY,
                 'name' => 'Another course category',
                 'pointstopass' => 0,
         )));
@@ -144,40 +144,40 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         // Create submissions.
         $this->submissions = array();
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id,
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises[0], $this->student->id,
                 array('submitteddata' => 4)));
         $this->add_submitted_file($this->submissions[0], 'myfile.txt', 'filekey');
         $this->submissions[0]->grade(6, 10, 'here is feedback', array('graderdata' => 2));
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student->id,
-                        null, \mod_adastra\local\data\submission::STATUS_ERROR));
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[1], $this->student->id));
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises[0], $this->student->id,
+                        null, data\submission::STATUS_ERROR));
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises[1], $this->student->id));
 
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[0], $this->student2->id));
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises[0], $this->student2->id));
         $this->add_submitted_file($this->submissions[3], 'myfile.txt', 'filekey');
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises[2], $this->student2->id));
-        $this->submissions[] = \mod_adastra\local\data\submission::create_from_id(
-                \mod_adastra\local\data\submission::create_new_submission($this->exercises3[0], $this->student2->id));
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises[2], $this->student2->id));
+        $this->submissions[] = data\submission::create_from_id(
+                data\submission::create_new_submission($this->exercises3[0], $this->student2->id));
         $this->add_submitted_file($this->submissions[5], 'newfile.txt', 'newfilekey');
 
         // Create deadline and submission limit extensions.
         $this->deadlinedevs = array();
         $this->sbmslimitdevs = array();
-        $this->deadlinedevs[] = \mod_adastra\local\data\deadline_deviation::create_from_id(
-            \mod_adastra\local\data\deadline_deviation::create_new($this->exercises2[0]->get_id(), $this->student->id, 60, true));
-        $this->sbmslimitdevs[] = \mod_adastra\local\data\submission_limit_deviation::create_from_id(
-            \mod_adastra\local\data\submission_limit_deviation::create_new($this->exercises2[0]->get_id(), $this->student2->id, 5));
+        $this->deadlinedevs[] = data\deadline_deviation::create_from_id(
+            data\deadline_deviation::create_new($this->exercises2[0]->get_id(), $this->student->id, 60, true));
+        $this->sbmslimitdevs[] = data\submission_limit_deviation::create_from_id(
+            data\submission_limit_deviation::create_new($this->exercises2[0]->get_id(), $this->student2->id, 5));
     }
 
-    protected function add_exercise(array $data, \mod_adastra\local\data\exercise_round $round, \mod_adastra\local\data\category $category) {
+    protected function add_exercise(array $data, data\exercise_round $round, data\category $category) {
         static $counter = 0;
         ++$counter;
         $defaults = array(
-                'status' => \mod_adastra\local\data\learning_object::STATUS_READY,
+                'status' => data\learning_object::STATUS_READY,
                 'parentid' => null,
                 'ordernum' => $counter,
                 'remotekey' => "testexercise$counter",
@@ -204,7 +204,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
     }
 
     public function test_get_metadata() {
-        $collection = new \core_privacy\local\metadata\collection(\mod_adastra\local\data\exercise_round::MODNAME);
+        $collection = new \core_privacy\local\metadata\collection(data\exercise_round::MODNAME);
         $collection = provider::get_metadata($collection);
         $this->assertDebuggingNotCalled();
         $items = $collection->get_collection();
@@ -253,7 +253,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         // Round 1.
         $context = \context_module::instance($this->round1->get_course_module()->id);
-        $userlist = new \core_privacy\local\request\userlist($context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $userlist = new \core_privacy\local\request\userlist($context, data\exercise_round::MODNAME);
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
         $this->assertCount(2, $userids);
@@ -267,7 +267,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         // Round 2.
         $context = \context_module::instance($this->round2->get_course_module()->id);
-        $userlist = new \core_privacy\local\request\userlist($context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $userlist = new \core_privacy\local\request\userlist($context, data\exercise_round::MODNAME);
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
         $this->assertCount(2, $userids);
@@ -281,7 +281,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         // Round 3.
         $context = \context_module::instance($this->round3->get_course_module()->id);
-        $userlist = new \core_privacy\local\request\userlist($context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $userlist = new \core_privacy\local\request\userlist($context, data\exercise_round::MODNAME);
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
         $this->assertCount(1, $userids);
@@ -292,7 +292,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         // Round 4.
         $context = \context_module::instance($this->round4->get_course_module()->id);
-        $userlist = new \core_privacy\local\request\userlist($context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $userlist = new \core_privacy\local\request\userlist($context, data\exercise_round::MODNAME);
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
         $this->assertCount(0, $userids);
@@ -315,7 +315,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
             return $ctx->id;
         }, $contexts);
         $contextlist = new \core_privacy\local\request\approved_contextlist(
-            $user, \mod_adastra\local\data\exercise_round::MODNAME, $contextids);
+            $user, data\exercise_round::MODNAME, $contextids);
         provider::export_user_data($contextlist);
         foreach ($contexts as $ctx) {
             $this->assertFalse(
@@ -326,7 +326,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $user = $this->student;
         $contextids = array();
         $contextlist = new \core_privacy\local\request\approved_contextlist(
-            $user, \mod_adastra\local\data\exercise_round::MODNAME, $contextids);
+            $user, data\exercise_round::MODNAME, $contextids);
         provider::export_user_data($contextlist);
         foreach ($contexts as $ctx) {
             $this->assertFalse(
@@ -339,7 +339,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->add_test_data();
 
         $context = \context_module::instance($this->round1->get_course_module()->id);
-        $this->export_context_data_for_user($this->student->id, $context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $this->export_context_data_for_user($this->student->id, $context, data\exercise_round::MODNAME);
         $writer = \core_privacy\local\request\writer::with_context($context);
         $subcontext = ['exerciseid_'. $this->exercises[0]->get_id()];
 
@@ -380,7 +380,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->add_test_data();
 
         $context = \context_module::instance($this->round2->get_course_module()->id);
-        $this->export_context_data_for_user($this->student2->id, $context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $this->export_context_data_for_user($this->student2->id, $context, data\exercise_round::MODNAME);
         $writer = \core_privacy\local\request\writer::with_context($context);
         $this->assertTrue($writer->has_any_data_in_any_context());
         $subcontext = ['exerciseid_'. $this->exercises2[0]->get_id()];
@@ -410,7 +410,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->add_test_data();
 
         $context = \context_module::instance($this->round2->get_course_module()->id);
-        $this->export_context_data_for_user($this->student->id, $context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $this->export_context_data_for_user($this->student->id, $context, data\exercise_round::MODNAME);
         $writer = \core_privacy\local\request\writer::with_context($context);
         $this->assertTrue($writer->has_any_data_in_any_context());
         $subcontext = ['exerciseid_'. $this->exercises2[0]->get_id()];
@@ -441,7 +441,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->add_test_data();
 
         $context = \context_module::instance($this->round3->get_course_module()->id);
-        $this->export_context_data_for_user($this->student2->id, $context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $this->export_context_data_for_user($this->student2->id, $context, data\exercise_round::MODNAME);
         $writer = \core_privacy\local\request\writer::with_context($context);
         $subcontext = ['exerciseid_'. $this->exercises3[0]->get_id()];
 
@@ -467,12 +467,12 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $this->add_test_data();
 
         $context = \context_module::instance($this->round4->get_course_module()->id);
-        $this->export_context_data_for_user($this->student->id, $context, \mod_adastra\local\data\exercise_round::MODNAME);
+        $this->export_context_data_for_user($this->student->id, $context, data\exercise_round::MODNAME);
         $writer = \core_privacy\local\request\writer::with_context($context);
         $this->assertFalse($writer->has_any_data_in_any_context());
     }
 
-    protected function check_exported_submission(\stdClass $exported, \mod_adastra\local\data\submission $sbms) {
+    protected function check_exported_submission(\stdClass $exported, data\submission $sbms) {
         $sbmsrec = $sbms->get_record();
         $this->assertEquals($sbms->get_status(true, true), $exported->status);
         $this->assertEquals(transform::datetime($sbmsrec->submissiontime), $exported->submissiontime);
@@ -506,24 +506,24 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $fs = get_file_storage();
         $exercises = $this->exercises; // The exercises of round1.
         foreach ($exercises as $ex) {
-            $submissions = $DB->get_records(\mod_adastra\local\data\submission::TABLE, array(
+            $submissions = $DB->get_records(data\submission::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($submissions);
             // Submitted files.
             $files = $fs->get_area_files($context->id,
-                \mod_adastra\local\data\exercise_round::MODNAME,
-                \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA);
+                data\exercise_round::MODNAME,
+                data\submission::SUBMITTED_FILES_FILEAREA);
             $this->assertEmpty($files);
 
             // Deadline extensions.
-            $dldevs = $DB->get_records(\mod_adastra\local\data\deadline_deviation::TABLE, array(
+            $dldevs = $DB->get_records(data\deadline_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($dldevs);
 
             // Submission limit extensions.
-            $sbmsdevs = $DB->get_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array(
+            $sbmsdevs = $DB->get_records(data\submission_limit_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($sbmsdevs);
@@ -533,15 +533,15 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $round3submissionsrs = $this->exercises3[0]->get_submissions_for_student($this->student2->id, false);
         $round3submissions = array();
         foreach ($round3submissionsrs as $rec) {
-            $round3submissions[] = new \mod_adastra\local\data\submission($rec);
+            $round3submissions[] = new data\submission($rec);
         }
         $round3submissionsrs->close();
         $this->assertCount(1, $round3submissions);
         $this->assertEquals($this->submissions[5]->get_id(), $round3submissions[0]->get_id());
         $this->assertCount(1, $round3submissions[0]->get_submitted_files());
 
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\deadline_deviation::TABLE));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission_limit_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\deadline_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\submission_limit_deviation::TABLE));
     }
 
     public function test_delete_data_for_user() {
@@ -557,7 +557,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
             return $ctx->id;
         }, $contexts);
         $contextlist = new \core_privacy\local\request\approved_contextlist(
-            $this->student, \mod_adastra\local\data\exercise_round::MODNAME, $contextids);
+            $this->student, data\exercise_round::MODNAME, $contextids);
         $deletedsubmissionids = array(
             $this->submissions[0]->get_id(),
             $this->submissions[1]->get_id(),
@@ -567,20 +567,20 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         $exercises = array_merge($this->exercises, $this->exercises2);
         foreach ($exercises as $ex) {
-            $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+            $this->assertEquals(0, $DB->count_records(data\submission::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             )));
 
             // Deadline extensions.
-            $dldevs = $DB->get_records(\mod_adastra\local\data\deadline_deviation::TABLE, array(
+            $dldevs = $DB->get_records(data\deadline_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             ));
             $this->assertEmpty($dldevs);
 
             // Submission limit extensions.
-            $sbmsdevs = $DB->get_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array(
+            $sbmsdevs = $DB->get_records(data\submission_limit_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             ));
@@ -591,44 +591,44 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $contextround1 = \context_module::instance($this->round1->get_course_module()->id);
         foreach ($deletedsubmissionids as $sid) {
             $files = $fs->get_area_files($contextround1->id,
-                \mod_adastra\local\data\exercise_round::MODNAME,
-                \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                data\exercise_round::MODNAME,
+                data\submission::SUBMITTED_FILES_FILEAREA,
                 $sid);
             $this->assertEmpty($files);
         }
 
         // Test that other contexts or other users were not affected.
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission_limit_deviation::TABLE));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission_limit_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student2->id,
         )));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[2]->get_id(),
             'submitter' => $this->student2->id,
         )));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises3[0]->get_id(),
             'submitter' => $this->student2->id,
         )));
         $files = $fs->get_area_files($contextround1->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[3]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertCount(1, $files);
         $files = $fs->get_area_files($contextround1->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[4]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertEmpty($files);
         $contextround3 = \context_module::instance($this->round3->get_course_module()->id);
         $files = $fs->get_area_files($contextround3->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[5]->get_id(),
             'itemid, filepath, filename',
             false);
@@ -649,7 +649,7 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
             return $ctx->id;
         }, $contexts);
         $contextlist = new \core_privacy\local\request\approved_contextlist(
-            $this->student2, \mod_adastra\local\data\exercise_round::MODNAME, $contextids);
+            $this->student2, data\exercise_round::MODNAME, $contextids);
         $deletedsubmissionids = array(
             $this->submissions[3]->get_id(),
             $this->submissions[4]->get_id(),
@@ -658,20 +658,20 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
 
         $exercises = array_merge($this->exercises, $this->exercises2);
         foreach ($exercises as $ex) {
-            $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+            $this->assertEquals(0, $DB->count_records(data\submission::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student2->id,
             )));
 
             // Deadline extensions.
-            $dldevs = $DB->get_records(\mod_adastra\local\data\deadline_deviation::TABLE, array(
+            $dldevs = $DB->get_records(data\deadline_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student2->id,
             ));
             $this->assertEmpty($dldevs);
 
             // Submission limit extensions.
-            $sbmsdevs = $DB->get_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array(
+            $sbmsdevs = $DB->get_records(data\submission_limit_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             ));
@@ -682,43 +682,43 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $contextround1 = \context_module::instance($this->round1->get_course_module()->id);
         foreach ($deletedsubmissionids as $sid) {
             $files = $fs->get_area_files($contextround1->id,
-                \mod_adastra\local\data\exercise_round::MODNAME,
-                \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                data\exercise_round::MODNAME,
+                data\submission::SUBMITTED_FILES_FILEAREA,
                 $sid);
             $this->assertEmpty($files);
         }
 
         // Test that other contexts or other users were not affected.
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\deadline_deviation::TABLE));
-        $this->assertEquals(2, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\deadline_deviation::TABLE));
+        $this->assertEquals(2, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student->id,
         )));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[1]->get_id(),
             'submitter' => $this->student->id,
         )));
-        $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(0, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[2]->get_id(),
             'submitter' => $this->student->id,
         )));
         $files = $fs->get_area_files($contextround1->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[0]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertCount(1, $files);
         $files = $fs->get_area_files($contextround1->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[1]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertEmpty($files);
         $files = $fs->get_area_files($contextround1->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[2]->get_id(),
             'itemid, filepath, filename',
             false);
@@ -733,49 +733,49 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $context = \context_module::instance($this->round1->get_course_module()->id);
         $userids = [$this->student->id, $this->student2->id];
         $userlist = new \core_privacy\local\request\approved_userlist(
-            $context, \mod_adastra\local\data\exercise_round::MODNAME, $userids);
+            $context, data\exercise_round::MODNAME, $userids);
         // Delete round1 data for both users.
         provider::delete_data_for_users($userlist);
 
         $fs = get_file_storage();
         $exercises = $this->exercises; // The exercises of round1.
         foreach ($exercises as $ex) {
-            $submissions = $DB->get_records(\mod_adastra\local\data\submission::TABLE, array(
+            $submissions = $DB->get_records(data\submission::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($submissions);
 
             // Deadline extensions.
-            $dldevs = $DB->get_records(\mod_adastra\local\data\deadline_deviation::TABLE, array(
+            $dldevs = $DB->get_records(data\deadline_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($dldevs);
 
             // Submission limit extensions.
-            $sbmsdevs = $DB->get_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array(
+            $sbmsdevs = $DB->get_records(data\submission_limit_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
             ));
             $this->assertEmpty($sbmsdevs);
         }
         // Submitted files.
         $files = $fs->get_area_files($context->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA);
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA);
         $this->assertEmpty($files);
 
         // Check that other rounds were not affected by the delete operation.
         $round3submissionsrs = $this->exercises3[0]->get_submissions_for_student($this->student2->id, false);
         $round3submissions = array();
         foreach ($round3submissionsrs as $rec) {
-            $round3submissions[] = new \mod_adastra\local\data\submission($rec);
+            $round3submissions[] = new data\submission($rec);
         }
         $round3submissionsrs->close();
         $this->assertCount(1, $round3submissions);
         $this->assertEquals($this->submissions[5]->get_id(), $round3submissions[0]->get_id());
         $this->assertCount(1, $round3submissions[0]->get_submitted_files());
 
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\deadline_deviation::TABLE));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission_limit_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\deadline_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\submission_limit_deviation::TABLE));
     }
 
     public function test_delete_data_for_users_one_user() {
@@ -792,25 +792,25 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $context = \context_module::instance($this->round1->get_course_module()->id);
         $userids = [$this->student->id];
         $userlist = new \core_privacy\local\request\approved_userlist(
-            $context, \mod_adastra\local\data\exercise_round::MODNAME, $userids);
+            $context, data\exercise_round::MODNAME, $userids);
         provider::delete_data_for_users($userlist);
 
         $exercises = $this->exercises;
         foreach ($exercises as $ex) {
-            $this->assertEquals(0, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+            $this->assertEquals(0, $DB->count_records(data\submission::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             )));
 
             // Deadline extensions.
-            $dldevs = $DB->get_records(\mod_adastra\local\data\deadline_deviation::TABLE, array(
+            $dldevs = $DB->get_records(data\deadline_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             ));
             $this->assertEmpty($dldevs);
 
             // Submission limit extensions.
-            $sbmsdevs = $DB->get_records(\mod_adastra\local\data\submission_limit_deviation::TABLE, array(
+            $sbmsdevs = $DB->get_records(data\submission_limit_deviation::TABLE, array(
                 'exerciseid' => $ex->get_id(),
                 'submitter' => $this->student->id,
             ));
@@ -820,45 +820,45 @@ class privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
         $fs = get_file_storage();
         foreach ($deletedsubmissionids as $sid) {
             $files = $fs->get_area_files($context->id,
-                \mod_adastra\local\data\exercise_round::MODNAME,
-                \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+                data\exercise_round::MODNAME,
+                data\submission::SUBMITTED_FILES_FILEAREA,
                 $sid);
             $this->assertEmpty($files);
         }
 
         // Test that other contexts or other users were not affected.
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\deadline_deviation::TABLE));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission_limit_deviation::TABLE));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\deadline_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\submission_limit_deviation::TABLE));
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[0]->get_id(),
             'submitter' => $this->student2->id,
         )));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises[2]->get_id(),
             'submitter' => $this->student2->id,
         )));
-        $this->assertEquals(1, $DB->count_records(\mod_adastra\local\data\submission::TABLE, array(
+        $this->assertEquals(1, $DB->count_records(data\submission::TABLE, array(
             'exerciseid' => $this->exercises3[0]->get_id(),
             'submitter' => $this->student2->id,
         )));
         $files = $fs->get_area_files($context->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[3]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertCount(1, $files);
         $files = $fs->get_area_files($context->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[4]->get_id(),
             'itemid, filepath, filename',
             false);
         $this->assertEmpty($files);
         $contextround3 = \context_module::instance($this->round3->get_course_module()->id);
         $files = $fs->get_area_files($contextround3->id,
-            \mod_adastra\local\data\exercise_round::MODNAME,
-            \mod_adastra\local\data\submission::SUBMITTED_FILES_FILEAREA,
+            data\exercise_round::MODNAME,
+            data\submission::SUBMITTED_FILES_FILEAREA,
             $this->submissions[5]->get_id(),
             'itemid, filepath, filename',
             false);

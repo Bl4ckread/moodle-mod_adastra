@@ -151,7 +151,7 @@ class exercise_round_testcase extends \advanced_testcase {
                 'instance' => $roundid,
                 'eventtype' => exercise_round::EVENT_DL_TYPE,
         ));
-        $this->assertTrue($event !== false); // Fails.
+        $this->assertTrue($event !== false);
         $this->assertEquals(1, $event->visible);
         $this->assertEquals($this->course->id, $event->courseid);
         $this->assertEquals("Deadline: {$this->round1_data['name']}", $event->name);
