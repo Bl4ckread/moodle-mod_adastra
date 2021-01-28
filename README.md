@@ -18,6 +18,16 @@ Course student answers to the task and the answer is sent to Plussa grading syst
 ## Plugin structure
 
 The following list explains how the plugin code is structured and divided:
+
+### amd
+Contains the Javascript code for the frontend
+
+### assets
+Contains the main css style for the plugin
+
+### backup
+Contains the backup API of Moodle
+
 ### classes
 Contains class definitions, supports Moodle class auto-loading
 * cache: contains classes that define caches in the plugin
@@ -25,6 +35,7 @@ Contains class definitions, supports Moodle class auto-loading
 * form: contains forming classes that use Moodle form API
 * local: contains classes that work in a local Moodle environment, including auto setup and forming of data
 * output: contains classes that output data with output API
+* privacy: contains classes that handle user data
 
 ### db
 Defines parts of the plugin required by Moodle
@@ -52,8 +63,9 @@ Contains PHPunit tests, that are using Moodle test API
 * locallib.php: sets requirements for the moodle page, for example requirement for custom Javascript and CSS
 * mod_form.php: contains the form used to create and edit activities
 * settings.php: contains the settings to configure the plugin for the administration
+* submission.php: contains the code for submission cases of the tasks
+* version.php: contains the required information of plugin version number
 * view.php: contains the view configuration of the plugin
-
 ## Using the plugin
 The plugin is set to the Moodle page by using the block plugin part of Ad Astra. The plugin settings are now set, by adding the course url from Plussa etc. Ad astra then runs the calls for the course tasks and runs the auto setup to set the module to Moodle. After the auto setup course data can now be completed in the Moodle platform. The looks of the imported module will match the one seen in Plussa environment, and makes the completion of these tasks similar. Each task includes every aspect of the Plussa completion, for example the points and the number of submissions left.
 ## Grading
