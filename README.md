@@ -4,16 +4,34 @@ This plugin imports task data from Plussa to Moodle environment, so that the tas
 
 The plugin is made for course admins mainly from Tampere University, for its usage of both Moodle and Plussa. This plugin helps the students by removing some of the need of using both systems.
 
+Plussa is an online learning platform created by Aalto University (https://github.com/apluslms/a-plus). This plugin talks with the backend grading system of the server (MOOC grader) to facilitate its functionality.
+
 ## Installation ##
 
 At the moment plugin can be only installed manually to the Moodle platform, but the requirement of the finished product will be implementation to the Moodle plugin library.
 
+The plugin is meant to be used in conjunction with https://github.com/Bl4ckread/moodle-block_adastra_setup, which should be installed together with mod_adastra.
+
 ## Usage ##
 
-Ad Astra will be implemented as two different plugins, one being the actual plugin and the other acting as a simple block to reach plugin properties.
-Course admin will add a block to setup Ad Astra. Plussa course url will be added.
-Plugin will work separetely with each module implemented from Plussa.
-Course student answers to the task and the answer is sent to Plussa grading system for grading. Grade is returned to the Moodle environment, for the student to see.
+Importing a course from the MOOC grader is easy.
+
+First add the adastra setup block to your course in Moodle. It has to be added only once, and will stay in that same coursespace until removed. These are the steps for adding the block:
+1. Go to the course front page.
+2. Turn editing on.
+3. Click "add a block" towards the bottom of the left side navigation pane.
+4. Select "Ad Astra exercises setup". Editing can be turned off now.
+
+You can import the course from the MOOC grader by following these steps:
+1. First decide which section will host the course, and record its section number, this will be needed during the process. The section number is visible in the URL of the section page. The course front page is section zero.
+2. Click "Edit exercises" in the Ad Astra exercises setup block. The block is visible on the right side of the course page, if you added it as described earlier.
+3. On the exercise edit page, click "Update and create Ad Astra exercises automatically".
+4. In the form that opens, enter the "configuration URL" for your course and the "Moodle course section number" which you recorded in step 1. API key is not needed. The configuration URL depends on the MOOC grader server and the course key used there. The URL follows the pattern https://DOMAIN/COURSEKEY/aplus-json
+5. Click "apply" in the form. The exercises are now ready. You can see an overview in the edit course page (from which you accessed the import form) and the Moodle activities are displayed in the specified course section.
+
+If changes to the course, such as new exercises added, are made on the remote platform, the course should be imported again. The import form remembers the previously entered values, so you only need to click the apply button in the form.
+
+You can find a short video showing the basic functionality of the plugin here: https://www.youtube.com/watch?v=zy5-fn-43_4
 
 ## Plugin structure
 
