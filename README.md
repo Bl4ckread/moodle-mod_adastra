@@ -26,7 +26,7 @@ You can import the course from the MOOC grader by following these steps:
 1. First decide which section will host the course, and record its section number, this will be needed during the process. The section number is visible in the URL of the section page. The course front page is section zero.
 2. Click "Edit exercises" in the Ad Astra exercises setup block. The block is visible on the right side of the course page, if you added it as described earlier.
 3. On the exercise edit page, click "Update and create Ad Astra exercises automatically".
-4. In the form that opens, enter the "configuration URL" for your course and the "Moodle course section number" which you recorded in step 1. API key is not needed. The configuration URL depends on the MOOC grader server and the course key used there. The URL follows the pattern https://DOMAIN/COURSEKEY/aplus-json
+4. In the form that opens, enter the "configuration URL" for your course and the "Moodle course section number" which you recorded in step 1. API key is not needed. The configuration URL depends on the MOOC grader server and the course key used there. The URL follows the pattern `https://DOMAIN/COURSEKEY/aplus-json`
 5. Click "apply" in the form. The exercises are now ready. You can see an overview in the edit course page (from which you accessed the import form) and the Moodle activities are displayed in the specified course section.
 
 If changes to the course, such as new exercises added, are made on the remote platform, the course should be imported again. The import form remembers the previously entered values, so you only need to click the apply button in the form.
