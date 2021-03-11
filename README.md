@@ -12,6 +12,8 @@ At the moment plugin can be only installed manually to the Moodle platform, but 
 
 The plugin is meant to be used in conjunction with https://github.com/Bl4ckread/moodle-block_adastra_setup, which should be installed together with mod_adastra.
 
+The plugin requires Moodle version 3.8.
+
 ## Usage ##
 
 Importing a course from the MOOC grader is easy.
